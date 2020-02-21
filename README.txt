@@ -1,5 +1,7 @@
-Cross-compilation for bare metal devices
-========================================
+C + D + FreeRTOS
+cross-compilation for
+bare metal devices
+=====================
 
 Prerequisites:
 
