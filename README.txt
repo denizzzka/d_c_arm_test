@@ -15,8 +15,8 @@ BUILD STEPS:
 
 cd into this repository and:
 
-$ meson setup --cross-file arm_cortex_m3_cross.ini builddir
-$ cd builddir
+$ meson setup --cross-file arm_cortex_m3_cross.ini build
+$ cd build
 $ ninja
 
 This steps will produce file firmware.elf: "ELF 32-bit LSB executable,
