@@ -13,5 +13,3 @@ static void gpio_setup()
 
 	gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO1);
 }
-
-//void gpio_toggle(uint, ushort) @nogc nothrow;

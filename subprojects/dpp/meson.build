@@ -1,5 +1,6 @@
 project('d++ parser')
 
+dub_ensure_available = find_program('dub', native: true)
 helper = find_program('dpp_helper.sh', native: true)
 
 dpp_parser = generator(

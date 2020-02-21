@@ -29,5 +29,5 @@ d_dep = library(
         libopencm3_binding,
         freertos_binding,
     ],
-    include_directories: ['source'],
+    include_directories: ['source', 'source/bindings'],
 )

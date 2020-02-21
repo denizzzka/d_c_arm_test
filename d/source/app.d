@@ -10,12 +10,12 @@
 
 extern(C) __gshared void _d_dso_registry(void* arg) {}
 
-//~ import gpio;
-//~ import freertos;
+import gpio;
+import freertos;
 
 void main()
 {
-	//~ gpio_setup();
+	gpio_setup();
 
 	//~ vInitSystem();
 
@@ -29,9 +29,9 @@ void main()
 	//~ );
 }
 
-//~ extern(C) void blinkTask(void *pvParametres)
-//~ {
-	//~ gpio_toggle(GPIOB, GPIO1);
+extern(C) void blinkTask(void *pvParametres)
+{
+	gpio_toggle(GPIOB, GPIO1);
 
 	//~ vTaskDelay(1000);
-//~ }
+}
