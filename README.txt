@@ -1,3 +1,11 @@
+Prerequisites:
+
+- Installed: dub, ldc2, arm-none-eabi-gcc
+
+PREBUILD:
+
+$ dub fetch dpp # d++, headers parser
+
 BUILD STEPS:
 
 cd into this git repository and:
