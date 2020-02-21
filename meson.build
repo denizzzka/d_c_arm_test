@@ -1,5 +1,5 @@
 project(
-    'C + D + dpp + libopencm3 + freertos + both GCC and Clang test project',
+    'C + D + freertos test project',
     version: 'v0.0.1',
     default_options: [
         'default_library=static' #move out it
