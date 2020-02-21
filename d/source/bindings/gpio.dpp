@@ -1,0 +1,17 @@
+import bindings.types; //Types is not avail from core.stdc.config for bare-metal
+
+// https://github.com/ldc-developers/ldc/issues/3290
+import ldc.attributes;
+@llvmAttr("nounwind"):
+
+#include <libopencm3/stm32/rcc.h>
+#include <libopencm3/stm32/gpio.h>
+
+static void gpio_setup()
+{
+	rcc_periph_clock_enable(RCC_GPIOB);
+
+	gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO1);
+}
+
+//void gpio_toggle(uint, ushort) @nogc nothrow;
