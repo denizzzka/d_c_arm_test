@@ -8,7 +8,7 @@ $ dub fetch dpp # d++, headers parser
 
 BUILD STEPS:
 
-cd into this git repository and:
+cd into this repository and:
 
 $ meson setup --cross-file arm_cortex_m3_cross.ini builddir
 $ cd builddir
