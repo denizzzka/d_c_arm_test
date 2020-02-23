@@ -7,8 +7,6 @@ export extern(C) int main()
 {
 	gpio_setup();
 
-	//~ vInitSystem();
-
 	xTaskCreate(
 		&blinkTask,
 		cast(const(char*)) "LED Blink",
@@ -18,7 +16,10 @@ export extern(C) int main()
 		null // task handler
 	);
 
-	return 0;
+	vTaskStartScheduler();
+
+	// Will not get here unless there is insufficient RAM
+	return 1;
 }
 
 extern(C) void blinkTask(void *pvParametres)
