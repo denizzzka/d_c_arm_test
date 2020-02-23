@@ -19,14 +19,14 @@ export extern(C) int main()
 
 	//~ vInitSystem();
 
-	//~ xTaskCreate(
-		//~ &blinkTask, 
-		//~ cast (byte*) "LED Blink",
-		//~ 32, // usStackDepth
-		//~ null, // *pvParameters
-		//~ 1, // uxPriority
-		//~ null // task handler
-	//~ );
+	xTaskCreate(
+		&blinkTask,
+		cast(const(char*)) "LED Blink",
+		32, // usStackDepth
+		null, // *pvParameters
+		1, // uxPriority
+		null // task handler
+	);
 
 	return 0;
 }
@@ -35,5 +35,5 @@ extern(C) void blinkTask(void *pvParametres)
 {
 	gpio_toggle(GPIOB, GPIO1);
 
-	//~ vTaskDelay(1000);
+	vTaskDelay(500);
 }

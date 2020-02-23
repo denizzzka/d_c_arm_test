@@ -5,3 +5,4 @@ import ldc.attributes;
 @llvmAttr("nounwind"):
 
 #include <FreeRTOS.h>
+#include <task.h>
