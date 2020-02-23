@@ -1,8 +1,6 @@
 import bindings.types; //Types is not avail from core.stdc.config for bare-metal
 
-// https://github.com/ldc-developers/ldc/issues/3290
-import ldc.attributes;
-@llvmAttr("nounwind"):
+@nogc:
 
 #include <FreeRTOS.h>
 #include <task.h>
