@@ -40,15 +40,11 @@ headers = files(
     'src/Unwind-EHABI.h',
 )
 
-#TODO: detach it from this project
-picolibc_dep = subproject('freertos').get_variable('picolibc_dep')
-
 libunwind_dep = declare_dependency(
     sources:[c_src, cxx_src, asm_src],
     include_directories: [
         includes,
     ],
-    dependencies: [picolibc_dep],
     compile_args: [
         '-D_LIBUNWIND_IS_BAREMETAL',
         '-D_LIBUNWIND_HAS_NO_THREADS',
