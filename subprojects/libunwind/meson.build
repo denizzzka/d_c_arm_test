@@ -44,13 +44,11 @@ headers = files(
 picolibc_dep = subproject('freertos').get_variable('picolibc_dep')
 
 libunwind_dep = declare_dependency(
-    #'libunwind',
     sources:[c_src, cxx_src, asm_src],
     include_directories: [
         includes,
     ],
     dependencies: [picolibc_dep],
-    #c_args: [
     compile_args: [
         '-D_LIBUNWIND_IS_BAREMETAL',
         '-D_LIBUNWIND_HAS_NO_THREADS',
