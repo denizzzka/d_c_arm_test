@@ -1,13 +1,3 @@
-//import std.stdio;
-
-//extern(C) void vApplicationTickHook();
-
-//~ extern(C) void reset_handler()
-//~ {}
-
-// Place the FreeRTOS System Calls first in the unprivileged region.
-//~ extern(C) int* __syscalls_flash_start__ = rom;
-
 extern(C) __gshared void _d_dso_registry(void* arg) {}
 
 import gpio;
