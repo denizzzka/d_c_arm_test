@@ -14,7 +14,7 @@ subdir('d')
 
 executable(
     'firmware.elf',
-    #link_with: [d_dep, libunwind_dep],
+    link_with: [d_dep],
     dependencies: [stm32f1_dep, freertos_dep, libunwind_dep],
     link_language: 'c' # to avoid calling ldc2 as linker because it affected to "no source files" bug
 )

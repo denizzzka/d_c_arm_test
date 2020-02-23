@@ -13,7 +13,7 @@ extern(C) __gshared void _d_dso_registry(void* arg) {}
 import gpio;
 import freertos;
 
-void main()
+export extern(C) int main()
 {
 	gpio_setup();
 
@@ -27,6 +27,8 @@ void main()
 		//~ 1, // uxPriority
 		//~ null // task handler
 	//~ );
+
+	return 0;
 }
 
 extern(C) void blinkTask(void *pvParametres)
