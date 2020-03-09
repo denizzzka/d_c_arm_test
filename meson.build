@@ -26,5 +26,5 @@ executable(
         freertos_dep,
         libunwind_dep,
     ],
-    link_language: 'c' # to avoid calling ldc2 as linker because it affected to "no source files" bug
+    link_language: 'd'
 )
