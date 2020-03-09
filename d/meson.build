@@ -1,6 +1,6 @@
 add_languages('d')
 
-dpp = subproject('dpp').get_variable('dpp_parser')
+dpp = subproject('dpp').get_variable('dpp_preprocessor')
 
 root_dir = meson.source_root()
 subprojects_dir = root_dir + '/subprojects/'
