@@ -1,16 +1,15 @@
-project('d++ parser')
+project('d++ preprocessor')
 
-dub_ensure_available = find_program('dub', native: true)
-helper = find_program('dpp_helper.sh', native: true)
+dub = find_program('dub', native: true)
 
-dpp_parser = generator(
-    helper,
+dpp_preprocessor = generator(
+    dub,
     arguments : [
-        '@INPUT@',
-        '@BUILD_DIR@/@BASENAME@.dpp',
+        'run', 'dpp', '--',
         '--preprocess-only',
+        '--source-output-path=@BUILD_DIR@',
         '@EXTRA_ARGS@',
+        '@INPUT@',
     ],
     output: '@BASENAME@.d',
-    preserve_path_from: meson.current_source_dir(),
 )
