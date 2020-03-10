@@ -51,8 +51,6 @@ enum
     L_tmpnam     = 20
 }
 
-import libc.stdarg: va_list;
-
 int  snprintf(scope char* s, size_t n, scope const char* format, ...)
 {
     assert(false, "not implemented");
