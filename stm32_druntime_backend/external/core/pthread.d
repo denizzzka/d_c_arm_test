@@ -1,5 +1,7 @@
 module external.core.pthread;
 
+//TODO: maybe it will be removed
+
 version (ARM)
 {
     enum __SIZEOF_PTHREAD_ATTR_T = 36;
@@ -14,9 +16,10 @@ version (ARM)
     enum __SIZEOF_PTHREAD_BARRIERATTR_T = 4;
 }
 
-import libc.config: c_long;
+import libc.config: c_long, c_ulong;
 
 alias pthread_spinlock_t = int;
+alias pthread_t = c_ulong;
 
 union pthread_mutex_t
 {
@@ -30,5 +33,17 @@ union pthread_mutexattr_t
     c_long __align;
 }
 
-@nogc:
-alias Mutex = pthread_mutex_t;
+immutable size_t PAGESIZE = 28;
+immutable size_t PTHREAD_STACK_MIN = 0x004c;
+
+alias ThreadID = pthread_t;
+
+ThreadID createLowLevelThread(void delegate() nothrow dg, uint stacksize = 0,
+                              void delegate() nothrow cbDllUnload = null) nothrow @nogc
+{
+    assert(false, "Not implemented");
+}
+
+class Thread
+{
+}

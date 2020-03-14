@@ -29,3 +29,5 @@ enum
 }
 
 enum RAND_MAX = 0x7fffffff;
+
+void*   realloc(void* ptr, size_t size);
