@@ -1,49 +1,80 @@
+//TODO: rename to external.core.thread
 module external.core.pthread;
 
-//TODO: maybe it will be removed
+import libc.config: c_ulong;
 
-version (ARM)
+alias ThreadID = c_ulong;
+
+extern (C) void thread_init() @nogc
 {
-    enum __SIZEOF_PTHREAD_ATTR_T = 36;
-    enum __SIZEOF_PTHREAD_MUTEX_T = 24;
-    enum __SIZEOF_PTHREAD_MUTEXATTR_T = 4;
-    enum __SIZEOF_PTHREAD_COND_T = 48;
-    enum __SIZEOF_PTHREAD_COND_COMPAT_T = 12;
-    enum __SIZEOF_PTHREAD_CONDATTR_T = 4;
-    enum __SIZEOF_PTHREAD_RWLOCK_T = 32;
-    enum __SIZEOF_PTHREAD_RWLOCKATTR_T = 8;
-    enum __SIZEOF_PTHREAD_BARRIER_T = 20;
-    enum __SIZEOF_PTHREAD_BARRIERATTR_T = 4;
+    assert(false, "Not implemented");
 }
 
-import libc.config: c_long, c_ulong;
-
-alias pthread_spinlock_t = int;
-alias pthread_t = c_ulong;
-
-union pthread_mutex_t
+extern (C) void thread_term() @nogc
 {
-    byte[__SIZEOF_PTHREAD_MUTEX_T] __size;
-    c_long __align;
+    assert(false, "Not implemented");
 }
 
-union pthread_mutexattr_t
+extern (C) bool thread_isMainThread() nothrow @nogc
 {
-    byte[__SIZEOF_PTHREAD_MUTEXATTR_T] __size;
-    c_long __align;
+    //~ return Thread.getThis() is Thread.sm_main;
+    assert(false, "Not implemented");
 }
 
-immutable size_t PAGESIZE = 28;
-immutable size_t PTHREAD_STACK_MIN = 0x004c;
+extern (C) Thread thread_attachThis()
+{
+    assert(false, "Not implemented");
+}
 
-alias ThreadID = pthread_t;
+static Thread thread_findByAddr(ThreadID addr)
+{
+    assert(false, "Not implemented");
+}
 
-ThreadID createLowLevelThread(void delegate() nothrow dg, uint stacksize = 0,
-                              void delegate() nothrow cbDllUnload = null) nothrow @nogc
+extern (C) void thread_joinAll()
+{
+    assert(false, "Not implemented");
+}
+
+void thread_intermediateShutdown() nothrow @nogc
 {
     assert(false, "Not implemented");
 }
 
 class Thread
 {
+    /// Main process thread
+    private __gshared Thread    sm_main;
+
+    static void initLocks() @nogc
+    {
+        assert(false, "Not implemented");
+    }
+
+    /// Sets a thread-local reference to the current thread object.
+    static void setThis(Thread t) nothrow @nogc
+    {
+        //~ sm_this = t;
+        assert(false, "Not implemented");
+    }
+
+    static Thread getThis() @safe nothrow @nogc
+    {
+        // NOTE: This function may not be called until thread_init has
+        //       completed.  See thread_suspendAll for more information
+        //       on why this might occur.
+        //~ return sm_this;
+        assert(false, "Not implemented");
+    }
+    //
+    // Remove a thread from the global thread list.
+    //
+    static void remove(Thread t) nothrow @nogc
+    {
+        assert(false, "Not implemented");
+    }
+
+    static struct Context
+    {
+    }
 }

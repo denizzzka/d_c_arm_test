@@ -1,27 +1,26 @@
 module external.rt.monitor_;
 
-public import external.core.pthread: Mutex;
-import external.core.pthread;
+public import external.core.mutex: Mutex;
 
 nothrow:
 @nogc:
 
-void initMutex(pthread_mutex_t* mtx)
+void initMutex(Mutex* mtx)
 {
-    pthread_mutex_init(mtx, &gattr) && assert(0);
+    assert(false, "Not implemented");
 }
 
-void destroyMutex(pthread_mutex_t* mtx)
+void destroyMutex(Mutex* mtx)
 {
-    pthread_mutex_destroy(mtx) && assert(0);
+    assert(false, "Not implemented");
 }
 
-void lockMutex(pthread_mutex_t* mtx)
+void lockMutex(Mutex* mtx)
 {
-    pthread_mutex_lock(mtx) && assert(0);
+    assert(false, "Not implemented");
 }
 
-void unlockMutex(pthread_mutex_t* mtx)
+void unlockMutex(Mutex* mtx)
 {
-    pthread_mutex_unlock(mtx) && assert(0);
+    assert(false, "Not implemented");
 }
