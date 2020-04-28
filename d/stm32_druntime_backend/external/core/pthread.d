@@ -1,6 +1,7 @@
 //TODO: rename to external.core.thread
 module external.core.pthread;
 
+import core.thread.osthread: ScanAllThreadsTypeFn, IsMarkedDg;
 import libc.config: c_ulong;
 
 alias ThreadID = c_ulong;
@@ -36,7 +37,27 @@ extern (C) void thread_joinAll()
     assert(false, "Not implemented");
 }
 
+extern (C) void thread_suspendAll() nothrow
+{
+    assert(false, "Not implemented");
+}
+
+extern (C) void thread_resumeAll() nothrow
+{
+    assert(false, "Not implemented");
+}
+
+extern (C) void thread_scanAllType( scope ScanAllThreadsTypeFn scan ) nothrow
+{
+    assert(false, "Not implemented");
+}
+
 void thread_intermediateShutdown() nothrow @nogc
+{
+    assert(false, "Not implemented");
+}
+
+extern(C) void thread_processGCMarks( scope IsMarkedDg isMarked ) nothrow
 {
     assert(false, "Not implemented");
 }
@@ -46,10 +67,59 @@ extern(D) public void callWithStackShell(scope void delegate(void* sp) nothrow f
     assert(false, "Not implemented");
 }
 
+version (LDC_Windows)
+{
+    void* getStackBottom() nothrow @nogc @naked
+    {
+        assert(false, "Not implemented");
+    }
+} else {
+    void* getStackBottom() nothrow @nogc
+    {
+        assert(false, "Not implemented");
+    }
+}
+
+extern (C) void* thread_stackBottom() nothrow @nogc
+{
+    assert(false, "Not implemented");
+}
+
+ThreadID createLowLevelThread(void delegate() nothrow dg, uint stacksize = 0,
+                              void delegate() nothrow cbDllUnload = null) nothrow @nogc
+{
+    assert(false, "Not implemented");
+}
+
+bool findLowLevelThread(ThreadID tid) nothrow @nogc
+{
+    assert(false, "Not implemented");
+}
+
 class Thread
 {
     /// Main process thread
     private __gshared Thread    sm_main;
+
+    bool m_isInCriticalRegion;
+
+    this(void function() fn, size_t sz = 0) @safe pure nothrow @nogc
+    in(fn !is null)
+    {
+        assert(false, "Not implemented");
+    }
+
+    this(void delegate() dg, size_t sz = 0) @safe pure nothrow @nogc
+    in(dg !is null)
+    {
+        assert(false, "Not implemented");
+    }
+
+    final Thread start() nothrow
+    in(!next && !prev)
+    {
+        assert(false, "Not implemented");
+    }
 
     static void initLocks() @nogc
     {
@@ -71,10 +141,33 @@ class Thread
         //~ return sm_this;
         assert(false, "Not implemented");
     }
+
+    final @property bool isRunning() nothrow @nogc
+    {
+        assert(false, "Not implemented");
+    }
+
+    import external.core.mutex: Mutex;
+
+    @property static Mutex criticalRegionLock() nothrow @nogc
+    {
+        assert(false, "Not implemented");
+    }
+
     //
     // Remove a thread from the global thread list.
     //
     static void remove(Thread t) nothrow @nogc
+    {
+        assert(false, "Not implemented");
+    }
+
+    final Throwable join( bool rethrow = true )
+    {
+        assert(false, "Not implemented");
+    }
+
+    final void joinAll( bool rethrow = true )
     {
         assert(false, "Not implemented");
     }
