@@ -27,6 +27,11 @@ druntime_lib = library(
     'druntime',
     include_directories: include_directories('stm32_druntime_backend'),
     dependencies: druntime_dep,
+    d_module_versions: [
+        'DruntimeAbstractRt',
+        'CRuntime_Abstract',
+        'ExternStackShell',
+    ],
     d_args: ['-defaultlib='],
 )
 

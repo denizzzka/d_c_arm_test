@@ -41,6 +41,11 @@ void thread_intermediateShutdown() nothrow @nogc
     assert(false, "Not implemented");
 }
 
+extern(D) public void callWithStackShell(scope void delegate(void* sp) nothrow fn) nothrow
+{
+    assert(false, "Not implemented");
+}
+
 class Thread
 {
     /// Main process thread
