@@ -1,4 +1,4 @@
-add_languages('d')
+add_languages('d', native:false)
 
 dpp = subproject('dpp').get_variable('dpp_preprocessor')
 
@@ -23,6 +23,12 @@ freertos_binding = dpp.process(
 )
 
 druntime_dep = subproject('druntime').get_variable('druntime_dep')
+druntime_lib = library(
+    'druntime',
+    include_directories: include_directories('stm32_druntime_backend'),
+    dependencies: druntime_dep,
+    d_args: ['-defaultlib='],
+)
 
 d_dep = library(
     'D code part',
@@ -32,5 +38,5 @@ d_dep = library(
         freertos_binding,
     ],
     include_directories: ['source', 'source/bindings'],
-    link_with: druntime_dep,
+    link_with: druntime_lib,
 )
