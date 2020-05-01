@@ -25,6 +25,7 @@ freertos_binding = dpp.process(
 
 stm32_druntime_backend = [
     'stm32_druntime_backend/external/core/abort.d',
+    'stm32_druntime_backend/external/core/fiber.d',
     'stm32_druntime_backend/external/core/memory.d',
     'stm32_druntime_backend/external/core/pthread.d',
     'stm32_druntime_backend/external/core/time.d',
@@ -44,6 +45,7 @@ druntime_lib = library(
         'DruntimeAbstractRt',
         'CRuntime_Abstract',
         'ExternStackShell',
+        'AsmExternal', #used by fiber module
     ],
     d_args: ['-defaultlib='],
 )
