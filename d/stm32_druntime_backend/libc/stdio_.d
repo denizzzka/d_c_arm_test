@@ -51,7 +51,7 @@ enum
     L_tmpnam     = 20
 }
 
-int  snprintf(scope char* s, size_t n, scope const char* format, ...) nothrow @nogc
+export int snprintf(scope char* s, size_t n, scope const char* format, ...) nothrow @nogc
 {
     assert(false, "not implemented");
 }
