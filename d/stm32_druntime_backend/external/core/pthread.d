@@ -116,7 +116,6 @@ class Thread
     }
 
     final Thread start() nothrow
-    in(!next && !prev)
     {
         assert(false, "Not implemented");
     }
