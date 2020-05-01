@@ -29,6 +29,7 @@ stm32_druntime_backend = [
     'stm32_druntime_backend/external/core/pthread.d',
     'stm32_druntime_backend/external/core/time.d',
     'stm32_druntime_backend/external/rt/config.d',
+    'stm32_druntime_backend/external/rt/monitor_.d',
     'stm32_druntime_backend/external/rt/sections.d',
     'stm32_druntime_backend/libc/stdio_.d',
 ]
