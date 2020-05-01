@@ -155,10 +155,27 @@ class Thread
         assert(false, "Not implemented");
     }
 
+    static void add( Context* c ) nothrow @nogc
+    in( c )
+    {
+        assert(false, "Not implemented");
+    }
+
     //
     // Remove a thread from the global thread list.
     //
     static void remove(Thread t) nothrow @nogc
+    {
+        assert(false, "Not implemented");
+    }
+
+    static void remove(Context* c) nothrow @nogc
+    in( c )
+    {
+        assert(false, "Not implemented");
+    }
+
+    @property static Mutex slock() nothrow @nogc
     {
         assert(false, "Not implemented");
     }
@@ -185,7 +202,23 @@ class Thread
         assert(false, "Not implemented");
     }
 
-    static struct Context
+    final void pushContext( Context* c ) nothrow @nogc
     {
+        assert(false, "Not implemented");
     }
+
+    final void popContext() nothrow @nogc
+    {
+        assert(false, "Not implemented");
+    }
+
+    static import core.thread.osthread;
+
+    alias Context = core.thread.osthread.Context;
+
+    //FIXME: remove or wrap this
+    Context             m_main;
+    Context*            m_curr;
+    bool                m_lock;
+    void*               m_tlsgcdata;
 }
