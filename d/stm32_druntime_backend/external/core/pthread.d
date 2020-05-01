@@ -172,6 +172,18 @@ class Thread
         assert(false, "Not implemented");
     }
 
+    import core.time: Duration;
+
+    static void sleep( Duration val ) @nogc nothrow
+    {
+        assert(false, "Not implemented");
+    }
+
+    static void yield() @nogc nothrow
+    {
+        assert(false, "Not implemented");
+    }
+
     static struct Context
     {
     }

@@ -22,9 +22,16 @@ freertos_binding = dpp.process(
     ]
 )
 
+
+stm32_druntime_backend = [
+    'stm32_druntime_backend/external/rt/sections.d',
+    'stm32_druntime_backend/libc/stdio_.d',
+]
+
 druntime_dep = subproject('druntime').get_variable('druntime_dep')
 druntime_lib = library(
     'druntime',
+    stm32_druntime_backend,
     include_directories: include_directories('stm32_druntime_backend'),
     dependencies: druntime_dep,
     d_module_versions: [
