@@ -1,4 +1,4 @@
-add_languages('d')
+add_languages('d', native:false)
 
 dpp = subproject('dpp').get_variable('dpp_preprocessor')
 
@@ -22,6 +22,34 @@ freertos_binding = dpp.process(
     ]
 )
 
+
+stm32_druntime_backend = [
+    'stm32_druntime_backend/external/core/abort.d',
+    'stm32_druntime_backend/external/core/fiber.d',
+    'stm32_druntime_backend/external/core/memory.d',
+    'stm32_druntime_backend/external/core/pthread.d',
+    'stm32_druntime_backend/external/core/time.d',
+    'stm32_druntime_backend/external/rt/config.d',
+    'stm32_druntime_backend/external/rt/monitor_.d',
+    'stm32_druntime_backend/external/rt/sections.d',
+    'stm32_druntime_backend/libc/stdio_.d',
+]
+
+druntime_dep = subproject('druntime').get_variable('druntime_dep')
+druntime_lib = library(
+    'druntime',
+    stm32_druntime_backend,
+    include_directories: include_directories('stm32_druntime_backend'),
+    dependencies: druntime_dep,
+    d_module_versions: [
+        'DruntimeAbstractRt',
+        'CRuntime_Abstract',
+        'ExternStackShell',
+        'AsmExternal', #used by fiber module
+    ],
+    d_args: ['-defaultlib='],
+)
+
 d_dep = library(
     'D code part',
     [
@@ -30,4 +58,5 @@ d_dep = library(
         freertos_binding,
     ],
     include_directories: ['source', 'source/bindings'],
+    link_with: druntime_lib,
 )

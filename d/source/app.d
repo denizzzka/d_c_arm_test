@@ -1,5 +1,3 @@
-extern(C) __gshared void _d_dso_registry(void* arg) {}
-
 import gpio;
 import freertos;
 
