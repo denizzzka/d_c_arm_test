@@ -69,6 +69,8 @@ extern(D) public void callWithStackShell(scope void delegate(void* sp) nothrow f
 
 version (LDC_Windows)
 {
+    import ldc.attributes;
+
     void* getStackBottom() nothrow @nogc @naked
     {
         assert(false, "Not implemented");
