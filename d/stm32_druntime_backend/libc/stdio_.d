@@ -19,7 +19,7 @@ struct _iobuf
 }
 
 ///
-alias shared(_iobuf) FILE;
+alias FILE = shared(_iobuf);
 
 enum
 {
@@ -31,9 +31,9 @@ enum
     _IONBF = 2,
 }
 
-extern shared FILE* stdin;
-extern shared FILE* stdout;
-extern shared FILE* stderr;
+export shared FILE* stdin;
+export shared FILE* stdout;
+export shared FILE* stderr;
 
 enum
 {
