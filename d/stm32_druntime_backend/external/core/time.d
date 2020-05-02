@@ -15,7 +15,4 @@ static @property TickDuration currSystemTick() @trusted nothrow @nogc
     assert(false, "Not implemented");
 }
 
-static @property auto /*MonoTimeImpl*/ currTime() @trusted nothrow @nogc
-{
-    assert(false, "Not implemented");
-}
+long currTicks; //FIXME
