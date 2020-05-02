@@ -47,7 +47,7 @@ druntime_lib = library(
         'ExternStackShell',
         'AsmExternal', #used by fiber module
     ],
-    d_args: ['-defaultlib='],
+    d_args: [],
 )
 
 d_dep = library(
