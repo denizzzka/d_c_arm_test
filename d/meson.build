@@ -25,6 +25,7 @@ freertos_binding = dpp.process(
 
 stm32_druntime_backend = [
     'stm32_druntime_backend/external/core/abort.d',
+    'stm32_druntime_backend/external/core/event.d',
     'stm32_druntime_backend/external/core/fiber.d',
     'stm32_druntime_backend/external/core/memory.d',
     'stm32_druntime_backend/external/core/pthread.d',
