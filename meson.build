@@ -7,7 +7,13 @@ project(
     ]
 )
 
-picolibc_sub = subproject('picolibc', default_options: ['multilib=false'])
+picolibc_sub = subproject(
+    'picolibc',
+    default_options: [
+        'multilib=false',
+        'newlib-supplied-syscalls=true',
+    ]
+)
 picolibc_dep = picolibc_sub.get_variable('picolibc_dep')
 
 semihost_lib = picolibc_sub.get_variable('lib_semihost')
