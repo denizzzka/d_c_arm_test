@@ -3,8 +3,9 @@ module libc.errno;
 @nogc:
 nothrow:
 
-extern (C)
+extern (C) ref int __error()
 {
-    ref int __error();
-    alias errno = __error;
+    assert(false, "Not implemented");
 }
+
+alias errno = __error;
