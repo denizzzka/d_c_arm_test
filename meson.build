@@ -63,4 +63,8 @@ executable(
     ],
     link_language: 'c',
     link_depends: ld_script_with_known_name,
+    link_args: [
+        '-Xlinker', '--fatal-warnings',
+        '-Xlinker', '--script=./linker_script.ld',
+    ]
 )
