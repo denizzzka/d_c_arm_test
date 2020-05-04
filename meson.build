@@ -61,6 +61,6 @@ executable(
         freertos_dep,
         libunwind_dep,
     ],
-    link_language: 'd',
+    link_language: 'c',
     link_depends: ld_script_with_known_name,
 )
