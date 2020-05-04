@@ -1,4 +1,4 @@
 [wrap-git]
 url = https://github.com/keith-packard/picolibc.git
 depth = 1
-revision = master
+revision = 1.4.1

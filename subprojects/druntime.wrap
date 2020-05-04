@@ -1,0 +1,4 @@
+[wrap-git]
+url = https://github.com/denizzzka/druntime.git
+depth = 1
+revision = non_posix
