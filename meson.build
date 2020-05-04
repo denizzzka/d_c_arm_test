@@ -23,6 +23,27 @@ ld_script_gen = libopencm3_sub.get_variable('ld_script_gen')
 freertos_dep = subproject('freertos').get_variable('freertos_dep')
 libunwind_dep = subproject('libunwind').get_variable('libunwind_dep')
 
+ld_script = ld_script_gen.process(
+    files('unused.ld'), #to satisfy generator
+    extra_args: [
+        'DEVICE=stm32f103x8',
+        'ARCH_FLAGS=-D_EH_FRAME',
+    ]
+)
+
+ld_script_generated = custom_target(
+    'linker script install',
+    input: ld_script,
+    output: 'linker_script.ld',
+    command: ['cp', '@INPUT@', '@OUTPUT@'],
+)
+
+run_target(
+    'ld_script_gen',
+    command: ['echo', 'Linker script generated'],
+    depends: ld_script_generated,
+)
+
 subdir('d')
 
 executable(
@@ -35,7 +56,5 @@ executable(
         libunwind_dep,
     ],
     link_language: 'd',
-    link_args: [
-#        '-L=--script=' + ld_script,
-    ],
+    link_depends: ld_script_generated,
 )
