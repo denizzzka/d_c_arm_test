@@ -65,6 +65,6 @@ executable(
     link_depends: ld_script_with_known_name,
     link_args: [
         '-Xlinker', '--fatal-warnings',
-        '-Xlinker', '--script=./linker_script.ld',
+        '-Xlinker', '--script=' + ld_script_path,
     ]
 )
