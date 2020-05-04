@@ -23,25 +23,31 @@ ld_script_gen = libopencm3_sub.get_variable('ld_script_gen')
 freertos_dep = subproject('freertos').get_variable('freertos_dep')
 libunwind_dep = subproject('libunwind').get_variable('libunwind_dep')
 
+ld_aliases_for_picolibc = files('aliases_for_picolibc.ld')
+
 ld_script = ld_script_gen.process(
-    files('unused.ld'), #to satisfy generator
+    ld_aliases_for_picolibc, #unused, just to satisfy generator
     extra_args: [
         'DEVICE=stm32f103x8',
         'ARCH_FLAGS=-D_EH_FRAME',
     ]
 )
 
-ld_script_generated = custom_target(
-    'linker script install',
-    input: ld_script,
-    output: 'linker_script.ld',
-    command: ['cp', '@INPUT@', '@OUTPUT@'],
+ld_script_path = 'linker_script.ld'
+
+# Copies generated file to make it acessible for .ini file
+ld_script_with_known_name = custom_target(
+    'concat .ld files and copy it to known place',
+    command : [ 'cat', '@INPUT@' ],
+    capture: true,
+    input: [ld_script, ld_aliases_for_picolibc],
+    output: ld_script_path,
 )
 
 run_target(
     'ld_script_gen',
-    command: ['echo', 'Linker script generated'],
-    depends: ld_script_generated,
+    command: ['echo', 'generate ld script'],
+    depends: ld_script_with_known_name,
 )
 
 subdir('d')
@@ -56,5 +62,5 @@ executable(
         libunwind_dep,
     ],
     link_language: 'd',
-    link_depends: ld_script_generated,
+    link_depends: ld_script_with_known_name,
 )
