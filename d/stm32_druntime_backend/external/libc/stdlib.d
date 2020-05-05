@@ -1,4 +1,4 @@
-module libc.stdio;
+module external.libc.stdio;
 
 union fpos_t
 {

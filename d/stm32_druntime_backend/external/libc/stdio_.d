@@ -1,6 +1,6 @@
-module libc.stdio_;
+module external.libc.stdio_;
 
-import libc.config;
+import external.libc.config;
 
 ///
 alias c_long fpos_t;

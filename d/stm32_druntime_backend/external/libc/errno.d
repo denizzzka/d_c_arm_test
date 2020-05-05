@@ -1,4 +1,4 @@
-module libc.errno;
+module external.libc.errno;
 
 @nogc:
 nothrow:

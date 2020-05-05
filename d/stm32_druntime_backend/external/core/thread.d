@@ -1,7 +1,7 @@
 module external.core.thread;
 
 import core.thread.osthread: ScanAllThreadsTypeFn, IsMarkedDg;
-import libc.config: c_ulong;
+import external.libc.config: c_ulong;
 
 alias ThreadID = c_ulong;
 

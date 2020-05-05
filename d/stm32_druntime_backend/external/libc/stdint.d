@@ -1,4 +1,4 @@
-module libc.stdint;
+module external.libc.stdint;
 
 alias int8_t   = byte;   ///
 alias int16_t  = short;  ///

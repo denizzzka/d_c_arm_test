@@ -1,6 +1,6 @@
-module libc.time;
+module external.libc.time;
 
-import libc.config;
+import external.libc.config;
 
 alias time_t = c_long;
 alias clock_t = c_long;
