@@ -11,6 +11,9 @@ picolibc_sub = subproject(
     'picolibc',
     default_options: [
         'multilib=false',
+        'newlib-io-c99-formats=true',
+        'newlib-io-long-long=true',
+        'newlib-io-long-double=true',
     ]
 )
 picolibc_dep = picolibc_sub.get_variable('picolibc_dep')
