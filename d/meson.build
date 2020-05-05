@@ -28,7 +28,7 @@ stm32_druntime_backend = [
     'stm32_druntime_backend/external/core/event.d',
     'stm32_druntime_backend/external/core/fiber.d',
     'stm32_druntime_backend/external/core/memory.d',
-    'stm32_druntime_backend/external/core/pthread.d',
+    'stm32_druntime_backend/external/core/thread.d',
     'stm32_druntime_backend/external/core/time.d',
     'stm32_druntime_backend/external/rt/config.d',
     'stm32_druntime_backend/external/rt/dmain.d',

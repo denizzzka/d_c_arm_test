@@ -1,5 +1,4 @@
-//TODO: rename to external.core.thread
-module external.core.pthread;
+module external.core.thread;
 
 import core.thread.osthread: ScanAllThreadsTypeFn, IsMarkedDg;
 import libc.config: c_ulong;
