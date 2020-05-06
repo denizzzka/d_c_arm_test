@@ -5,7 +5,7 @@ bare metal devices
 
 Prerequisites:
 
-- Installed: dub, ldc2, arm-none-eabi-gcc
+- Installed: dub, ldc2, gcc-arm-none-eabi
 
 PREBUILD:
 
