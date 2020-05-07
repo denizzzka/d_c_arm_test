@@ -43,14 +43,16 @@ druntime_lib = library(
     'druntime',
     stm32_druntime_backend,
     include_directories: include_directories('stm32_druntime_backend'),
-    dependencies: druntime_dep,
+    dependencies: [
+        druntime_dep,
+        picolibc_dep,
+    ],
     d_module_versions: [
         'DruntimeAbstractRt',
         'CRuntime_Abstract',
         'ExternStackShell',
         'AsmExternal', #used by fiber module
     ],
-    d_args: [],
 )
 
 d_dep = library(

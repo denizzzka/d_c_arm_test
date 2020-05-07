@@ -7,6 +7,11 @@ project(
     ]
 )
 
+#add_global_arguments('-flto=thin', language: 'c')
+#add_global_arguments('--flto=thin', language: 'd')
+add_global_link_arguments('-Xlinker', '--fatal-warnings', language: 'c')
+add_global_link_arguments('-Xlinker', '--fatal-warnings', language: 'd')
+
 picolibc_sub = subproject(
     'picolibc',
     default_options: [
@@ -65,7 +70,6 @@ executable(
     link_language: 'c',
     link_depends: ld_script_with_known_name,
     link_args: [
-        '-Xlinker', '--fatal-warnings',
         '-Xlinker', '--script=' + ld_script_path,
     ]
 )
