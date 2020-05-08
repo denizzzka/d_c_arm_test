@@ -71,5 +71,6 @@ executable(
     link_depends: ld_script_with_known_name,
     link_args: [
         '-Xlinker', '--script=' + ld_script_path,
+        '-L/usr/lib/gcc/arm-none-eabi/7.3.1/thumb/v7-m', '-lgcc',
     ]
 )
