@@ -1,7 +1,7 @@
 import gpio;
 import freertos;
 
-export extern(C) int main()
+int main()
 {
 	gpio_setup();
 
