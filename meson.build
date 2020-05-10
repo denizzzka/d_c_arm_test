@@ -7,10 +7,21 @@ project(
     ]
 )
 
-add_global_arguments('-flto=full', language: 'c')
-add_global_arguments('--flto=full', language: 'd')
-add_global_link_arguments('-Xlinker', '--fatal-warnings', language: 'c')
-add_global_link_arguments('-Xlinker', '--fatal-warnings', language: 'd')
+
+flto_type = 'thin'
+
+add_global_arguments('-flto=' + flto_type, language: 'c')
+add_global_arguments('--flto=' + flto_type, language: 'd')
+add_global_link_arguments(
+    '-Xlinker', '--fatal-warnings',
+    '-flto=' + flto_type,
+    language: 'c'
+)
+add_global_link_arguments(
+    '-Xlinker', '--fatal-warnings',
+    '--flto=' + flto_type,
+    language: 'd'
+)
 
 picolibc_sub = subproject(
     'picolibc',
@@ -60,15 +71,16 @@ subdir('d')
 
 executable(
     'firmware.elf',
-    link_with: [
-        semihost_lib,
-    ],
     dependencies: [
         d_dep,
         libopencm3_dep,
         picolibc_dep,
         freertos_dep,
         libunwind_dep,
+    ],
+    link_with: [
+        semihost_lib,
+        druntime_lib,
     ],
     link_language: 'c',
     link_depends: ld_script_with_known_name,
