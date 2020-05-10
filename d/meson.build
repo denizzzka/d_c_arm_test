@@ -55,9 +55,8 @@ druntime_lib = library(
     ],
 )
 
-d_dep = library(
-    'D code part',
-    [
+d_dep = declare_dependency(
+    sources: [
         'source/app.d',
         libopencm3_binding,
         freertos_binding,

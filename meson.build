@@ -7,8 +7,8 @@ project(
     ]
 )
 
-#add_global_arguments('-flto=thin', language: 'c')
-#add_global_arguments('--flto=thin', language: 'd')
+add_global_arguments('-flto=full', language: 'c')
+add_global_arguments('--flto=full', language: 'd')
 add_global_link_arguments('-Xlinker', '--fatal-warnings', language: 'c')
 add_global_link_arguments('-Xlinker', '--fatal-warnings', language: 'd')
 
@@ -60,8 +60,11 @@ subdir('d')
 
 executable(
     'firmware.elf',
-    link_with: [d_dep, semihost_lib],
+    link_with: [
+        semihost_lib,
+    ],
     dependencies: [
+        d_dep,
         libopencm3_dep,
         picolibc_dep,
         freertos_dep,
