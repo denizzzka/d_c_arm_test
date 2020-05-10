@@ -1,4 +1,4 @@
 [wrap-git]
-url = https://github.com/keith-packard/picolibc.git
+url = https://github.com/denizzzka/picolibc.git
 depth = 1
-revision = master
+revision = lib2dep
