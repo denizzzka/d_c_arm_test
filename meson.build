@@ -80,12 +80,11 @@ executable(
     ],
     link_with: [
         semihost_lib,
-        druntime_lib,
     ],
     link_language: 'c',
     link_depends: ld_script_with_known_name,
     link_args: [
         '-Xlinker', '--script=' + ld_script_path,
-        '-L/usr/lib/gcc/arm-none-eabi/7.3.1/thumb/v7-m', '-lgcc',
+        '-L/usr/lib/gcc/arm-none-eabi/8.3.1/thumb/v7-m/nofp/', '-lgcc',
     ]
 )
