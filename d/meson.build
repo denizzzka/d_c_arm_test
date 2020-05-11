@@ -42,7 +42,7 @@ druntime_dep = subproject('druntime').get_variable('druntime_dep')
 druntime_lib = library(
     'druntime',
     stm32_druntime_backend,
-    include_directories: include_directories('stm32_druntime_backend'),
+    include_directories: include_directories('./stm32_druntime_backend/'),
     dependencies: [
         druntime_dep,
         picolibc_dep,
