@@ -8,7 +8,7 @@ project(
 )
 
 
-flto_type = 'thin'
+flto_type = 'full'
 
 add_global_arguments('-flto=' + flto_type, language: 'c')
 add_global_arguments('--flto=' + flto_type, language: 'd')
