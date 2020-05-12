@@ -1,4 +1,4 @@
 [wrap-git]
 url = https://github.com/denizzzka/picolibc.git
 depth = 1
-revision = lib2dep
+revision = attr_used_added
