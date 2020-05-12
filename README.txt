@@ -5,7 +5,7 @@ bare metal devices
 
 Prerequisites:
 
-- Installed: dub, ldc2, gcc-arm-none-eabi
+- Installed: dub, ldc2, clang-11, libclang1-10 (used by dpp), gcc-arm-none-eabi
 
 PREBUILD:
 
