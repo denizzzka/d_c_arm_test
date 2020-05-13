@@ -11,7 +11,11 @@ project(
 flto_type = 'full'
 
 add_global_arguments('-flto=' + flto_type, language: 'c')
-add_global_arguments('--flto=' + flto_type, language: 'd')
+add_global_arguments(
+    '--flto=' + flto_type, #saves ~100KB
+    '--boundscheck=off', #saves 1.4KB
+    language: 'd'
+)
 add_global_link_arguments(
     '-Xlinker', '--fatal-warnings',
     '-flto=' + flto_type,
