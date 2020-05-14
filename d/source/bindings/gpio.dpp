@@ -1,4 +1,4 @@
-import bindings.types; //Types is not avail from core.stdc.config for bare-metal
+import external.libc.config;
 
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>

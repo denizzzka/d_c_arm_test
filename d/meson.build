@@ -6,22 +6,36 @@ root_dir = meson.source_root()
 subprojects_dir = root_dir + '/subprojects/'
 
 libopencm3_binding = dpp.process(
-    meson.current_source_dir() + '/source/bindings/gpio.dpp',
-    extra_args: ['--include-path=' + subprojects_dir + 'libopencm3/include/', '--define=STM32F1']
+    files(
+        'source/bindings/gpio.dpp',
+    ),
+    extra_args: [
+        '--include-path=' + subprojects_dir + 'libopencm3/include/',
+        '--define=STM32F1'
+    ]
 )
 
-#freertos_dep = subproject('freertos').get_variable('freertos_dep')
-
 freertos_binding = dpp.process(
-    meson.current_source_dir() + '/source/bindings/freertos.dpp',
+    files(
+        'freertos_dpp_bindings/freertos.dpp',
+    ),
     extra_args: [
         '--include-path=' + subprojects_dir + 'freertos/include/',
         '--include-path=' + subprojects_dir + 'freertos/portable/GCC/ARM_CM3/', #TODO: get this from freertos_dep?
         '--include-path=' + root_dir, #for FreeRTOSConfig.h
-        #'--no-sys-headers',
     ]
 )
 
+freertos_dep = declare_dependency(
+    sources: [
+        #freertos_binding,
+        'freertos_dpp_bindings/freertos.d', #TODO: remove this file, https://github.com/mesonbuild/meson/issues/7140
+    ],
+    include_directories: include_directories(
+        'freertos_dpp_bindings',
+        'stm32_druntime_backend',
+    )
+)
 
 stm32_druntime_backend = [
     'stm32_druntime_backend/external/core/abort.d',
@@ -38,13 +52,19 @@ stm32_druntime_backend = [
     'stm32_druntime_backend/external/rt/sections.d',
 ]
 
+
 druntime_dep = subproject('druntime').get_variable('druntime_dep')
 druntime_lib = library(
     'druntime',
-    stm32_druntime_backend,
-    include_directories: include_directories('./stm32_druntime_backend/'),
+    sources: [
+        stm32_druntime_backend,
+    ],
+    include_directories: include_directories(
+        './stm32_druntime_backend/',
+    ),
     dependencies: [
         druntime_dep,
+        freertos_dep,
         picolibc_dep,
     ],
     d_module_versions: [
@@ -59,8 +79,13 @@ d_dep = declare_dependency(
     sources: [
         'source/app.d',
         libopencm3_binding,
-        freertos_binding,
     ],
-    include_directories: ['source', 'source/bindings'],
+    include_directories: [
+        'source',
+        'source/bindings',
+    ],
+    dependencies: [
+        freertos_dep,
+    ],
     link_with: druntime_lib,
 )
