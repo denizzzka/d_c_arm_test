@@ -49,8 +49,7 @@ ld_aliases_for_picolibc = files('aliases_for_picolibc.ld')
 ld_script = ld_script_gen.process(
     ld_aliases_for_picolibc, #unused, just to satisfy generator
     extra_args: [
-        'DEVICE=stm32f103x8',
-        'ARCH_FLAGS=-D_EH_FRAME',
+        'DEVICE=stm32f205rft6', #FIXME: subst by stm32f103x8
     ]
 )
 
