@@ -5,6 +5,7 @@ import object;
 class Mutex : Object.Monitor
 {
     import freertos;
+    import core.sync.exception;
 
     private SemaphoreHandle_t mtx = void;
 
@@ -37,7 +38,7 @@ class Mutex : Object.Monitor
     final void unlock_nothrow(this Q)() nothrow @trusted @nogc
     if (is(Q == Mutex) || is(Q == shared Mutex))
     {
-        if(xSemaphoreGive(mtx) != pdTRUE)
+        if(_xSemaphoreGive(mtx) != pdTRUE)
         {
             SyncError syncErr = cast(SyncError) cast(void*) typeid(SyncError).initializer;
             syncErr.msg = "Unable to unlock mutex.";

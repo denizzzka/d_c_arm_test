@@ -9,3 +9,11 @@ import external.libc.config;
 #include <FreeRTOS.h>
 #include <task.h>
 #include <semphr.h>
+
+// dpp not parses this:
+alias xSemaphoreTake = xQueueSemaphoreTake;
+
+auto _xSemaphoreGive(SemaphoreHandle_t xSemaphore)
+{
+    return xSemaphoreGive(xSemaphore);
+}
