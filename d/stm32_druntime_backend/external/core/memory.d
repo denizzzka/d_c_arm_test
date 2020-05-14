@@ -1,7 +1,6 @@
-//TODO: rename it to some non-Posix?
 module external.core.memory;
 
-size_t initialize()
+size_t getPageSize() @nogc nothrow
 {
-    assert(false, "Not implemented");
+    return 512; //page size
 }
