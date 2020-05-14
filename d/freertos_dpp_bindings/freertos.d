@@ -1,9 +1,5 @@
 module freertos;
 
-import external.libc.config;
-
-@nogc:
-
 
         import core.stdc.config;
         import core.stdc.stdarg: va_list;
@@ -4152,3 +4148,9 @@ extern(C)
 }
 
 
+
+import external.libc.config;
+
+
+
+@nogc:

@@ -1,7 +1,8 @@
 module freertos;
 
-//import bindings.types; //Types is not avail from core.stdc.config for bare-metal
-import core.stdc.config;
+import external.libc.config;
+//TODO: ^^^^^^^^ can be replaced by:
+//import core.stdc.config;
 
 @nogc:
 
