@@ -11,6 +11,16 @@ import external.libc.config;
 #include <semphr.h>
 
 // dpp not parses this:
+auto _xSemaphoreCreateMutex()
+{
+    return xQueueCreateMutex(queueQUEUE_TYPE_MUTEX);
+}
+
+auto _vSemaphoreDelete(SemaphoreHandle_t xSemaphore)
+{
+    return vSemaphoreDelete(xSemaphore);
+}
+
 alias xSemaphoreTake = xQueueSemaphoreTake;
 
 auto _xSemaphoreGive(SemaphoreHandle_t xSemaphore)

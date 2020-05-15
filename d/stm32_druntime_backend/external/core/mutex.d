@@ -2,6 +2,7 @@ module external.core.mutex;
 
 import object;
 
+//FIXME: implement recursive mutex!
 class Mutex : Object.Monitor
 {
     import freertos;
@@ -25,8 +26,7 @@ class Mutex : Object.Monitor
     final void lock_nothrow(this Q)() nothrow @trusted @nogc
     if (is(Q == Mutex) || is(Q == shared Mutex))
     {
-        // Infinity wait, requires INCLUDE_vTaskSuspend = 1
-        // TODO: compile-time check INCLUDE_vTaskSuspend == 1
+        // Infinity wait
         if(xSemaphoreTake(mtx, portMAX_DELAY) != pdTRUE)
         {
             SyncError syncErr = cast(SyncError) cast(void*) typeid(SyncError).initializer;

@@ -1,26 +1,33 @@
 module external.rt.monitor_;
 
-public import external.core.mutex: Mutex;
-
 nothrow:
 @nogc:
 
-void initMutex(Mutex* mtx)
+import freertos;
+
+alias MonitorMutex = SemaphoreHandle_t;
+alias Mutex = MonitorMutex;
+
+void initMutex(MonitorMutex* mtx)
+in(mtx is null)
+out(;mtx !is null)
 {
-    assert(false, "Not implemented");
+    *mtx = _xSemaphoreCreateMutex();
 }
 
-void destroyMutex(Mutex* mtx)
+void destroyMutex(MonitorMutex* mtx)
 {
-    assert(false, "Not implemented");
+    _vSemaphoreDelete(*mtx);
 }
 
-void lockMutex(Mutex* mtx)
+void lockMutex(MonitorMutex* mtx)
 {
-    assert(false, "Not implemented");
+    if(xSemaphoreTake(*mtx, portMAX_DELAY) != pdTRUE)
+        assert(false);
 }
 
-void unlockMutex(Mutex* mtx)
+void unlockMutex(MonitorMutex* mtx)
 {
-    assert(false, "Not implemented");
+    if(_xSemaphoreGive(*mtx) != pdTRUE)
+        assert(false);
 }

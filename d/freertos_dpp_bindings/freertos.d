@@ -4157,6 +4157,16 @@ import external.libc.config;
 
 
 
+auto _xSemaphoreCreateMutex()
+{
+    return xQueueCreateMutex(( cast( uint8_t ) 1U ));
+}
+
+auto _vSemaphoreDelete(SemaphoreHandle_t xSemaphore)
+{
+    return vQueueDelete ( cast( QueueHandle_t ) ( xSemaphore ) );
+}
+
 alias xSemaphoreTake = xQueueSemaphoreTake;
 
 auto _xSemaphoreGive(SemaphoreHandle_t xSemaphore)
