@@ -9,7 +9,6 @@ alias MonitorMutex = SemaphoreHandle_t;
 alias Mutex = MonitorMutex;
 
 void initMutex(MonitorMutex* mtx)
-in(mtx is null)
 out(;mtx !is null)
 {
     *mtx = _xSemaphoreCreateMutex();
