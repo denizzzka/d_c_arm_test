@@ -26,7 +26,7 @@ freertos_binding = dpp.process(
     ]
 )
 
-freertos_dep = declare_dependency(
+freertos_d_dep = declare_dependency(
     sources: [
         #freertos_binding,
         'freertos_dpp_bindings/freertos.d', #TODO: remove this file, https://github.com/mesonbuild/meson/issues/7140
@@ -64,7 +64,7 @@ druntime_lib = library(
     ),
     dependencies: [
         druntime_dep,
-        freertos_dep,
+        freertos_d_dep,
         picolibc_dep,
     ],
     d_module_versions: [
@@ -85,7 +85,10 @@ d_dep = declare_dependency(
         'source/bindings',
     ],
     dependencies: [
-        freertos_dep,
+        freertos_d_dep,
     ],
-    link_with: druntime_lib,
+    link_with: [
+        druntime_lib,
+        freertos_lib,
+    ]
 )

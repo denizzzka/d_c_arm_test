@@ -53,8 +53,8 @@ struct dpp {
 extern(C)
 {
     alias wchar_t = int;
-    alias size_t = c_ulong;
-    alias ptrdiff_t = c_long;
+    //~ alias size_t = c_ulong;
+    //~ alias ptrdiff_t = c_long;
     struct max_align_t
     {
         long __clang_max_align_nonce1;

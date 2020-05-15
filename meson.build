@@ -7,23 +7,29 @@ project(
     ]
 )
 
+if get_option('dlang_lto')
+    lto_type = 'full'
+    lto_d = '--flto=' + lto_type #saves ~100KB
+else
+    lto_d = ''
+endif
 
-flto_type = 'full'
-
-add_global_arguments('-flto=' + flto_type, language: 'c')
 add_global_arguments(
-    '--flto=' + flto_type, #saves ~100KB
+    language: 'c'
+)
+add_global_arguments(
+    '--checkaction=halt',
+    lto_d,
     '--boundscheck=off', #saves 1.4KB
     language: 'd'
 )
 add_global_link_arguments(
     '-Xlinker', '--fatal-warnings',
-    '-flto=' + flto_type,
     language: 'c'
 )
 add_global_link_arguments(
-    '-Xlinker', '--fatal-warnings',
-    '--flto=' + flto_type,
+    lto_d,
+    '-L=--fatal-warnings',
     language: 'd'
 )
 
@@ -41,7 +47,6 @@ libopencm3_sub = subproject('libopencm3')
 libopencm3_dep = libopencm3_sub.get_variable('libopencm3_dep')
 ld_script_gen = libopencm3_sub.get_variable('ld_script_gen')
 
-freertos_dep = subproject('freertos').get_variable('freertos_dep')
 libunwind_dep = subproject('libunwind').get_variable('libunwind_dep')
 
 ld_aliases_for_picolibc = files('aliases_for_picolibc.ld')
@@ -70,6 +75,14 @@ run_target(
     depends: ld_script_with_known_name,
 )
 
+freertos_lib = library(
+    'freertos',
+    dependencies: [
+      subproject('freertos').get_variable('freertos_dep'),
+      picolibc_dep,
+    ],
+)
+
 subdir('d')
 
 executable(
@@ -78,7 +91,6 @@ executable(
         d_dep,
         libopencm3_dep,
         picolibc_dep,
-        freertos_dep,
         libunwind_dep,
     ],
     link_with: [
