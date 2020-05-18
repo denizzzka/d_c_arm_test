@@ -7,7 +7,7 @@ alias ThreadID = c_ulong;
 
 extern (C) void thread_init() @nogc
 {
-    assert(false, "Not implemented");
+    //FIXME: implement
 }
 
 extern (C) void thread_term() @nogc
