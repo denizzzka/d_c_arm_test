@@ -2,7 +2,6 @@ module external.core.mutex;
 
 import object;
 
-//FIXME: implement recursive mutex!
 class Mutex : Object.Monitor
 {
     import freertos;
@@ -12,7 +11,7 @@ class Mutex : Object.Monitor
 
     this()
     {
-        mtx = xSemaphoreCreateMutex();
+        mtx = xSemaphoreCreateRecursiveMutex();
 
         if(mtx == null)
             abort("Error: memory required to hold mutex could not be allocated.");
@@ -27,7 +26,7 @@ class Mutex : Object.Monitor
     if (is(Q == Mutex) || is(Q == shared Mutex))
     {
         // Infinity wait
-        if(xSemaphoreTake(mtx, portMAX_DELAY) != pdTRUE)
+        if(xSemaphoreTakeRecursive(mtx, portMAX_DELAY) != pdTRUE)
         {
             SyncError syncErr = cast(SyncError) cast(void*) typeid(SyncError).initializer;
             syncErr.msg = "Unable to lock mutex.";
@@ -38,7 +37,7 @@ class Mutex : Object.Monitor
     final void unlock_nothrow(this Q)() nothrow @trusted @nogc
     if (is(Q == Mutex) || is(Q == shared Mutex))
     {
-        if(_xSemaphoreGive(mtx) != pdTRUE)
+        if(xSemaphoreGiveRecursive(mtx) != pdTRUE)
         {
             SyncError syncErr = cast(SyncError) cast(void*) typeid(SyncError).initializer;
             syncErr.msg = "Unable to unlock mutex.";

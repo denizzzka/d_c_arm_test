@@ -4173,3 +4173,7 @@ auto _xSemaphoreGive(SemaphoreHandle_t xSemaphore)
 {
     return xQueueGenericSend ( cast( QueueHandle_t ) ( xSemaphore ) , null , ( cast( TickType_t ) 0U ) , ( cast( BaseType_t ) 0 ) );
 }
+
+alias xSemaphoreTakeRecursive = xQueueTakeMutexRecursive;
+
+alias xSemaphoreGiveRecursive = xQueueGiveMutexRecursive;

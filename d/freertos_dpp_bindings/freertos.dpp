@@ -27,3 +27,7 @@ auto _xSemaphoreGive(SemaphoreHandle_t xSemaphore)
 {
     return xSemaphoreGive(xSemaphore);
 }
+
+alias xSemaphoreTakeRecursive = xQueueTakeMutexRecursive;
+
+alias xSemaphoreGiveRecursive = xQueueGiveMutexRecursive;
