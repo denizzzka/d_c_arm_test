@@ -33,23 +33,23 @@ freertos_d_dep = declare_dependency(
     ],
     include_directories: include_directories(
         'freertos_dpp_bindings',
-        'stm32_druntime_backend',
+        'freertos_druntime_backend',
     )
 )
 
-stm32_druntime_backend = [
-    'stm32_druntime_backend/external/core/abort.d',
-    'stm32_druntime_backend/external/core/event.d',
-    'stm32_druntime_backend/external/core/fiber.d',
-    'stm32_druntime_backend/external/core/memory.d',
-    'stm32_druntime_backend/external/core/thread.d',
-    'stm32_druntime_backend/external/core/time.d',
-    'stm32_druntime_backend/external/libc/errno.d',
-    'stm32_druntime_backend/external/libc/stdio_.d',
-    'stm32_druntime_backend/external/rt/config.d',
-    'stm32_druntime_backend/external/rt/dmain.d',
-    'stm32_druntime_backend/external/rt/monitor_.d',
-    'stm32_druntime_backend/external/rt/sections.d',
+freertos_druntime_backend = [
+    'freertos_druntime_backend/external/core/abort.d',
+    'freertos_druntime_backend/external/core/event.d',
+    'freertos_druntime_backend/external/core/fiber.d',
+    'freertos_druntime_backend/external/core/memory.d',
+    'freertos_druntime_backend/external/core/thread.d',
+    'freertos_druntime_backend/external/core/time.d',
+    'freertos_druntime_backend/external/libc/errno.d',
+    'freertos_druntime_backend/external/libc/stdio_.d',
+    'freertos_druntime_backend/external/rt/config.d',
+    'freertos_druntime_backend/external/rt/dmain.d',
+    'freertos_druntime_backend/external/rt/monitor_.d',
+    'freertos_druntime_backend/external/rt/sections.d',
 ]
 
 
@@ -57,10 +57,10 @@ druntime_dep = subproject('druntime').get_variable('druntime_dep')
 druntime_lib = library(
     'druntime',
     sources: [
-        stm32_druntime_backend,
+        freertos_druntime_backend,
     ],
     include_directories: include_directories(
-        './stm32_druntime_backend/',
+        './freertos_druntime_backend/',
     ),
     dependencies: [
         druntime_dep,
