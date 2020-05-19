@@ -4,6 +4,7 @@ import external.libc.config;
 #include <libopencm3/stm32/gpio.h>
 
 @nogc:
+nothrow:
 
 static void gpio_setup()
 {

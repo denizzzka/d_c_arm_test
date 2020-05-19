@@ -2,6 +2,8 @@ module external.core.mutex;
 
 import object;
 
+@nogc:
+
 class Mutex : Object.Monitor
 {
     import freertos;

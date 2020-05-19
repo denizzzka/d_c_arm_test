@@ -5,6 +5,9 @@ import external.libc.config: c_ulong;
 
 alias ThreadID = c_ulong;
 
+@nogc:
+nothrow:
+
 extern (C) void thread_init() @nogc
 {
     //FIXME: implement
@@ -26,7 +29,7 @@ extern (C) Thread thread_attachThis()
     assert(false, "Not implemented");
 }
 
-static Thread thread_findByAddr(ThreadID addr)
+extern (C) static Thread thread_findByAddr(ThreadID addr)
 {
     assert(false, "Not implemented");
 }

@@ -1,7 +1,7 @@
 import gpio;
 import freertos;
 
-int main()
+int main() @nogc nothrow
 {
 	gpio_setup();
 
@@ -20,7 +20,7 @@ int main()
 	return 1;
 }
 
-extern(C) void blinkTask(void *pvParametres)
+extern(C) void blinkTask(void *pvParametres) @nogc nothrow
 {
 	gpio_toggle(GPIOB, GPIO1);
 

@@ -1,5 +1,7 @@
 module external.libc.stdio;
 
+nothrow @nogc:
+
 union fpos_t
 {
     char[16] __opaque = 0;

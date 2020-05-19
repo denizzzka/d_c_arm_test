@@ -7,7 +7,7 @@ final void initStack() nothrow @nogc
     assert(false, "Not implemented");
 }
 
-export void fiber_entryPoint() nothrow /* LDC */ @assumeUsed
+export void fiber_entryPoint() nothrow /* LDC */ @assumeUsed @nogc
 {
     assert(false, "Not implemented");
 }

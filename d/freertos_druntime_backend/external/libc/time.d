@@ -22,7 +22,7 @@ struct tm
 }
 
 enum clock_t CLOCKS_PER_SEC = 1_000_000;
-clock_t clock();
+clock_t clock() @nogc nothrow;
 
 ///
 void tzset();
