@@ -53,7 +53,14 @@ freertos_druntime_backend = [
 ]
 
 
-druntime_dep = subproject('druntime').get_variable('druntime_dep')
+druntime_dep = subproject(
+    'druntime',
+    default_options: [
+        'phobos_include_path=/usr/lib/ldc/x86_64-linux-gnu/include/d/',
+        'newlib-io-c99-formats=true',
+    ]
+).get_variable('druntime_dep')
+
 druntime_lib = library(
     'druntime',
     sources: [
