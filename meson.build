@@ -18,7 +18,6 @@ add_global_arguments(
     language: 'c'
 )
 add_global_arguments(
-    '--checkaction=halt',
     lto_d,
     '--boundscheck=off', #saves 1.4KB
     language: 'd'
