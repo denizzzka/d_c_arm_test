@@ -4,39 +4,33 @@ import freertos;
 import core.stdc.errno;
 import core.sync.exception: SyncError;
 
-// druntime's Posix implementation, version() conditionals removed
+enum SEM_VALUE_MAX = 0x7FFFU;
+
 class Semaphore
 {
-    private sem_t m_hndl;
+    private SemaphoreHandle_t m_hndl;
 
     this(uint count = 0)
     {
-        int rc = sem_init( &m_hndl, 0, count );
-        if ( rc )
-            throw new SyncError( "Unable to create semaphore" );
+        m_hndl = xSemaphoreCreateCounting(SEM_VALUE_MAX, count);
+
+        assert(m_hndl);
     }
 
     ~this()
     {
-        int rc = sem_destroy( &m_hndl );
-        assert( !rc, "Unable to destroy semaphore" );
+        _vSemaphoreDelete(m_hndl);
     }
 
     void wait()
     {
-        while ( true )
-        {
-            if ( !sem_wait( &m_hndl ) )
-                return;
-            if ( errno != EINTR )
-                throw new SyncError( "Unable to wait for semaphore" );
-        }
+        if(xSemaphoreTakeRecursive(m_hndl, portMAX_DELAY) != pdTRUE)
+            throw new SyncError("Unable to wait for semaphore");
     }
 
     void notify()
     {
-        int rc = sem_post( &m_hndl );
-        if ( rc )
-            throw new SyncError( "Unable to notify semaphore" );
+        if(xSemaphoreGiveRecursive(m_hndl) != pdTRUE)
+            throw new SyncError("Unable to notify semaphore");
     }
 }
