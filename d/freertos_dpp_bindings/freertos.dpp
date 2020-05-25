@@ -9,6 +9,7 @@ import external.libc.config;
 #include <FreeRTOS.h>
 #include <task.h>
 #include <semphr.h>
+#include <semaphore.h> /* Posix wrapper */
 
 // dpp not parses this:
 auto _xSemaphoreCreateMutex()
