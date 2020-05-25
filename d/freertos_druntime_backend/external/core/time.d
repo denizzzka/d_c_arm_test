@@ -16,3 +16,14 @@ static @property TickDuration currSystemTick() @trusted nothrow @nogc
 }
 
 long currTicks; //FIXME
+
+void initTicksPerSecond(ref long[] tps)
+{
+    foreach (i, typeStr; __traits(allMembers, ClockType))
+    {
+        static if (typeStr != "second")
+        {
+            tps[i] = 1_000_000; //FIXME
+        }
+    }
+}
