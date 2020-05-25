@@ -1,6 +1,7 @@
 module external.core.semaphore;
 
 import freertos;
+import core.stdc.errno;
 import core.sync.exception: SyncError;
 
 // druntime's Posix implementation, version() conditionals removed

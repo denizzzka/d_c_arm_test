@@ -9,3 +9,5 @@ extern (C) ref int __error()
 }
 
 alias errno = __error;
+
+enum EINTR =  4;       /// interrupted system call

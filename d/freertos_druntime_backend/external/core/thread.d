@@ -223,4 +223,9 @@ class Thread
     Context*            m_curr;
     bool                m_lock;
     void*               m_tlsgcdata;
+
+    static int opApply(scope int delegate(ref Thread) dg)
+    {
+        assert(false, "Not implemented");
+    }
 }
