@@ -94,9 +94,10 @@ d_dep = declare_dependency(
     ],
     dependencies: [
         freertos_d_dep,
+        druntime_dep,
     ],
     link_with: [
-        druntime_lib,
+        druntime_lib, #TODO: redundant
         freertos_lib,
     ]
 )

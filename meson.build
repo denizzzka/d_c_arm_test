@@ -20,6 +20,9 @@ add_global_arguments(
 add_global_arguments(
     lto_d,
     '--boundscheck=off', #saves 1.4KB
+    '--d-version=DruntimeAbstractRt', #TODO: https://github.com/mesonbuild/meson/issues/7168
+    '--d-version=CRuntime_Abstract', #TODO: https://github.com/mesonbuild/meson/issues/7168
+    '--d-version=GENERIC_IO', #TODO: ditto, used by Phobos
     language: 'd'
 )
 add_global_link_arguments(

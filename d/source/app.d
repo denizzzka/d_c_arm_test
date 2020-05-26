@@ -1,8 +1,11 @@
 import gpio;
 import freertos;
 
-int main() @nogc nothrow
+int main()
 {
+	import std.stdio;
+	writeln("Entering into D main()");
+
 	gpio_setup();
 
 	xTaskCreate(
