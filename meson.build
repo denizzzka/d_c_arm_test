@@ -22,6 +22,7 @@ add_global_arguments(
     '--boundscheck=off', #saves 1.4KB
     '--d-version=DruntimeAbstractRt', #TODO: https://github.com/mesonbuild/meson/issues/7168
     '--d-version=CRuntime_Abstract', #TODO: https://github.com/mesonbuild/meson/issues/7168
+    '--d-version=AsmExternal', #TODO: ditto
     '--d-version=GENERIC_IO', #TODO: ditto, used by Phobos
     language: 'd'
 )

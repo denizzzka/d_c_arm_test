@@ -3,8 +3,8 @@ import freertos;
 
 int main()
 {
-	import std.stdio;
-	writeln("Entering into D main()");
+	//~ import std.stdio;
+	//~ writeln("Entering into D main()");
 
 	gpio_setup();
 

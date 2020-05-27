@@ -2,6 +2,8 @@ module external.core.fiber;
 
 version (LDC) import ldc.attributes;
 
+version (ARM):
+
 final void initStack() nothrow @nogc
 {
     assert(false, "Not implemented");
@@ -12,67 +14,32 @@ export void fiber_entryPoint() nothrow /* LDC */ @assumeUsed @nogc
     assert(false, "Not implemented");
 }
 
-//TODO: Deprecated
-extern (C) void fiber_switchContext( void** oldp, void* newp ) nothrow @nogc
+extern (C) void fiber_switchContext(size_t** for_store_curr_sp, size_t* switch_to_sp) nothrow @nogc @naked
 {
-    assert(false, "Not implemented");
-}
+	import ldc.llvmasm;
 
-version (ARM)
-{
-    import core.stdc.config: c_ulong;
+	__asm!()(`
+	// stack grows down (sp is decrementing while grow)
+	PUSH    {r0-r12}                @ Push user registers (except two what contain arguments)
 
-    void swapcontext(ucontext_t* oldp, ucontext_t* newp) nothrow @nogc
-    {
-        assert(false, "Not implemented");
-    }
+	@FIXME:
+    @MRS     r0, SPSR                @ Pick up Saved Program Status Register
+    PUSH    {r0, lr}                @ and push it with return address.
 
-    struct sigcontext
-    {
-        c_ulong trap_no;
-        c_ulong error_code;
-        c_ulong oldmask;
-        c_ulong arm_r0;
-        c_ulong arm_r1;
-        c_ulong arm_r2;
-        c_ulong arm_r3;
-        c_ulong arm_r4;
-        c_ulong arm_r5;
-        c_ulong arm_r6;
-        c_ulong arm_r7;
-        c_ulong arm_r8;
-        c_ulong arm_r9;
-        c_ulong arm_r10;
-        c_ulong arm_fp;
-        c_ulong arm_ip;
-        c_ulong arm_sp;
-        c_ulong arm_lr;
-        c_ulong arm_pc;
-        c_ulong arm_cpsr;
-        c_ulong fault_address;
-    }
+	LDRH	r1, [$0]                @ Get pointer to storage ptr
+	MRS		r2, psp                 @ Get and
+	STRH	r2, [r1]                @ store sp value into storage
 
-    alias mcontext_t = sigcontext;
+    LDRH    r3, [$1]                @ Load new process sp from switch_to_sp argument
+	MSR		psp, r3                 @ Set up new sp value
 
-    struct stack_t
-    {
-        void*   ss_sp;
-        size_t  ss_size;
-        int     ss_flags;
-    }
+    POP     {r0, lr}                @ Pop SPSR data
+    @MSR     SPSR_cxsf, r0           @ and restore some SPSR fields.
 
-    struct sigset_t
-    {
-        uint[4] __bits;
-    }
+    POP     {r0-r12}                @ Pop the rest of the registers
 
-    struct ucontext_t
-    {
-        c_ulong uc_flags;
-        ucontext_t* uc_link;
-        stack_t uc_stack;
-        mcontext_t uc_mcontext;
-        sigset_t uc_sigmask;
-        align(8) c_ulong[128] uc_regspace;
-    }
+	BX      lr						@ Return (also sets PC to new value)
+	`,
+	"r,r",
+	for_store_curr_sp, switch_to_sp);
 }
