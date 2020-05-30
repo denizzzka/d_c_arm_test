@@ -34,6 +34,21 @@ extern (C) static Thread thread_findByAddr(ThreadID addr)
     assert(false, "Not implemented");
 }
 
+extern (C) void* thread_entryPoint( void* arg ) nothrow
+{
+    assert(false, "Not implemented");
+}
+
+extern (C) void thread_suspendHandler( int sig ) nothrow
+{
+    assert(false, "Not implemented");
+}
+
+extern (C) void thread_resumeHandler( int sig ) nothrow
+{
+    assert(false, "Not implemented");
+}
+
 extern (C) void thread_joinAll()
 {
     assert(false, "Not implemented");
@@ -96,6 +111,11 @@ ThreadID createLowLevelThread(void delegate() nothrow dg, uint stacksize = 0,
 }
 
 bool findLowLevelThread(ThreadID tid) nothrow @nogc
+{
+    assert(false, "Not implemented");
+}
+
+Thread attachThread(Thread thisThread) @nogc
 {
     assert(false, "Not implemented");
 }
