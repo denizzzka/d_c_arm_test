@@ -8,9 +8,23 @@ alias ThreadID = c_ulong;
 @nogc:
 nothrow:
 
-extern (C) void thread_init() @nogc
+void initLowlevelThreads() @nogc
 {
-    //FIXME: implement
+    assert(false, "Not implemented");
+}
+
+extern (C) void external_thread_module_init() @nogc
+{
+    import external.rt.sections;
+
+    // Init .tbss by zeroes (.bss already initialized by libopencm3)
+    auto tbss_start = cast(ubyte*)&_tbss;
+    auto tbss_size = cast(ubyte*)&_etbss - tbss_start;
+    foreach(i; 0 .. tbss_size)
+        tbss_start[i] = 0x00;
+
+    assert(false, "Not implemented");
+    // TLS sections init
 }
 
 extern (C) void thread_term() @nogc
@@ -123,9 +137,16 @@ Thread attachThread(Thread thisThread) @nogc
 class Thread
 {
     /// Main process thread
-    private __gshared Thread    sm_main;
+    __gshared Thread sm_main;
 
     bool m_isInCriticalRegion;
+
+    /// Initializes a thread object which has no associated executable function.
+    /// This is used for the main thread initialized in thread_init().
+    this(size_t sz = 0) @safe pure nothrow @nogc
+    {
+        assert(false, "Not implemented");
+    }
 
     this(void function() fn, size_t sz = 0) @safe pure nothrow @nogc
     in(fn !is null)

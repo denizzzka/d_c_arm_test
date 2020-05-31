@@ -1,4 +1,4 @@
-module  external.rt.sections;
+module external.rt.sections;
 
 import rt.sections_ldc : SectionGroup;
 debug(PRINTF) import core.stdc.stdio : printf;
@@ -23,16 +23,10 @@ void fillGlobalSectionGroup(ref SectionGroup gsg) nothrow @nogc
 
     gsg._gcRanges.insertBack(data_start[0 .. size]);
 
-    // TLS data sections
+    // Init TLS start and size
     auto tdata_start = cast(void*)&_tdata;
     _set_tls(tdata_start);
     gsg._tlsSize = cast(void*)&_etbss - tdata_start;
-
-    // Init .tbss by zeroes (.bss already initialized by libopencm3)
-    auto tbss_start = cast(ubyte*)&_tbss;
-    auto tbss_size = cast(ubyte*)&_etbss - tbss_start;
-    foreach(i; 0 .. tbss_size)
-        tbss_start[i] = 0x00;
 
     debug(PRINTF) printf(__FUNCTION__~" done\n");
 }
