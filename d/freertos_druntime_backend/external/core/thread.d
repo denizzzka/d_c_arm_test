@@ -37,11 +37,6 @@ extern (C) bool thread_isMainThread() nothrow @nogc
     assert(false, "Not implemented");
 }
 
-extern (C) Thread thread_attachThis()
-{
-    assert(false, "Not implemented");
-}
-
 extern (C) static Thread thread_findByAddr(ThreadID addr)
 {
     assert(false, "Not implemented");
@@ -130,7 +125,6 @@ bool findLowLevelThread(ThreadID tid) nothrow @nogc
 
 Thread attachThread(Thread thisThread) @nogc
 {
-    //~ assert(false, "Not implemented");
     return thisThread;
 }
 
