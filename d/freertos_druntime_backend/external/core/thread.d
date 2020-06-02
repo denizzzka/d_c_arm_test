@@ -10,21 +10,20 @@ nothrow:
 
 void initLowlevelThreads() @nogc
 {
-    assert(false, "Not implemented");
+    //FIXME: Not implemented
 }
 
 extern (C) void external_thread_module_init() @nogc
 {
     import external.rt.sections;
 
-    // Init .tbss by zeroes (.bss already initialized by libopencm3)
+    // TLS sections init
+
+    // Init .tbss by zeroes
     auto tbss_start = cast(ubyte*)&_tbss;
     auto tbss_size = cast(ubyte*)&_etbss - tbss_start;
     foreach(i; 0 .. tbss_size)
         tbss_start[i] = 0x00;
-
-    assert(false, "Not implemented");
-    // TLS sections init
 }
 
 extern (C) void thread_term() @nogc
@@ -131,7 +130,8 @@ bool findLowLevelThread(ThreadID tid) nothrow @nogc
 
 Thread attachThread(Thread thisThread) @nogc
 {
-    assert(false, "Not implemented");
+    //~ assert(false, "Not implemented");
+    return thisThread;
 }
 
 class Thread
@@ -145,7 +145,7 @@ class Thread
     /// This is used for the main thread initialized in thread_init().
     this(size_t sz = 0) @safe pure nothrow @nogc
     {
-        assert(false, "Not implemented");
+        //~ assert(false, "Not implemented");
     }
 
     this(void function() fn, size_t sz = 0) @safe pure nothrow @nogc
@@ -167,7 +167,7 @@ class Thread
 
     static void initLocks() @nogc
     {
-        assert(false, "Not implemented");
+        //~ assert(false, "Not implemented");
     }
 
     /// Sets a thread-local reference to the current thread object.
