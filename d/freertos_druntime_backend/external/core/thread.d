@@ -1,6 +1,6 @@
 module external.core.thread;
 
-import core.thread.osthread: ScanAllThreadsTypeFn, IsMarkedDg;
+import core.thread.osthread: ScanAllThreadsTypeFn, IsMarkedDg, _mainThreadStore;
 import external.libc.config: c_ulong;
 
 alias ThreadID = c_ulong;
@@ -8,12 +8,8 @@ alias ThreadID = c_ulong;
 @nogc:
 nothrow:
 
-void initLowlevelThreads() @nogc
-{
-    //FIXME: Not implemented
-}
-
-extern (C) void external_thread_module_init() @nogc
+/// Init threads module
+extern (C) void thread_init() @nogc
 {
     import external.rt.sections;
 
@@ -24,8 +20,13 @@ extern (C) void external_thread_module_init() @nogc
     auto tbss_size = cast(ubyte*)&_etbss - tbss_start;
     foreach(i; 0 .. tbss_size)
         tbss_start[i] = 0x00;
+
+    // Threads storage
+    assert(typeid(Thread).initializer.ptr);
+    _mainThreadStore[] = typeid(Thread).initializer[];
 }
 
+/// Term threads module
 extern (C) void thread_term() @nogc
 {
     assert(false, "Not implemented");
