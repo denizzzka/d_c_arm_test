@@ -85,7 +85,7 @@ void[] allocateTLS() nothrow @nogc
     void* tls = core.stdc.stdlib.malloc(p.full_tls_size);
 
     // Set up TLS pointer
-    _set_tls(tls /* + 8 FIXME: TCB_SIZE compensation, https://github.com/keith-packard/picolibc/issues/46 */);
+    _set_tls(tls);
 
     auto curr_thread = Thread.getThis;
     // Copying TLS data
