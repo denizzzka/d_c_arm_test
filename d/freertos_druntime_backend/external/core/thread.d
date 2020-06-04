@@ -1,6 +1,6 @@
 module external.core.thread;
 
-import core.thread.osthread: ScanAllThreadsTypeFn, IsMarkedDg, _mainThreadStore;
+import core.thread.osthread;
 import external.libc.config: c_ulong;
 
 alias ThreadID = c_ulong;
@@ -11,19 +11,12 @@ nothrow:
 /// Init threads module
 extern (C) void thread_init() @nogc
 {
-    import external.rt.sections;
-
-    // TLS sections init
-
-    // Init .tbss by zeroes
-    auto tbss_start = cast(ubyte*)&_tbss;
-    auto tbss_size = cast(ubyte*)&_etbss - tbss_start;
-    foreach(i; 0 .. tbss_size)
-        tbss_start[i] = 0x00;
-
     // Threads storage
     assert(typeid(Thread).initializer.ptr);
     _mainThreadStore[] = typeid(Thread).initializer[];
+
+    // Creating main thread
+    Thread.sm_main = attachThread((cast(Thread)_mainThreadStore.ptr).__ctor());
 }
 
 /// Term threads module
@@ -34,8 +27,7 @@ extern (C) void thread_term() @nogc
 
 extern (C) bool thread_isMainThread() nothrow @nogc
 {
-    //~ return Thread.getThis() is Thread.sm_main;
-    assert(false, "Not implemented");
+    return Thread.getThis() is Thread.sm_main;
 }
 
 extern (C) static Thread thread_findByAddr(ThreadID addr)
@@ -45,7 +37,12 @@ extern (C) static Thread thread_findByAddr(ThreadID addr)
 
 extern (C) void* thread_entryPoint( void* arg ) nothrow
 {
-    assert(false, "Not implemented");
+    Thread obj = cast(Thread) arg;
+    Thread.setThis(obj);
+
+    obj.m_tlsgcdata = rt_tlsgc_init();
+
+    return null;
 }
 
 extern (C) void thread_suspendHandler( int sig ) nothrow
@@ -88,11 +85,6 @@ extern(C) void thread_processGCMarks( scope IsMarkedDg isMarked ) nothrow
     assert(false, "Not implemented");
 }
 
-extern(D) public void callWithStackShell(scope void delegate(void* sp) nothrow fn) nothrow
-{
-    assert(false, "Not implemented");
-}
-
 version (LDC_Windows)
 {
     import ldc.attributes;
@@ -126,21 +118,27 @@ bool findLowLevelThread(ThreadID tid) nothrow @nogc
 
 Thread attachThread(Thread thisThread) @nogc
 {
+    Thread.setThis(thisThread);
+
+    thisThread.m_tlsgcdata = rt_tlsgc_init();
+
     return thisThread;
 }
 
 class Thread
 {
     /// Main process thread
-    __gshared Thread sm_main;
+    private __gshared Thread sm_main;
+
+    /// Current thread
+    private static Thread sm_this;
 
     bool m_isInCriticalRegion;
 
     /// Initializes a thread object which has no associated executable function.
     /// This is used for the main thread initialized in thread_init().
-    this(size_t sz = 0) @safe pure nothrow @nogc
+    private this(size_t sz = 0) @safe pure nothrow @nogc
     {
-        //~ assert(false, "Not implemented");
     }
 
     this(void function() fn, size_t sz = 0) @safe pure nothrow @nogc
@@ -168,17 +166,12 @@ class Thread
     /// Sets a thread-local reference to the current thread object.
     static void setThis(Thread t) nothrow @nogc
     {
-        //~ sm_this = t;
-        assert(false, "Not implemented");
+        sm_this = t;
     }
 
     static Thread getThis() @safe nothrow @nogc
     {
-        // NOTE: This function may not be called until thread_init has
-        //       completed.  See thread_suspendAll for more information
-        //       on why this might occur.
-        //~ return sm_this;
-        assert(false, "Not implemented");
+        return sm_this;
     }
 
     final @property bool isRunning() nothrow @nogc
