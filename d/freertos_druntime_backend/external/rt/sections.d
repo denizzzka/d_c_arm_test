@@ -65,9 +65,16 @@ void fillGlobalSectionGroup(ref SectionGroup gsg) nothrow @nogc
  */
 void[] initTLSRanges() nothrow @nogc
 {
+    debug(PRINTF) printf("external initTLSRanges called\n");
+
+    return allocateTLS();
+}
+
+void[] allocateTLS() nothrow @nogc
+{
     import external.core.thread;
 
-    debug(PRINTF) printf("external initTLSRanges called\n");
+    debug(PRINTF) printf("allocateTLS called\n");
 
     import core.stdc.string: memcpy, memset;
 
@@ -78,7 +85,7 @@ void[] initTLSRanges() nothrow @nogc
     void* tls = core.stdc.stdlib.malloc(p.full_tls_size);
 
     // Set up TLS pointer
-    _set_tls(tls);
+    _set_tls(tls /* + 8 FIXME: TCB_SIZE compensation, https://github.com/keith-packard/picolibc/issues/46 */);
 
     auto curr_thread = Thread.getThis;
     // Copying TLS data
@@ -87,7 +94,7 @@ void[] initTLSRanges() nothrow @nogc
     // Init local bss by zeroes
     memset(tls + p.tdata_size, 0x00, p.tbss_size);
 
-    debug(PRINTF) printf("external initTLSRanges done\n");
+    debug(PRINTF) printf("allocateTLS done\n");
 
-    return null; //p.tdata_dst[0 .. p.full_tls_size];
+    return p.tdata_start[0 .. p.full_tls_size];
 }
