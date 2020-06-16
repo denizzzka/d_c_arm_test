@@ -1,4 +1,6 @@
-[wrap-git]
-url = https://github.com/denizzzka/FreeRTOS-Kernel.git
-depth = 1
-revision = meson_build
+[wrap-file]
+lead_directory_missing = yes
+source_url = https://github.com/FreeRTOS/FreeRTOS-Kernel/archive/V10.3.1-kernel-only.zip
+source_filename = V10.3.1-kernel-only.zip
+source_hash = 887507aa5fb3c37bea6f3bf441c74c49b40683506e81bd296007b280a49795ed
+patch_directory = freertos_changes

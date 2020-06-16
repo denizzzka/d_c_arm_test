@@ -1,0 +1,3 @@
+option('config_h_dir', type: 'string', value: '', description: 'Directory where is RTOS config header file')
+option('mpu_enabled', type: 'boolean', value: 'false', description: 'Enables memory protection unit (MPU)')
+option('custom_libc', type: 'string', description: 'Name of dependency to libc library')
