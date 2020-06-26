@@ -49,6 +49,7 @@ freertos_druntime_backend = [
     'freertos_druntime_backend/external/core/semaphore.d',
     'freertos_druntime_backend/external/core/thread.d',
     'freertos_druntime_backend/external/core/time.d',
+    'freertos_druntime_backend/external/core/types.d',
     'freertos_druntime_backend/external/libc/errno.d',
     'freertos_druntime_backend/external/libc/stdio_.d',
     'freertos_druntime_backend/external/rt/config.d',
