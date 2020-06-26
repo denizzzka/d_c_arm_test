@@ -1,6 +1,8 @@
 module external.core.thread;
 
 import core.thread.osthread;
+import core.thread.threadbase;
+import core.thread.context: StackContext;
 import external.libc.config: c_ulong;
 
 alias ThreadID = c_ulong;
@@ -16,18 +18,13 @@ extern (C) void thread_init() @nogc
     _mainThreadStore[] = typeid(Thread).initializer[];
 
     // Creating main thread
-    Thread.sm_main = attachThread((cast(Thread)_mainThreadStore.ptr).__ctor());
+    Thread.sm_main = external_attachThread((cast(Thread)_mainThreadStore.ptr).__ctor());
 }
 
 /// Term threads module
 extern (C) void thread_term() @nogc
 {
     assert(false, "Not implemented");
-}
-
-extern (C) bool thread_isMainThread() nothrow @nogc
-{
-    return Thread.getThis() is Thread.sm_main;
 }
 
 extern (C) static Thread thread_findByAddr(ThreadID addr)
@@ -40,7 +37,9 @@ extern (C) void* thread_entryPoint( void* arg ) nothrow
     Thread obj = cast(Thread) arg;
     Thread.setThis(obj);
 
-    obj.m_tlsgcdata = rt_tlsgc_init();
+    obj.tlsGCdataInit();
+
+    //FIXME: osthread.d contains more stuff here
 
     return null;
 }
@@ -55,22 +54,7 @@ extern (C) void thread_resumeHandler( int sig ) nothrow
     assert(false, "Not implemented");
 }
 
-extern (C) void thread_joinAll()
-{
-    assert(false, "Not implemented");
-}
-
 extern (C) void thread_suspendAll() nothrow
-{
-    assert(false, "Not implemented");
-}
-
-extern (C) void thread_resumeAll() nothrow
-{
-    assert(false, "Not implemented");
-}
-
-extern (C) void thread_scanAllType( scope ScanAllThreadsTypeFn scan ) nothrow
 {
     assert(false, "Not implemented");
 }
@@ -80,27 +64,7 @@ void thread_intermediateShutdown() nothrow @nogc
     assert(false, "Not implemented");
 }
 
-extern(C) void thread_processGCMarks( scope IsMarkedDg isMarked ) nothrow
-{
-    assert(false, "Not implemented");
-}
-
-version (LDC_Windows)
-{
-    import ldc.attributes;
-
-    void* getStackBottom() nothrow @nogc @naked
-    {
-        assert(false, "Not implemented");
-    }
-} else {
-    void* getStackBottom() nothrow @nogc
-    {
-        assert(false, "Not implemented");
-    }
-}
-
-extern (C) void* thread_stackBottom() nothrow @nogc
+void* getStackBottom() nothrow @nogc
 {
     assert(false, "Not implemented");
 }
@@ -116,16 +80,18 @@ bool findLowLevelThread(ThreadID tid) nothrow @nogc
     assert(false, "Not implemented");
 }
 
-Thread attachThread(Thread thisThread) @nogc
+Thread external_attachThread(ThreadBase thisThread) @nogc
 {
-    Thread.setThis(thisThread);
+    Thread t = cast(Thread) thisThread; //FIXME: remove cast
 
-    thisThread.m_tlsgcdata = rt_tlsgc_init();
+    Thread.setThis(t); //FIXME: remove cast
 
-    return thisThread;
+    t.tlsGCdataInit();
+
+    return t;
 }
 
-class Thread
+class Thread : ThreadBase
 {
     /// Main process thread
     private __gshared Thread sm_main;
@@ -174,8 +140,11 @@ class Thread
         return sm_this;
     }
 
-    final @property bool isRunning() nothrow @nogc
+    override final @property bool isRunning() nothrow @nogc
     {
+        if (!super.isRunning())
+            return false;
+
         assert(false, "Not implemented");
     }
 
@@ -186,7 +155,7 @@ class Thread
         assert(false, "Not implemented");
     }
 
-    static void add( Context* c ) nothrow @nogc
+    static void add(StackContext* c) nothrow @nogc
     in( c )
     {
         assert(false, "Not implemented");
@@ -200,7 +169,7 @@ class Thread
         assert(false, "Not implemented");
     }
 
-    static void remove(Context* c) nothrow @nogc
+    static void remove(StackContext* c) nothrow @nogc
     in( c )
     {
         assert(false, "Not implemented");
@@ -211,7 +180,7 @@ class Thread
         assert(false, "Not implemented");
     }
 
-    final Throwable join( bool rethrow = true )
+    override final Throwable join( bool rethrow = true )
     {
         assert(false, "Not implemented");
     }
@@ -232,26 +201,6 @@ class Thread
     {
         assert(false, "Not implemented");
     }
-
-    final void pushContext( Context* c ) nothrow @nogc
-    {
-        assert(false, "Not implemented");
-    }
-
-    final void popContext() nothrow @nogc
-    {
-        assert(false, "Not implemented");
-    }
-
-    static import core.thread.osthread;
-
-    alias Context = core.thread.osthread.Context;
-
-    //FIXME: remove or wrap this
-    Context             m_main;
-    Context*            m_curr;
-    bool                m_lock;
-    void*               m_tlsgcdata;
 
     static int opApply(scope int delegate(ref Thread) dg)
     {

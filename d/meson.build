@@ -42,6 +42,7 @@ freertos_druntime_backend = [
     'freertos_druntime_backend/external/core/event.d',
     'freertos_druntime_backend/external/core/fiber.d',
     'freertos_druntime_backend/external/core/memory.d',
+    'freertos_druntime_backend/external/core/mutex.d',
     'freertos_druntime_backend/external/core/semaphore.d',
     'freertos_druntime_backend/external/core/thread.d',
     'freertos_druntime_backend/external/core/time.d',
