@@ -15,13 +15,16 @@ libopencm3_binding = dpp.process(
     ]
 )
 
+#FIXME: https://github.com/mesonbuild/meson/issues/7330
+freertos_subdir = 'FreeRTOS-Kernel-10.3.1-kernel-only'
+
 freertos_binding = dpp.process(
     files(
         'freertos_dpp_bindings/freertos.dpp',
     ),
     extra_args: [
-        '--include-path=' + subprojects_dir + 'freertos/include/',
-        '--include-path=' + subprojects_dir + 'freertos/portable/GCC/ARM_CM3/', #TODO: get this from freertos_dep?
+        '--include-path=' + subprojects_dir + 'freertos/' + freertos_subdir + '/include/',
+        '--include-path=' + subprojects_dir + 'freertos/' + freertos_subdir + '/portable/GCC/ARM_CM3/', #TODO: get this from freertos_dep?
         '--include-path=' + root_dir, #for FreeRTOSConfig.h
     ]
 )
