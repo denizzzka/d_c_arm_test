@@ -2,10 +2,8 @@ module external.core.thread;
 
 import core.thread.osthread;
 import core.thread.threadbase;
+import core.thread.types: ThreadID;
 import core.thread.context: StackContext;
-import external.libc.config: c_ulong;
-
-alias ThreadID = c_ulong;
 
 @nogc:
 nothrow:
