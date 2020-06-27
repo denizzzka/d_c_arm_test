@@ -4,6 +4,7 @@ import core.thread.osthread;
 import core.thread.threadbase;
 import core.thread.types: ThreadID;
 import core.thread.context: StackContext;
+static import freertos;
 
 @nogc:
 nothrow:
@@ -54,12 +55,100 @@ extern (C) void thread_resumeHandler( int sig ) nothrow
 
 extern (C) void thread_suspendAll() nothrow
 {
-    assert(false, "Not implemented");
+    if ( !multiThreadedFlag && Thread.sm_tbeg )
+    {
+        if ( ++suspendDepth == 1 )
+            suspend( Thread.getThis() );
+
+        return;
+    }
+
+    Thread.slock.lock_nothrow();
+    {
+        if ( ++suspendDepth > 1 )
+            return;
+
+        Thread.criticalRegionLock.lock_nothrow();
+        scope (exit) Thread.criticalRegionLock.unlock_nothrow();
+        size_t cnt;
+        Thread t = ThreadBase.sm_tbeg.toThread;
+        while (t)
+        {
+            auto tn = t.next.toThread;
+            if (suspend(t))
+                ++cnt;
+            t = tn;
+        }
+
+        version (Darwin)
+        {}
+        else version (Posix)
+        {
+            // subtract own thread
+            assert(cnt >= 1);
+            --cnt;
+        Lagain:
+            // wait for semaphore notifications
+            for (; cnt; --cnt)
+            {
+                while (sem_wait(&suspendCount) != 0)
+                {
+                    if (errno != EINTR)
+                        onThreadError("Unable to wait for semaphore");
+                    errno = 0;
+                }
+            }
+        }
+    }
+}
+
+/// Suspend the specified thread and load stack and register information
+private extern (D) bool suspend( Thread t ) nothrow
+{
+    // Common code (TODO: use druntime code instead):
+    import core.time;
+
+    Duration waittime = dur!"usecs"(10);
+
+ Lagain:
+    if (!t.isRunning)
+    {
+        Thread.remove(t);
+        return false;
+    }
+    else if (t.m_isInCriticalRegion)
+    {
+        Thread.criticalRegionLock.unlock_nothrow();
+        Thread.sleep(waittime);
+        if (waittime < dur!"msecs"(10)) waittime *= 2;
+        Thread.criticalRegionLock.lock_nothrow();
+        goto Lagain;
+    }
+
+    // OS-specific code:
+
+    if (t.m_addr != freertos.xTaskGetCurrentTaskHandle())
+    {
+        freertos.vTaskSuspend(t.m_addr);
+    }
+    else if (!t.m_lock)
+    {
+        t.m_curr.tstack = getStackTop();
+    }
+
+    return true;
 }
 
 void thread_intermediateShutdown() nothrow @nogc
 {
     assert(false, "Not implemented");
+}
+
+private void* getStackTop() nothrow @nogc
+{
+    import ldc.intrinsics;
+    pragma(LDC_never_inline);
+    return llvm_frameaddress(0);
 }
 
 void* getStackBottom() nothrow @nogc
@@ -80,9 +169,9 @@ bool findLowLevelThread(ThreadID tid) nothrow @nogc
 
 Thread external_attachThread(ThreadBase thisThread) @nogc
 {
-    Thread t = cast(Thread) thisThread; //FIXME: remove cast
+    Thread t = thisThread.toThread;
 
-    Thread.setThis(t); //FIXME: remove cast
+    Thread.setThis(t);
 
     t.tlsGCdataInit();
 
@@ -204,4 +293,9 @@ class Thread : ThreadBase
     {
         assert(false, "Not implemented");
     }
+}
+
+private Thread toThread(ThreadBase t) @trusted nothrow @nogc pure
+{
+    return cast(Thread) cast(void*) t;
 }

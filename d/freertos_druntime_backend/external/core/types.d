@@ -1,5 +1,5 @@
 module external.core.types;
 
-import external.libc.config: c_ulong;
+import freertos: TaskHandle_t;
 
-alias ThreadID = c_ulong;
+alias ThreadID = TaskHandle_t;
