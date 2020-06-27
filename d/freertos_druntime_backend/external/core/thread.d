@@ -7,11 +7,13 @@ import core.thread.context: StackContext;
 static import freertos;
 
 @nogc:
-nothrow:
 
 /// Init threads module
 extern (C) void thread_init() @nogc
 {
+    initLowlevelThreads();
+    ThreadBase.initLocks();
+
     // Threads storage
     assert(typeid(Thread).initializer.ptr);
     _mainThreadStore[] = typeid(Thread).initializer[];
@@ -19,6 +21,8 @@ extern (C) void thread_init() @nogc
     // Creating main thread
     Thread.sm_main = external_attachThread((cast(Thread)_mainThreadStore.ptr).__ctor());
 }
+
+nothrow:
 
 /// Term threads module
 extern (C) void thread_term() @nogc
@@ -63,13 +67,13 @@ extern (C) void thread_suspendAll() nothrow
         return;
     }
 
-    Thread.slock.lock_nothrow();
+    ThreadBase.slock.lock_nothrow();
     {
         if ( ++suspendDepth > 1 )
             return;
 
-        Thread.criticalRegionLock.lock_nothrow();
-        scope (exit) Thread.criticalRegionLock.unlock_nothrow();
+        ThreadBase.criticalRegionLock.lock_nothrow();
+        scope (exit) ThreadBase.criticalRegionLock.unlock_nothrow();
         size_t cnt;
         Thread t = ThreadBase.sm_tbeg.toThread;
         while (t)
@@ -118,10 +122,10 @@ private extern (D) bool suspend( Thread t ) nothrow
     }
     else if (t.m_isInCriticalRegion)
     {
-        Thread.criticalRegionLock.unlock_nothrow();
+        ThreadBase.criticalRegionLock.unlock_nothrow();
         Thread.sleep(waittime);
         if (waittime < dur!"msecs"(10)) waittime *= 2;
-        Thread.criticalRegionLock.lock_nothrow();
+        ThreadBase.criticalRegionLock.lock_nothrow();
         goto Lagain;
     }
 
@@ -211,11 +215,6 @@ class Thread : ThreadBase
         assert(false, "Not implemented");
     }
 
-    static void initLocks() @nogc
-    {
-        //~ assert(false, "Not implemented");
-    }
-
     /// Sets a thread-local reference to the current thread object.
     static void setThis(Thread t) nothrow @nogc
     {
@@ -235,13 +234,6 @@ class Thread : ThreadBase
         assert(false, "Not implemented");
     }
 
-    import external.core.mutex: Mutex;
-
-    @property static Mutex criticalRegionLock() nothrow @nogc
-    {
-        assert(false, "Not implemented");
-    }
-
     static void add(StackContext* c) nothrow @nogc
     in( c )
     {
@@ -258,11 +250,6 @@ class Thread : ThreadBase
 
     static void remove(StackContext* c) nothrow @nogc
     in( c )
-    {
-        assert(false, "Not implemented");
-    }
-
-    @property static Mutex slock() nothrow @nogc
     {
         assert(false, "Not implemented");
     }

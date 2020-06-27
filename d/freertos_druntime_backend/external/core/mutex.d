@@ -18,8 +18,6 @@ class Mutex : Object.Monitor
 
         if(mtx == null)
             abort("Error: memory required to hold mutex could not be allocated.");
-
-        assert(false, "FIXME: not implemented");
     }
 
     ~this() @nogc
