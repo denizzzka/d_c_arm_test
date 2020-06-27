@@ -42,6 +42,7 @@ picolibc_sub = subproject(
         'multilib=false',
         'newlib-io-c99-formats=true',
         'newlib-long-time_t=true',
+        'newlib-multithread=true',
     ]
 )
 picolibc_dep = picolibc_sub.get_variable('picolibc_dep')

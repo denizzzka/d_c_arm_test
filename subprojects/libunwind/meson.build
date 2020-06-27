@@ -40,6 +40,8 @@ headers = files(
     'src/Unwind-EHABI.h',
 )
 
+libc_dep = subproject('picolibc').get_variable('picolibc_dep')
+
 libunwind_dep = declare_dependency(
     sources:[c_src, cxx_src, asm_src],
     include_directories: [
@@ -47,7 +49,9 @@ libunwind_dep = declare_dependency(
     ],
     compile_args: [
         '-D_LIBUNWIND_IS_BAREMETAL',
-        '-D_LIBUNWIND_HAS_NO_THREADS',
-        '-DNDEBUG',
+        '-D_POSIX_THREADS', #used in picolibc headers
+        '-D_POSIX_READER_WRITER_LOCKS', #used in picolibc headers
+        #'-DNDEBUG',
     ],
+    dependencies: libc_dep,
 )
