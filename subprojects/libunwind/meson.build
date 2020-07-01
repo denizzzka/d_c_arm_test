@@ -52,9 +52,10 @@ libunwind_dep = declare_dependency(
         includes,
     ],
     compile_args: [
+        #'-D_LIBUNWIND_IS_NATIVE_ONLY',
+        #'-D__ARM_DWARF_EH__',
         '-D_LIBUNWIND_IS_BAREMETAL',
         '-D_LIBUNWIND_HAS_NO_THREADS',
-        '-D__ARM_DWARF_EH__',
         #'-D_POSIX_THREADS', #used in picolibc headers
         #'-D_POSIX_READER_WRITER_LOCKS', #used in picolibc headers
         #'-DNDEBUG',
