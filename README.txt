@@ -25,6 +25,4 @@ not stripped".
 
 TODO:
 
-- Implement druntime backends (maybe stm32_druntime_backend)
-- Cover libopencm3 by Meson (only dirty workaround is implemented)
-- Cover FreeRTOS by Meson (ditto)
+- Please see Github "Issues" section
