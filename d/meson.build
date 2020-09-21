@@ -15,13 +15,16 @@ libopencm3_binding = dpp.process(
     ]
 )
 
+#FIXME: https://github.com/mesonbuild/meson/issues/7330
+freertos_subdir = 'FreeRTOS-Kernel-10.3.1-kernel-only'
+
 freertos_binding = dpp.process(
     files(
         'freertos_dpp_bindings/freertos.dpp',
     ),
     extra_args: [
-        '--include-path=' + subprojects_dir + 'freertos/include/',
-        '--include-path=' + subprojects_dir + 'freertos/portable/GCC/ARM_CM3/', #TODO: get this from freertos_dep?
+        '--include-path=' + subprojects_dir + 'freertos/' + freertos_subdir + '/include/',
+        '--include-path=' + subprojects_dir + 'freertos/' + freertos_subdir + '/portable/GCC/ARM_CM3/', #TODO: get this from freertos_dep?
         '--include-path=' + root_dir, #for FreeRTOSConfig.h
     ]
 )
@@ -42,9 +45,11 @@ freertos_druntime_backend = [
     'freertos_druntime_backend/external/core/event.d',
     'freertos_druntime_backend/external/core/fiber.d',
     'freertos_druntime_backend/external/core/memory.d',
+    'freertos_druntime_backend/external/core/mutex.d',
     'freertos_druntime_backend/external/core/semaphore.d',
     'freertos_druntime_backend/external/core/thread.d',
     'freertos_druntime_backend/external/core/time.d',
+    'freertos_druntime_backend/external/core/types.d',
     'freertos_druntime_backend/external/libc/errno.d',
     'freertos_druntime_backend/external/libc/stdio_.d',
     'freertos_druntime_backend/external/rt/config.d',

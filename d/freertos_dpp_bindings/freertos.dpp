@@ -16,6 +16,11 @@ auto _xSemaphoreCreateMutex()
     return xQueueCreateMutex(queueQUEUE_TYPE_MUTEX);
 }
 
+auto _xSemaphoreCreateRecursiveMutex()
+{
+    return xQueueCreateMutex(queueQUEUE_TYPE_RECURSIVE_MUTEX);
+}
+
 auto _vSemaphoreDelete(SemaphoreHandle_t xSemaphore)
 {
     return vSemaphoreDelete(xSemaphore);

@@ -7,7 +7,7 @@ includes = include_directories(
 )
 
 c_src = files(
-    'src/UnwindLevel1.c',
+    'src/UnwindLevel1.c', #duplicates some libgcc symbols
     #'src/UnwindLevel1-gcc-ext.c', #for GCC only
     'src/Unwind-sjlj.c',
 )
@@ -21,6 +21,7 @@ cxx_src = files(
     'src/libunwind.cpp',
     'src/Unwind-EHABI.cpp',
     'src/Unwind-seh.cpp',
+    #'src/Unwind_AppleExtras.cpp',
 )
 
 headers = files(
@@ -35,19 +36,29 @@ headers = files(
     'src/libunwind_ext.h',
     'src/Registers.hpp',
     'src/RWMutex.hpp',
-    'src/Unwind_AppleExtras.cpp',
     'src/UnwindCursor.hpp',
     'src/Unwind-EHABI.h',
 )
 
+#libc_dep = subproject('picolibc').get_variable('picolibc_dep')
+
 libunwind_dep = declare_dependency(
-    sources:[c_src, cxx_src, asm_src],
+    sources:[
+        c_src,
+        cxx_src,
+        asm_src,
+    ],
     include_directories: [
         includes,
     ],
     compile_args: [
+        #'-D_LIBUNWIND_IS_NATIVE_ONLY',
+        #'-D__ARM_DWARF_EH__',
         '-D_LIBUNWIND_IS_BAREMETAL',
         '-D_LIBUNWIND_HAS_NO_THREADS',
-        '-DNDEBUG',
+        #'-D_POSIX_THREADS', #used in picolibc headers
+        #'-D_POSIX_READER_WRITER_LOCKS', #used in picolibc headers
+        #'-DNDEBUG',
     ],
+    #dependencies: libc_dep,
 )

@@ -1,30 +1,31 @@
 module external.core.thread;
 
-import core.thread.osthread: ScanAllThreadsTypeFn, IsMarkedDg;
-import external.libc.config: c_ulong;
-
-alias ThreadID = c_ulong;
+import core.thread.osthread;
+import core.thread.threadbase;
+import core.thread.types: ThreadID;
+import core.thread.context: StackContext;
+static import freertos;
 
 @nogc:
-nothrow:
 
+/// Init threads module
 extern (C) void thread_init() @nogc
 {
-    //FIXME: implement
+    initLowlevelThreads();
+    ThreadBase.initLocks();
+
+    // Threads storage
+    assert(typeid(Thread).initializer.ptr);
+    _mainThreadStore[] = typeid(Thread).initializer[];
+
+    // Creating main thread
+    Thread.sm_main = external_attachThread((cast(Thread)_mainThreadStore.ptr).__ctor());
 }
 
+nothrow:
+
+/// Term threads module
 extern (C) void thread_term() @nogc
-{
-    assert(false, "Not implemented");
-}
-
-extern (C) bool thread_isMainThread() nothrow @nogc
-{
-    //~ return Thread.getThis() is Thread.sm_main;
-    assert(false, "Not implemented");
-}
-
-extern (C) Thread thread_attachThis()
 {
     assert(false, "Not implemented");
 }
@@ -34,24 +35,112 @@ extern (C) static Thread thread_findByAddr(ThreadID addr)
     assert(false, "Not implemented");
 }
 
-extern (C) void thread_joinAll()
+extern (C) void* thread_entryPoint( void* arg ) nothrow
+{
+    Thread obj = cast(Thread) arg;
+    Thread.setThis(obj);
+
+    obj.tlsGCdataInit();
+
+    //FIXME: osthread.d contains more stuff here
+
+    return null;
+}
+
+extern (C) void thread_suspendHandler( int sig ) nothrow
+{
+    assert(false, "Not implemented");
+}
+
+extern (C) void thread_resumeHandler( int sig ) nothrow
 {
     assert(false, "Not implemented");
 }
 
 extern (C) void thread_suspendAll() nothrow
 {
-    assert(false, "Not implemented");
+    if ( !multiThreadedFlag && Thread.sm_tbeg )
+    {
+        if ( ++suspendDepth == 1 )
+            suspend( Thread.getThis() );
+
+        return;
+    }
+
+    ThreadBase.slock.lock_nothrow();
+    {
+        if ( ++suspendDepth > 1 )
+            return;
+
+        ThreadBase.criticalRegionLock.lock_nothrow();
+        scope (exit) ThreadBase.criticalRegionLock.unlock_nothrow();
+        size_t cnt;
+        Thread t = ThreadBase.sm_tbeg.toThread;
+        while (t)
+        {
+            auto tn = t.next.toThread;
+            if (suspend(t))
+                ++cnt;
+            t = tn;
+        }
+
+        version (Darwin)
+        {}
+        else version (Posix)
+        {
+            // subtract own thread
+            assert(cnt >= 1);
+            --cnt;
+        Lagain:
+            // wait for semaphore notifications
+            for (; cnt; --cnt)
+            {
+                while (sem_wait(&suspendCount) != 0)
+                {
+                    if (errno != EINTR)
+                        onThreadError("Unable to wait for semaphore");
+                    errno = 0;
+                }
+            }
+        }
+    }
 }
 
-extern (C) void thread_resumeAll() nothrow
+/// Suspend the specified thread and load stack and register information
+private extern (D) bool suspend( Thread t ) nothrow
 {
-    assert(false, "Not implemented");
-}
+    // Common code (TODO: use druntime code instead):
+    import core.time;
 
-extern (C) void thread_scanAllType( scope ScanAllThreadsTypeFn scan ) nothrow
-{
-    assert(false, "Not implemented");
+    Duration waittime = dur!"usecs"(10);
+
+ Lagain:
+    if (!t.isRunning)
+    {
+        Thread.remove(t);
+        return false;
+    }
+    else if (t.m_isInCriticalRegion)
+    {
+        ThreadBase.criticalRegionLock.unlock_nothrow();
+        Thread.sleep(waittime);
+        if (waittime < dur!"msecs"(10)) waittime *= 2;
+        ThreadBase.criticalRegionLock.lock_nothrow();
+        goto Lagain;
+    }
+
+    // OS-specific code:
+
+    if (t.m_addr != freertos.xTaskGetCurrentTaskHandle())
+    {
+        freertos.vTaskSuspend(t.m_addr);
+    }
+    else if (!t.m_lock)
+    {
+        t.m_curr.tstack = getStackTop();
+    }
+
+    return true;
 }
 
 void thread_intermediateShutdown() nothrow @nogc
@@ -59,32 +148,14 @@ void thread_intermediateShutdown() nothrow @nogc
     assert(false, "Not implemented");
 }
 
-extern(C) void thread_processGCMarks( scope IsMarkedDg isMarked ) nothrow
+private void* getStackTop() nothrow @nogc
 {
-    assert(false, "Not implemented");
+    import ldc.intrinsics;
+    pragma(LDC_never_inline);
+    return llvm_frameaddress(0);
 }
 
-extern(D) public void callWithStackShell(scope void delegate(void* sp) nothrow fn) nothrow
-{
-    assert(false, "Not implemented");
-}
-
-version (LDC_Windows)
-{
-    import ldc.attributes;
-
-    void* getStackBottom() nothrow @nogc @naked
-    {
-        assert(false, "Not implemented");
-    }
-} else {
-    void* getStackBottom() nothrow @nogc
-    {
-        assert(false, "Not implemented");
-    }
-}
-
-extern (C) void* thread_stackBottom() nothrow @nogc
+void* getStackBottom() nothrow @nogc
 {
     assert(false, "Not implemented");
 }
@@ -100,12 +171,32 @@ bool findLowLevelThread(ThreadID tid) nothrow @nogc
     assert(false, "Not implemented");
 }
 
-class Thread
+Thread external_attachThread(ThreadBase thisThread) @nogc
+{
+    Thread t = thisThread.toThread;
+
+    Thread.setThis(t);
+
+    t.tlsGCdataInit();
+
+    return t;
+}
+
+class Thread : ThreadBase
 {
     /// Main process thread
-    private __gshared Thread    sm_main;
+    private __gshared Thread sm_main;
+
+    /// Current thread
+    private static Thread sm_this;
 
     bool m_isInCriticalRegion;
+
+    /// Initializes a thread object which has no associated executable function.
+    /// This is used for the main thread initialized in thread_init().
+    private this(size_t sz = 0) @safe pure nothrow @nogc
+    {
+    }
 
     this(void function() fn, size_t sz = 0) @safe pure nothrow @nogc
     in(fn !is null)
@@ -124,40 +215,26 @@ class Thread
         assert(false, "Not implemented");
     }
 
-    static void initLocks() @nogc
-    {
-        assert(false, "Not implemented");
-    }
-
     /// Sets a thread-local reference to the current thread object.
     static void setThis(Thread t) nothrow @nogc
     {
-        //~ sm_this = t;
-        assert(false, "Not implemented");
+        sm_this = t;
     }
 
     static Thread getThis() @safe nothrow @nogc
     {
-        // NOTE: This function may not be called until thread_init has
-        //       completed.  See thread_suspendAll for more information
-        //       on why this might occur.
-        //~ return sm_this;
-        assert(false, "Not implemented");
+        return sm_this;
     }
 
-    final @property bool isRunning() nothrow @nogc
+    override final @property bool isRunning() nothrow @nogc
     {
+        if (!super.isRunning())
+            return false;
+
         assert(false, "Not implemented");
     }
 
-    import external.core.mutex: Mutex;
-
-    @property static Mutex criticalRegionLock() nothrow @nogc
-    {
-        assert(false, "Not implemented");
-    }
-
-    static void add( Context* c ) nothrow @nogc
+    static void add(StackContext* c) nothrow @nogc
     in( c )
     {
         assert(false, "Not implemented");
@@ -171,18 +248,13 @@ class Thread
         assert(false, "Not implemented");
     }
 
-    static void remove(Context* c) nothrow @nogc
+    static void remove(StackContext* c) nothrow @nogc
     in( c )
     {
         assert(false, "Not implemented");
     }
 
-    @property static Mutex slock() nothrow @nogc
-    {
-        assert(false, "Not implemented");
-    }
-
-    final Throwable join( bool rethrow = true )
+    override final Throwable join( bool rethrow = true )
     {
         assert(false, "Not implemented");
     }
@@ -204,28 +276,13 @@ class Thread
         assert(false, "Not implemented");
     }
 
-    final void pushContext( Context* c ) nothrow @nogc
-    {
-        assert(false, "Not implemented");
-    }
-
-    final void popContext() nothrow @nogc
-    {
-        assert(false, "Not implemented");
-    }
-
-    static import core.thread.osthread;
-
-    alias Context = core.thread.osthread.Context;
-
-    //FIXME: remove or wrap this
-    Context             m_main;
-    Context*            m_curr;
-    bool                m_lock;
-    void*               m_tlsgcdata;
-
     static int opApply(scope int delegate(ref Thread) dg)
     {
         assert(false, "Not implemented");
     }
+}
+
+private Thread toThread(ThreadBase t) @trusted nothrow @nogc pure
+{
+    return cast(Thread) cast(void*) t;
 }

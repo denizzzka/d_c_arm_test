@@ -42,6 +42,7 @@ picolibc_sub = subproject(
         'multilib=false',
         'newlib-io-c99-formats=true',
         'newlib-long-time_t=true',
+        'newlib-multithread=true',
     ]
 )
 picolibc_dep = picolibc_sub.get_variable('picolibc_dep')
@@ -58,7 +59,7 @@ ld_aliases_for_picolibc = files('aliases_for_picolibc.ld')
 ld_script = ld_script_gen.process(
     ld_aliases_for_picolibc, #unused, just to satisfy generator
     extra_args: [
-        'DEVICE=stm32f205rft6', #FIXME: subst by stm32f103x8
+        'DEVICE=stm32f217xgx', #FIXME: set by option
     ]
 )
 
@@ -105,5 +106,6 @@ executable(
     link_args: [
         '-Xlinker', '--script=' + ld_script_path,
         '-L/usr/lib/gcc/arm-none-eabi/8.3.1/thumb/v7-m/nofp/', '-lgcc',
+        '-Xlinker', '--allow-multiple-definition', #ignore symbols duplication defined by libgcc and libunwind such as "_Unwind_RaiseException" (FIXME!)
     ]
 )

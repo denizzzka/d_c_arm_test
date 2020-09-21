@@ -221,7 +221,6 @@ extern(C)
     eTaskState eTaskGetState(tskTaskControlBlock*) @nogc nothrow;
     c_ulong uxTaskPriorityGetFromISR(const(tskTaskControlBlock*)) @nogc nothrow;
     c_ulong uxTaskPriorityGet(const(tskTaskControlBlock*)) @nogc nothrow;
-    c_long xTaskAbortDelayFromISR(tskTaskControlBlock*, c_long*) @nogc nothrow;
     c_long xTaskAbortDelay(tskTaskControlBlock*) @nogc nothrow;
     void vTaskDelayUntil(uint*, const(uint)) @nogc nothrow;
     void vTaskDelay(const(uint)) @nogc nothrow;
@@ -315,6 +314,8 @@ extern(C)
     c_long xQueueGenericReset(QueueDefinition*, c_long) @nogc nothrow;
     void vQueueWaitForMessageRestricted(QueueDefinition*, uint, const(c_long)) @nogc nothrow;
     QueueDefinition* xQueueSelectFromSetFromISR(QueueDefinition*) @nogc nothrow;
+    QueueDefinition* xQueueSelectFromSet(QueueDefinition*, const(uint)) @nogc nothrow;
+    c_long xQueueRemoveFromSet(QueueDefinition*, QueueDefinition*) @nogc nothrow;
     struct xSTATIC_LIST_ITEM
     {
         uint xDummy2;
@@ -385,12 +386,11 @@ extern(C)
         ubyte ucDummy3;
     }
     alias StaticMessageBuffer_t = xSTATIC_STREAM_BUFFER;
-    QueueDefinition* xQueueSelectFromSet(QueueDefinition*, const(uint)) @nogc nothrow;
-    c_long xQueueRemoveFromSet(QueueDefinition*, QueueDefinition*) @nogc nothrow;
     c_long xQueueAddToSet(QueueDefinition*, QueueDefinition*) @nogc nothrow;
     QueueDefinition* xQueueCreateSet(const(c_ulong)) @nogc nothrow;
     QueueDefinition* xQueueGenericCreate(const(c_ulong), const(c_ulong), const(ubyte)) @nogc nothrow;
     const(char)* pcQueueGetName(QueueDefinition*) @nogc nothrow;
+    void vQueueUnregisterQueue(QueueDefinition*) @nogc nothrow;
     struct xLIST
     {
         c_ulong uxNumberOfItems;
@@ -414,22 +414,24 @@ extern(C)
     }
     alias MiniListItem_t = xMINI_LIST_ITEM;
     alias List_t = xLIST;
-    void vQueueUnregisterQueue(QueueDefinition*) @nogc nothrow;
     void vQueueAddToRegistry(QueueDefinition*, const(char)*) @nogc nothrow;
     c_long xQueueGiveMutexRecursive(QueueDefinition*) @nogc nothrow;
     c_long xQueueTakeMutexRecursive(QueueDefinition*, uint) @nogc nothrow;
     tskTaskControlBlock* xQueueGetMutexHolderFromISR(QueueDefinition*) @nogc nothrow;
     tskTaskControlBlock* xQueueGetMutexHolder(QueueDefinition*) @nogc nothrow;
+    c_long xQueueSemaphoreTake(QueueDefinition*, uint) @nogc nothrow;
     void vListInitialise(xLIST*) @nogc nothrow;
     void vListInitialiseItem(xLIST_ITEM*) @nogc nothrow;
     void vListInsert(xLIST*, xLIST_ITEM*) @nogc nothrow;
     void vListInsertEnd(xLIST*, xLIST_ITEM*) @nogc nothrow;
     c_ulong uxListRemove(xLIST_ITEM*) @nogc nothrow;
-    c_long xQueueSemaphoreTake(QueueDefinition*, uint) @nogc nothrow;
     QueueDefinition* xQueueCreateCountingSemaphoreStatic(const(c_ulong), const(c_ulong), xSTATIC_QUEUE*) @nogc nothrow;
     QueueDefinition* xQueueCreateCountingSemaphore(const(c_ulong), const(c_ulong)) @nogc nothrow;
     QueueDefinition* xQueueCreateMutexStatic(const(ubyte), xSTATIC_QUEUE*) @nogc nothrow;
     QueueDefinition* xQueueCreateMutex(const(ubyte)) @nogc nothrow;
+    c_long xQueueCRReceive(QueueDefinition*, void*, uint) @nogc nothrow;
+    c_long xQueueCRSend(QueueDefinition*, const(void)*, uint) @nogc nothrow;
+    c_long xQueueCRReceiveFromISR(QueueDefinition*, void*, c_long*) @nogc nothrow;
     uint* pxPortInitialiseStack(uint*, void function(void*), void*) @nogc nothrow;
     alias HeapRegion_t = HeapRegion;
     struct HeapRegion
@@ -457,11 +459,8 @@ extern(C)
     c_ulong xPortGetMinimumEverFreeHeapSize() @nogc nothrow;
     c_long xPortStartScheduler() @nogc nothrow;
     void vPortEndScheduler() @nogc nothrow;
-    c_long xQueueCRReceive(QueueDefinition*, void*, uint) @nogc nothrow;
-    alias TaskFunction_t = void function(void*);
-    c_long xQueueCRSend(QueueDefinition*, const(void)*, uint) @nogc nothrow;
-    c_long xQueueCRReceiveFromISR(QueueDefinition*, void*, c_long*) @nogc nothrow;
     c_long xQueueCRSendFromISR(QueueDefinition*, const(void)*, c_long) @nogc nothrow;
+    alias TaskFunction_t = void function(void*);
     c_ulong uxQueueMessagesWaitingFromISR(const(QueueDefinition*)) @nogc nothrow;
     c_long xQueueIsQueueFullFromISR(const(QueueDefinition*)) @nogc nothrow;
     c_long xQueueIsQueueEmptyFromISR(const(QueueDefinition*)) @nogc nothrow;
@@ -479,6 +478,36 @@ extern(C)
     alias QueueSetHandle_t = QueueDefinition*;
     alias QueueHandle_t = QueueDefinition*;
     struct QueueDefinition;
+
+
+
+    static if(!is(typeof(pdFREERTOS_ERRNO_EBADE))) {
+        private enum enumMixinStr_pdFREERTOS_ERRNO_EBADE = `enum pdFREERTOS_ERRNO_EBADE = 50;`;
+        static if(is(typeof({ mixin(enumMixinStr_pdFREERTOS_ERRNO_EBADE); }))) {
+            mixin(enumMixinStr_pdFREERTOS_ERRNO_EBADE);
+        }
+    }
+
+
+
+
+    static if(!is(typeof(pdFREERTOS_ERRNO_EFTYPE))) {
+        private enum enumMixinStr_pdFREERTOS_ERRNO_EFTYPE = `enum pdFREERTOS_ERRNO_EFTYPE = 79;`;
+        static if(is(typeof({ mixin(enumMixinStr_pdFREERTOS_ERRNO_EFTYPE); }))) {
+            mixin(enumMixinStr_pdFREERTOS_ERRNO_EFTYPE);
+        }
+    }
+
+
+
+
+    static if(!is(typeof(pdFREERTOS_ERRNO_ENMFILE))) {
+        private enum enumMixinStr_pdFREERTOS_ERRNO_ENMFILE = `enum pdFREERTOS_ERRNO_ENMFILE = 89;`;
+        static if(is(typeof({ mixin(enumMixinStr_pdFREERTOS_ERRNO_ENMFILE); }))) {
+            mixin(enumMixinStr_pdFREERTOS_ERRNO_ENMFILE);
+        }
+    }
+
 
 
 
@@ -674,36 +703,6 @@ extern(C)
 
 
 
-    static if(!is(typeof(pdFREERTOS_ERRNO_ENMFILE))) {
-        private enum enumMixinStr_pdFREERTOS_ERRNO_ENMFILE = `enum pdFREERTOS_ERRNO_ENMFILE = 89;`;
-        static if(is(typeof({ mixin(enumMixinStr_pdFREERTOS_ERRNO_ENMFILE); }))) {
-            mixin(enumMixinStr_pdFREERTOS_ERRNO_ENMFILE);
-        }
-    }
-
-
-
-
-    static if(!is(typeof(pdFREERTOS_ERRNO_EFTYPE))) {
-        private enum enumMixinStr_pdFREERTOS_ERRNO_EFTYPE = `enum pdFREERTOS_ERRNO_EFTYPE = 79;`;
-        static if(is(typeof({ mixin(enumMixinStr_pdFREERTOS_ERRNO_EFTYPE); }))) {
-            mixin(enumMixinStr_pdFREERTOS_ERRNO_EFTYPE);
-        }
-    }
-
-
-
-
-    static if(!is(typeof(pdFREERTOS_ERRNO_EBADE))) {
-        private enum enumMixinStr_pdFREERTOS_ERRNO_EBADE = `enum pdFREERTOS_ERRNO_EBADE = 50;`;
-        static if(is(typeof({ mixin(enumMixinStr_pdFREERTOS_ERRNO_EBADE); }))) {
-            mixin(enumMixinStr_pdFREERTOS_ERRNO_EBADE);
-        }
-    }
-
-
-
-
     static if(!is(typeof(pdFREERTOS_ERRNO_EUNATCH))) {
         private enum enumMixinStr_pdFREERTOS_ERRNO_EUNATCH = `enum pdFREERTOS_ERRNO_EUNATCH = 42;`;
         static if(is(typeof({ mixin(enumMixinStr_pdFREERTOS_ERRNO_EUNATCH); }))) {
@@ -728,6 +727,36 @@ extern(C)
         private enum enumMixinStr_pdFREERTOS_ERRNO_ESPIPE = `enum pdFREERTOS_ERRNO_ESPIPE = 29;`;
         static if(is(typeof({ mixin(enumMixinStr_pdFREERTOS_ERRNO_ESPIPE); }))) {
             mixin(enumMixinStr_pdFREERTOS_ERRNO_ESPIPE);
+        }
+    }
+
+
+
+
+    static if(!is(typeof(pdFREERTOS_ERRNO_ENOSPC))) {
+        private enum enumMixinStr_pdFREERTOS_ERRNO_ENOSPC = `enum pdFREERTOS_ERRNO_ENOSPC = 28;`;
+        static if(is(typeof({ mixin(enumMixinStr_pdFREERTOS_ERRNO_ENOSPC); }))) {
+            mixin(enumMixinStr_pdFREERTOS_ERRNO_ENOSPC);
+        }
+    }
+
+
+
+
+    static if(!is(typeof(pdFREERTOS_ERRNO_EINVAL))) {
+        private enum enumMixinStr_pdFREERTOS_ERRNO_EINVAL = `enum pdFREERTOS_ERRNO_EINVAL = 22;`;
+        static if(is(typeof({ mixin(enumMixinStr_pdFREERTOS_ERRNO_EINVAL); }))) {
+            mixin(enumMixinStr_pdFREERTOS_ERRNO_EINVAL);
+        }
+    }
+
+
+
+
+    static if(!is(typeof(pdFREERTOS_ERRNO_EISDIR))) {
+        private enum enumMixinStr_pdFREERTOS_ERRNO_EISDIR = `enum pdFREERTOS_ERRNO_EISDIR = 21;`;
+        static if(is(typeof({ mixin(enumMixinStr_pdFREERTOS_ERRNO_EISDIR); }))) {
+            mixin(enumMixinStr_pdFREERTOS_ERRNO_EISDIR);
         }
     }
 
@@ -824,34 +853,6 @@ extern(C)
 
 
 
-    static if(!is(typeof(pdFREERTOS_ERRNO_ENOSPC))) {
-        private enum enumMixinStr_pdFREERTOS_ERRNO_ENOSPC = `enum pdFREERTOS_ERRNO_ENOSPC = 28;`;
-        static if(is(typeof({ mixin(enumMixinStr_pdFREERTOS_ERRNO_ENOSPC); }))) {
-            mixin(enumMixinStr_pdFREERTOS_ERRNO_ENOSPC);
-        }
-    }
-
-
-
-
-
-
-    static if(!is(typeof(pdFREERTOS_ERRNO_EINVAL))) {
-        private enum enumMixinStr_pdFREERTOS_ERRNO_EINVAL = `enum pdFREERTOS_ERRNO_EINVAL = 22;`;
-        static if(is(typeof({ mixin(enumMixinStr_pdFREERTOS_ERRNO_EINVAL); }))) {
-            mixin(enumMixinStr_pdFREERTOS_ERRNO_EINVAL);
-        }
-    }
-    static if(!is(typeof(pdFREERTOS_ERRNO_EISDIR))) {
-        private enum enumMixinStr_pdFREERTOS_ERRNO_EISDIR = `enum pdFREERTOS_ERRNO_EISDIR = 21;`;
-        static if(is(typeof({ mixin(enumMixinStr_pdFREERTOS_ERRNO_EISDIR); }))) {
-            mixin(enumMixinStr_pdFREERTOS_ERRNO_EISDIR);
-        }
-    }
-
-
-
-
     static if(!is(typeof(pdFREERTOS_ERRNO_ENOTDIR))) {
         private enum enumMixinStr_pdFREERTOS_ERRNO_ENOTDIR = `enum pdFREERTOS_ERRNO_ENOTDIR = 20;`;
         static if(is(typeof({ mixin(enumMixinStr_pdFREERTOS_ERRNO_ENOTDIR); }))) {
@@ -862,16 +863,14 @@ extern(C)
 
 
 
+
+
     static if(!is(typeof(pdFREERTOS_ERRNO_ENODEV))) {
         private enum enumMixinStr_pdFREERTOS_ERRNO_ENODEV = `enum pdFREERTOS_ERRNO_ENODEV = 19;`;
         static if(is(typeof({ mixin(enumMixinStr_pdFREERTOS_ERRNO_ENODEV); }))) {
             mixin(enumMixinStr_pdFREERTOS_ERRNO_ENODEV);
         }
     }
-
-
-
-
     static if(!is(typeof(pdFREERTOS_ERRNO_EXDEV))) {
         private enum enumMixinStr_pdFREERTOS_ERRNO_EXDEV = `enum pdFREERTOS_ERRNO_EXDEV = 18;`;
         static if(is(typeof({ mixin(enumMixinStr_pdFREERTOS_ERRNO_EXDEV); }))) {
@@ -978,6 +977,10 @@ extern(C)
             mixin(enumMixinStr_pdFREERTOS_ERRNO_EIO);
         }
     }
+
+
+
+
     static if(!is(typeof(pdFREERTOS_ERRNO_EINTR))) {
         private enum enumMixinStr_pdFREERTOS_ERRNO_EINTR = `enum pdFREERTOS_ERRNO_EINTR = 4;`;
         static if(is(typeof({ mixin(enumMixinStr_pdFREERTOS_ERRNO_EINTR); }))) {
@@ -1004,10 +1007,6 @@ extern(C)
             mixin(enumMixinStr_pdFREERTOS_ERRNO_NONE);
         }
     }
-
-
-
-
     static if(!is(typeof(pdINTEGRITY_CHECK_VALUE))) {
         private enum enumMixinStr_pdINTEGRITY_CHECK_VALUE = `enum pdINTEGRITY_CHECK_VALUE = 0x5a5a5a5aUL;`;
         static if(is(typeof({ mixin(enumMixinStr_pdINTEGRITY_CHECK_VALUE); }))) {
@@ -1272,6 +1271,16 @@ extern(C)
 
 
 
+    static if(!is(typeof(xTaskGetIdleRunTimeCounter))) {
+        private enum enumMixinStr_xTaskGetIdleRunTimeCounter = `enum xTaskGetIdleRunTimeCounter = ulTaskGetIdleRunTimeCounter;`;
+        static if(is(typeof({ mixin(enumMixinStr_xTaskGetIdleRunTimeCounter); }))) {
+            mixin(enumMixinStr_xTaskGetIdleRunTimeCounter);
+        }
+    }
+
+
+
+
     static if(!is(typeof(vTaskGetTaskInfo))) {
         private enum enumMixinStr_vTaskGetTaskInfo = `enum vTaskGetTaskInfo = vTaskGetInfo;`;
         static if(is(typeof({ mixin(enumMixinStr_vTaskGetTaskInfo); }))) {
@@ -1288,8 +1297,6 @@ extern(C)
             mixin(enumMixinStr_pcQueueGetQueueName);
         }
     }
-
-
 
 
 
@@ -1314,10 +1321,32 @@ extern(C)
 
 
 
+
+
     static if(!is(typeof(portTICK_RATE_MS))) {
         private enum enumMixinStr_portTICK_RATE_MS = `enum portTICK_RATE_MS = portTICK_PERIOD_MS;`;
         static if(is(typeof({ mixin(enumMixinStr_portTICK_RATE_MS); }))) {
             mixin(enumMixinStr_portTICK_RATE_MS);
+        }
+    }
+
+
+
+
+    static if(!is(typeof(pdTASK_HOOK_CODE))) {
+        private enum enumMixinStr_pdTASK_HOOK_CODE = `enum pdTASK_HOOK_CODE = TaskHookFunction_t;`;
+        static if(is(typeof({ mixin(enumMixinStr_pdTASK_HOOK_CODE); }))) {
+            mixin(enumMixinStr_pdTASK_HOOK_CODE);
+        }
+    }
+
+
+
+
+    static if(!is(typeof(xCoRoutineHandle))) {
+        private enum enumMixinStr_xCoRoutineHandle = `enum xCoRoutineHandle = CoRoutineHandle_t;`;
+        static if(is(typeof({ mixin(enumMixinStr_xCoRoutineHandle); }))) {
+            mixin(enumMixinStr_xCoRoutineHandle);
         }
     }
 
@@ -1354,30 +1383,6 @@ extern(C)
 
 
 
-    static if(!is(typeof(pdTASK_HOOK_CODE))) {
-        private enum enumMixinStr_pdTASK_HOOK_CODE = `enum pdTASK_HOOK_CODE = TaskHookFunction_t;`;
-        static if(is(typeof({ mixin(enumMixinStr_pdTASK_HOOK_CODE); }))) {
-            mixin(enumMixinStr_pdTASK_HOOK_CODE);
-        }
-    }
-
-
-
-
-
-
-    static if(!is(typeof(xCoRoutineHandle))) {
-        private enum enumMixinStr_xCoRoutineHandle = `enum xCoRoutineHandle = CoRoutineHandle_t;`;
-        static if(is(typeof({ mixin(enumMixinStr_xCoRoutineHandle); }))) {
-            mixin(enumMixinStr_xCoRoutineHandle);
-        }
-    }
-
-
-
-
-
-
     static if(!is(typeof(xTimerHandle))) {
         private enum enumMixinStr_xTimerHandle = `enum xTimerHandle = TimerHandle_t;`;
         static if(is(typeof({ mixin(enumMixinStr_xTimerHandle); }))) {
@@ -1396,34 +1401,36 @@ extern(C)
             mixin(enumMixinStr_xTaskStatusType);
         }
     }
+
+
+
+
+
+
     static if(!is(typeof(xTaskParameters))) {
         private enum enumMixinStr_xTaskParameters = `enum xTaskParameters = TaskParameters_t;`;
         static if(is(typeof({ mixin(enumMixinStr_xTaskParameters); }))) {
             mixin(enumMixinStr_xTaskParameters);
         }
     }
+
+
+
+
+
+
     static if(!is(typeof(xMemoryRegion))) {
         private enum enumMixinStr_xMemoryRegion = `enum xMemoryRegion = MemoryRegion_t;`;
         static if(is(typeof({ mixin(enumMixinStr_xMemoryRegion); }))) {
             mixin(enumMixinStr_xMemoryRegion);
         }
     }
-
-
-
-
-
-
     static if(!is(typeof(xTimeOutType))) {
         private enum enumMixinStr_xTimeOutType = `enum xTimeOutType = TimeOut_t;`;
         static if(is(typeof({ mixin(enumMixinStr_xTimeOutType); }))) {
             mixin(enumMixinStr_xTimeOutType);
         }
     }
-
-
-
-
     static if(!is(typeof(xQueueSetMemberHandle))) {
         private enum enumMixinStr_xQueueSetMemberHandle = `enum xQueueSetMemberHandle = QueueSetMemberHandle_t;`;
         static if(is(typeof({ mixin(enumMixinStr_xQueueSetMemberHandle); }))) {
@@ -1434,14 +1441,14 @@ extern(C)
 
 
 
+
+
     static if(!is(typeof(xQueueSetHandle))) {
         private enum enumMixinStr_xQueueSetHandle = `enum xQueueSetHandle = QueueSetHandle_t;`;
         static if(is(typeof({ mixin(enumMixinStr_xQueueSetHandle); }))) {
             mixin(enumMixinStr_xQueueSetHandle);
         }
     }
-
-
 
 
 
@@ -1466,6 +1473,8 @@ extern(C)
 
 
 
+
+
     static if(!is(typeof(xTaskHandle))) {
         private enum enumMixinStr_xTaskHandle = `enum xTaskHandle = TaskHandle_t;`;
         static if(is(typeof({ mixin(enumMixinStr_xTaskHandle); }))) {
@@ -1476,28 +1485,24 @@ extern(C)
 
 
 
-
-
     static if(!is(typeof(portTickType))) {
         private enum enumMixinStr_portTickType = `enum portTickType = TickType_t;`;
         static if(is(typeof({ mixin(enumMixinStr_portTickType); }))) {
             mixin(enumMixinStr_portTickType);
         }
     }
+
+
+
+
     static if(!is(typeof(eTaskStateGet))) {
         private enum enumMixinStr_eTaskStateGet = `enum eTaskStateGet = eTaskGetState;`;
         static if(is(typeof({ mixin(enumMixinStr_eTaskStateGet); }))) {
             mixin(enumMixinStr_eTaskStateGet);
         }
     }
-
-
-
-
-
-
     static if(!is(typeof(tskKERNEL_VERSION_NUMBER))) {
-        private enum enumMixinStr_tskKERNEL_VERSION_NUMBER = `enum tskKERNEL_VERSION_NUMBER = "V10.2.1";`;
+        private enum enumMixinStr_tskKERNEL_VERSION_NUMBER = `enum tskKERNEL_VERSION_NUMBER = "V10.3.1";`;
         static if(is(typeof({ mixin(enumMixinStr_tskKERNEL_VERSION_NUMBER); }))) {
             mixin(enumMixinStr_tskKERNEL_VERSION_NUMBER);
         }
@@ -1517,7 +1522,7 @@ extern(C)
 
 
     static if(!is(typeof(tskKERNEL_VERSION_MINOR))) {
-        private enum enumMixinStr_tskKERNEL_VERSION_MINOR = `enum tskKERNEL_VERSION_MINOR = 2;`;
+        private enum enumMixinStr_tskKERNEL_VERSION_MINOR = `enum tskKERNEL_VERSION_MINOR = 3;`;
         static if(is(typeof({ mixin(enumMixinStr_tskKERNEL_VERSION_MINOR); }))) {
             mixin(enumMixinStr_tskKERNEL_VERSION_MINOR);
         }
@@ -1582,6 +1587,10 @@ extern(C)
             mixin(enumMixinStr_tskMPU_REGION_DEVICE_MEMORY);
         }
     }
+
+
+
+
     static if(!is(typeof(configENABLE_BACKWARD_COMPATIBILITY))) {
         private enum enumMixinStr_configENABLE_BACKWARD_COMPATIBILITY = `enum configENABLE_BACKWARD_COMPATIBILITY = 1;`;
         static if(is(typeof({ mixin(enumMixinStr_configENABLE_BACKWARD_COMPATIBILITY); }))) {
@@ -1682,12 +1691,6 @@ extern(C)
             mixin(enumMixinStr_configUSE_TIME_SLICING);
         }
     }
-
-
-
-
-
-
     static if(!is(typeof(tskIDLE_PRIORITY))) {
         private enum enumMixinStr_tskIDLE_PRIORITY = `enum tskIDLE_PRIORITY = ( cast( UBaseType_t ) 0U );`;
         static if(is(typeof({ mixin(enumMixinStr_tskIDLE_PRIORITY); }))) {
@@ -1720,6 +1723,10 @@ extern(C)
             mixin(enumMixinStr_taskSCHEDULER_RUNNING);
         }
     }
+
+
+
+
     static if(!is(typeof(configUSE_QUEUE_SETS))) {
         private enum enumMixinStr_configUSE_QUEUE_SETS = `enum configUSE_QUEUE_SETS = 0;`;
         static if(is(typeof({ mixin(enumMixinStr_configUSE_QUEUE_SETS); }))) {
@@ -1864,16 +1871,6 @@ extern(C)
         private enum enumMixinStr_configUSE_ALTERNATIVE_API = `enum configUSE_ALTERNATIVE_API = 0;`;
         static if(is(typeof({ mixin(enumMixinStr_configUSE_ALTERNATIVE_API); }))) {
             mixin(enumMixinStr_configUSE_ALTERNATIVE_API);
-        }
-    }
-
-
-
-
-    static if(!is(typeof(configUSE_COUNTING_SEMAPHORES))) {
-        private enum enumMixinStr_configUSE_COUNTING_SEMAPHORES = `enum configUSE_COUNTING_SEMAPHORES = 0;`;
-        static if(is(typeof({ mixin(enumMixinStr_configUSE_COUNTING_SEMAPHORES); }))) {
-            mixin(enumMixinStr_configUSE_COUNTING_SEMAPHORES);
         }
     }
 
@@ -2036,6 +2033,24 @@ extern(C)
             mixin(enumMixinStr_configUSE_NEWLIB_REENTRANT);
         }
     }
+
+
+
+
+
+
+    static if(!is(typeof(configENFORCE_SYSTEM_CALLS_FROM_KERNEL_ONLY))) {
+        private enum enumMixinStr_configENFORCE_SYSTEM_CALLS_FROM_KERNEL_ONLY = `enum configENFORCE_SYSTEM_CALLS_FROM_KERNEL_ONLY = 0;`;
+        static if(is(typeof({ mixin(enumMixinStr_configENFORCE_SYSTEM_CALLS_FROM_KERNEL_ONLY); }))) {
+            mixin(enumMixinStr_configENFORCE_SYSTEM_CALLS_FROM_KERNEL_ONLY);
+        }
+    }
+
+
+
+
+
+
     static if(!is(typeof(portCHAR))) {
         private enum enumMixinStr_portCHAR = `enum portCHAR = char;`;
         static if(is(typeof({ mixin(enumMixinStr_portCHAR); }))) {
@@ -2106,16 +2121,6 @@ extern(C)
 
 
 
-    static if(!is(typeof(configENFORCE_SYSTEM_CALLS_FROM_KERNEL_ONLY))) {
-        private enum enumMixinStr_configENFORCE_SYSTEM_CALLS_FROM_KERNEL_ONLY = `enum configENFORCE_SYSTEM_CALLS_FROM_KERNEL_ONLY = 0;`;
-        static if(is(typeof({ mixin(enumMixinStr_configENFORCE_SYSTEM_CALLS_FROM_KERNEL_ONLY); }))) {
-            mixin(enumMixinStr_configENFORCE_SYSTEM_CALLS_FROM_KERNEL_ONLY);
-        }
-    }
-
-
-
-
     static if(!is(typeof(configMAX_SYSCALL_INTERRUPT_PRIORITY))) {
         private enum enumMixinStr_configMAX_SYSCALL_INTERRUPT_PRIORITY = `enum configMAX_SYSCALL_INTERRUPT_PRIORITY = ( configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY << ( 8 - configPRIO_BITS ) );`;
         static if(is(typeof({ mixin(enumMixinStr_configMAX_SYSCALL_INTERRUPT_PRIORITY); }))) {
@@ -2160,6 +2165,16 @@ extern(C)
         private enum enumMixinStr_configPRIO_BITS = `enum configPRIO_BITS = 4;`;
         static if(is(typeof({ mixin(enumMixinStr_configPRIO_BITS); }))) {
             mixin(enumMixinStr_configPRIO_BITS);
+        }
+    }
+
+
+
+
+    static if(!is(typeof(INCLUDE_xTaskGetSchedulerState))) {
+        private enum enumMixinStr_INCLUDE_xTaskGetSchedulerState = `enum INCLUDE_xTaskGetSchedulerState = 1;`;
+        static if(is(typeof({ mixin(enumMixinStr_INCLUDE_xTaskGetSchedulerState); }))) {
+            mixin(enumMixinStr_INCLUDE_xTaskGetSchedulerState);
         }
     }
 
@@ -2228,40 +2243,30 @@ extern(C)
             mixin(enumMixinStr_portNVIC_PENDSVSET_BIT);
         }
     }
-    static if(!is(typeof(INCLUDE_xTaskGetSchedulerState))) {
-        private enum enumMixinStr_INCLUDE_xTaskGetSchedulerState = `enum INCLUDE_xTaskGetSchedulerState = 1;`;
-        static if(is(typeof({ mixin(enumMixinStr_INCLUDE_xTaskGetSchedulerState); }))) {
-            mixin(enumMixinStr_INCLUDE_xTaskGetSchedulerState);
-        }
-    }
-
-
-
-
     static if(!is(typeof(INCLUDE_vTaskDelay))) {
         private enum enumMixinStr_INCLUDE_vTaskDelay = `enum INCLUDE_vTaskDelay = 1;`;
         static if(is(typeof({ mixin(enumMixinStr_INCLUDE_vTaskDelay); }))) {
             mixin(enumMixinStr_INCLUDE_vTaskDelay);
         }
     }
+
+
+
+
     static if(!is(typeof(INCLUDE_vTaskDelayUntil))) {
         private enum enumMixinStr_INCLUDE_vTaskDelayUntil = `enum INCLUDE_vTaskDelayUntil = 0;`;
         static if(is(typeof({ mixin(enumMixinStr_INCLUDE_vTaskDelayUntil); }))) {
             mixin(enumMixinStr_INCLUDE_vTaskDelayUntil);
         }
     }
-
-
-
-
-
-
     static if(!is(typeof(INCLUDE_vTaskSuspend))) {
         private enum enumMixinStr_INCLUDE_vTaskSuspend = `enum INCLUDE_vTaskSuspend = 1;`;
         static if(is(typeof({ mixin(enumMixinStr_INCLUDE_vTaskSuspend); }))) {
             mixin(enumMixinStr_INCLUDE_vTaskSuspend);
         }
     }
+
+
 
 
 
@@ -2292,6 +2297,16 @@ extern(C)
             mixin(enumMixinStr_INCLUDE_vTaskPrioritySet);
         }
     }
+
+
+
+
+    static if(!is(typeof(configMAX_CO_ROUTINE_PRIORITIES))) {
+        private enum enumMixinStr_configMAX_CO_ROUTINE_PRIORITIES = `enum configMAX_CO_ROUTINE_PRIORITIES = ( 2 );`;
+        static if(is(typeof({ mixin(enumMixinStr_configMAX_CO_ROUTINE_PRIORITIES); }))) {
+            mixin(enumMixinStr_configMAX_CO_ROUTINE_PRIORITIES);
+        }
+    }
     static if(!is(typeof(portINLINE))) {
         private enum enumMixinStr_portINLINE = `enum portINLINE = __inline;`;
         static if(is(typeof({ mixin(enumMixinStr_portINLINE); }))) {
@@ -2306,16 +2321,6 @@ extern(C)
         private enum enumMixinStr_portFORCE_INLINE = `enum portFORCE_INLINE = inline __attribute__ ( ( always_inline ) );`;
         static if(is(typeof({ mixin(enumMixinStr_portFORCE_INLINE); }))) {
             mixin(enumMixinStr_portFORCE_INLINE);
-        }
-    }
-
-
-
-
-    static if(!is(typeof(configMAX_CO_ROUTINE_PRIORITIES))) {
-        private enum enumMixinStr_configMAX_CO_ROUTINE_PRIORITIES = `enum configMAX_CO_ROUTINE_PRIORITIES = ( 2 );`;
-        static if(is(typeof({ mixin(enumMixinStr_configMAX_CO_ROUTINE_PRIORITIES); }))) {
-            mixin(enumMixinStr_configMAX_CO_ROUTINE_PRIORITIES);
         }
     }
 
@@ -2346,6 +2351,16 @@ extern(C)
         private enum enumMixinStr_configQUEUE_REGISTRY_SIZE = `enum configQUEUE_REGISTRY_SIZE = 8;`;
         static if(is(typeof({ mixin(enumMixinStr_configQUEUE_REGISTRY_SIZE); }))) {
             mixin(enumMixinStr_configQUEUE_REGISTRY_SIZE);
+        }
+    }
+
+
+
+
+    static if(!is(typeof(configUSE_COUNTING_SEMAPHORES))) {
+        private enum enumMixinStr_configUSE_COUNTING_SEMAPHORES = `enum configUSE_COUNTING_SEMAPHORES = 1;`;
+        static if(is(typeof({ mixin(enumMixinStr_configUSE_COUNTING_SEMAPHORES); }))) {
+            mixin(enumMixinStr_configUSE_COUNTING_SEMAPHORES);
         }
     }
 
@@ -4148,6 +4163,11 @@ import external.libc.config;
 auto _xSemaphoreCreateMutex()
 {
     return xQueueCreateMutex(( cast( uint8_t ) 1U ));
+}
+
+auto _xSemaphoreCreateRecursiveMutex()
+{
+    return xQueueCreateMutex(( cast( uint8_t ) 4U ));
 }
 
 auto _vSemaphoreDelete(SemaphoreHandle_t xSemaphore)
