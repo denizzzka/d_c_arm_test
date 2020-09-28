@@ -7,6 +7,7 @@ project(
     ]
 )
 
+#TODO: keep until will not be fixed https://github.com/mesonbuild/meson/issues/7154
 if get_option('dlang_lto')
     lto_type = 'full'
     lto_d = '--flto=' + lto_type #saves ~100KB
