@@ -3,6 +3,8 @@ import freertos;
 
 int main()
 {
+	malloc_stats();
+
 	//~ import std.stdio;
 	//~ writeln("Entering into D main()");
 
@@ -30,4 +32,11 @@ extern(C) void blinkTask(void *pvParametres) @nogc nothrow
 	vTaskDelay(500);
 }
 
-extern(C) __gshared string[] rt_options = [ "gcopt=minPoolSize:512B maxPoolSize:2048B incPoolSize:128B" ];
+extern(C) __gshared string[] rt_options = [ "gcopt=minPoolSize:128B maxPoolSize:2M incPoolSize:512B" ];
+
+//~ extern (C) bool logUnwinding() //FIXME: remove it
+//~ {
+	//~ return true;
+//~ }
+
+extern(C) void malloc_stats();
