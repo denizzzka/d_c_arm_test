@@ -32,7 +32,7 @@ extern(C) void blinkTask(void *pvParametres) @nogc nothrow
 	vTaskDelay(500);
 }
 
-extern(C) __gshared string[] rt_options = [ "gcopt=minPoolSize:128B maxPoolSize:2M incPoolSize:512B" ];
+extern(C) __gshared string[] rt_options = [ "gcopt=minPoolSize:16K maxPoolSize:5M incPoolSize:4K" ];
 
 //~ extern (C) bool logUnwinding() //FIXME: remove it
 //~ {
