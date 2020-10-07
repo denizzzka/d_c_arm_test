@@ -61,9 +61,6 @@ freertos_druntime_backend = [
 
 druntime_dep = subproject(
     'druntime',
-    default_options: [
-        'newlib-io-c99-formats=true',
-    ]
 ).get_variable('druntime_dep')
 
 druntime_lib = library(

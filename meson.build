@@ -51,35 +51,8 @@ semihost_lib = picolibc_sub.get_variable('lib_semihost')
 
 libopencm3_sub = subproject('libopencm3')
 libopencm3_dep = libopencm3_sub.get_variable('libopencm3_dep')
-ld_script_gen = libopencm3_sub.get_variable('ld_script_gen')
 
 libunwind_dep = subproject('libunwind').get_variable('libunwind_dep')
-
-ld_aliases_for_picolibc = files('aliases_for_picolibc.ld')
-
-ld_script = ld_script_gen.process(
-    ld_aliases_for_picolibc, #unused, just to satisfy generator
-    extra_args: [
-        'DEVICE=stm32f217xgx', #FIXME: set by option
-    ]
-)
-
-ld_script_path = 'linker_script.ld'
-
-# Copies generated file to make it acessible for .ini file
-ld_script_with_known_name = custom_target(
-    'concat .ld files and copy it to known place',
-    command : [ 'cat', '@INPUT@' ],
-    capture: true,
-    input: [ld_script, ld_aliases_for_picolibc],
-    output: ld_script_path,
-)
-
-run_target(
-    'ld_script_gen',
-    command: ['echo', 'generate ld script'],
-    depends: ld_script_with_known_name,
-)
 
 freertos_lib = library(
     'freertos',
@@ -103,10 +76,9 @@ executable(
         semihost_lib,
     ],
     link_language: 'c',
-    link_depends: ld_script_with_known_name,
     link_args: [
-        '-Xlinker', '--script=' + ld_script_path,
+        '-Xlinker', '--script=../linker_script.ld', #FIXME: hardcoded path
         '-L/usr/lib/gcc/arm-none-eabi/8.3.1/thumb/v7-m/nofp/', '-lgcc',
-        '-Xlinker', '--allow-multiple-definition', #ignore symbols duplication defined by libgcc and libunwind such as "_Unwind_RaiseException" (FIXME!)
+#        '-Xlinker', '--allow-multiple-definition', #ignore symbols duplication defined by libgcc and libunwind such as "_Unwind_RaiseException" (FIXME!)
     ]
 )
