@@ -79,6 +79,5 @@ executable(
     link_args: [
         '-Xlinker', '--script=../linker_script.ld', #FIXME: hardcoded path
         '-L/usr/lib/gcc/arm-none-eabi/8.3.1/thumb/v7-m/nofp/', '-lgcc',
-#        '-Xlinker', '--allow-multiple-definition', #ignore symbols duplication defined by libgcc and libunwind such as "_Unwind_RaiseException" (FIXME!)
     ]
 )
