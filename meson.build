@@ -70,7 +70,7 @@ executable(
         d_dep,
         libopencm3_dep,
         picolibc_dep,
-        libunwind_dep,
+        #libunwind_dep,
     ],
     link_with: [
         semihost_lib,
