@@ -2,13 +2,16 @@ EXTERN(vector_table)
 ENTRY(reset_handler)
 MEMORY
 {
- ram (rwx) : ORIGIN = 0x20000000, LENGTH = 10M
- rom (rx) : ORIGIN = 0x08000000, LENGTH = 1024K
+ flash (rx) : ORIGIN = 0x00000000, LENGTH = 256K
+ rom (rx)   : ORIGIN = 0x21000000, LENGTH = 1M
+ ram (rwx)  : ORIGIN = 0x21800000, LENGTH = 4M
 }
 SECTIONS
 {
- .text : {
+ .vectors : {
   *(.vectors)
+ } >flash
+ .text : {
   *(.text*)
   . = ALIGN(4);
   *(.rodata*)

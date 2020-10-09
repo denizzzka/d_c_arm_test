@@ -76,7 +76,9 @@ executable(
         semihost_lib,
     ],
     link_language: 'c',
+    link_depends: files('linker_script.ld'),
     link_args: [
+        '-static',
         '-Xlinker', '--script=../linker_script.ld', #FIXME: hardcoded path
         '-L/usr/lib/gcc/arm-none-eabi/8.3.1/thumb/v7-m/nofp/', '-lgcc',
     ]
