@@ -1,5 +1,5 @@
 [wrap-git]
-url = https://github.com/libopencm3/libopencm3.git
+url = https://github.com/denizzzka/libopencm3.git
 depth = 1
-revision = master
+revision = native_meson
 patch_directory = libopencm3_changes
