@@ -78,16 +78,17 @@ void[] allocateTLS() nothrow @nogc
 
     import core.stdc.string: memcpy, memset;
 
-    auto p = getTLSParams;
+    __gshared TLSParams p;
+    p = getTLSParams();
 
     // Allocate TLS memory
     static import core.stdc.stdlib;
-    void* tls = core.stdc.stdlib.malloc(p.full_tls_size);
+    __gshared void* tls;
+    tls = core.stdc.stdlib.malloc(p.full_tls_size);
 
     // Set up TLS pointer
     _set_tls(tls);
 
-    auto curr_thread = Thread.getThis;
     // Copying TLS data
     memcpy(tls, p.tdata_start, p.tdata_size);
 
