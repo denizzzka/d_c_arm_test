@@ -73,18 +73,16 @@ void[] allocateTLS() nothrow @nogc
     auto p = getTLSParams;
 
     // Allocate TLS memory
-    static import core.stdc.stdlib;
-    __gshared void* tls;
-    tls = core.stdc.stdlib.malloc(p.full_tls_size);
+    // (emutls does this automatically at first access to TLS pointer)
 
     // Set up TLS pointer
-    // (isn't needed because here is we use emulated TLS)
+    // (ditto)
 
     // Copying TLS data
-    memcpy(tls, p.tdata_start, p.tdata_size);
+    //~ memcpy(tls, p.tdata_start, p.tdata_size);
 
     // Init local bss by zeroes
-    memset(tls + p.tdata_size, 0x00, p.tbss_size);
+    //~ memset(tls + p.tdata_size, 0x00, p.tbss_size);
 
     debug(PRINTF) printf("allocateTLS done\n");
 
