@@ -39,14 +39,6 @@ TLSParams getTLSParams() nothrow @nogc
     );
 }
 
-extern(C) void _set_tls(void*) nothrow @nogc; // Provided by picolibc
-extern(C) void* __aeabi_read_tp() nothrow @nogc; // Provided by picolibc
-
-extern(C) void* __tls_get_addr() nothrow @nogc
-{
-    return __aeabi_read_tp();
-}
-
 void fillGlobalSectionGroup(ref SectionGroup gsg) nothrow @nogc
 {
     debug(PRINTF) printf(__FUNCTION__~" called\n");
@@ -86,7 +78,7 @@ void[] allocateTLS() nothrow @nogc
     tls = core.stdc.stdlib.malloc(p.full_tls_size);
 
     // Set up TLS pointer
-    _set_tls(tls);
+    // (isn't needed because here is we use emulated TLS)
 
     // Copying TLS data
     memcpy(tls, p.tdata_start, p.tdata_size);
