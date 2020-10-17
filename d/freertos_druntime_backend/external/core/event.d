@@ -4,6 +4,8 @@ import core.time;
 
 struct Event
 {
+    private bool signaled;
+
     nothrow @nogc:
 
     /**
@@ -36,7 +38,8 @@ struct Event
 
     ~this()
     {
-        assert(false, "Not implemented");
+        //FIXME
+        //~ assert(false, "Not implemented");
     }
 
     /**
@@ -52,13 +55,15 @@ struct Event
     /// Set the event to "signaled", so that waiting clients are resumed
     void set()
     {
-        assert(false, "Not implemented");
+        //FIXME
+        signaled = true;
     }
 
     /// Reset the event manually
     void reset()
     {
-        assert(false, "Not implemented");
+        //FIXME
+        signaled = false;
     }
 
     /**
@@ -69,7 +74,8 @@ struct Event
      */
     bool wait()
     {
-        assert(false, "Not implemented");
+        //FIXME
+        return signaled;
     }
 
     /**

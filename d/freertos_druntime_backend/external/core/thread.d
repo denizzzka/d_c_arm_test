@@ -268,12 +268,12 @@ class Thread : ThreadBase
 
     static void sleep( Duration val ) @nogc nothrow
     {
-        assert(false, "Not implemented");
+        //~ assert(false, "Not implemented");
     }
 
     static void yield() @nogc nothrow
     {
-        assert(false, "Not implemented"); //FIXME
+        //~ assert(false, "Not implemented"); //FIXME
     }
 
     static int opApply(scope int delegate(ref Thread) dg)
