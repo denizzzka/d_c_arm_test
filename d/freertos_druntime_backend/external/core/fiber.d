@@ -4,14 +4,11 @@ version (LDC) import ldc.attributes;
 
 version (ARM):
 
-final void initStack() nothrow @nogc
-{
-    assert(false, "Not implemented");
-}
+import core.thread.context: StackContext;
 
-export void fiber_entryPoint() nothrow /* LDC */ @assumeUsed @nogc
+void initStack(StackContext* m_ctxt) nothrow @nogc
 {
-    assert(false, "Not implemented");
+    //FIXME: Not implemented
 }
 
 extern (C) void fiber_switchContext(size_t** for_store_curr_sp, size_t* switch_to_sp) nothrow @nogc @naked
