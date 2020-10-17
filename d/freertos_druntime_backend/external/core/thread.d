@@ -215,12 +215,6 @@ class Thread : ThreadBase
         assert(false, "Not implemented");
     }
 
-    /// Sets a thread-local reference to the current thread object.
-    static void setThis(Thread t) nothrow @nogc
-    {
-        sm_this = t;
-    }
-
     static Thread getThis() @safe nothrow @nogc
     {
         return sm_this;
