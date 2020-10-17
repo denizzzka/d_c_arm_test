@@ -234,22 +234,10 @@ class Thread : ThreadBase
         assert(false, "Not implemented");
     }
 
-    static void add(StackContext* c) nothrow @nogc
-    in( c )
-    {
-        assert(false, "Not implemented");
-    }
-
     //
     // Remove a thread from the global thread list.
     //
     static void remove(Thread t) nothrow @nogc
-    {
-        assert(false, "Not implemented");
-    }
-
-    static void remove(StackContext* c) nothrow @nogc
-    in( c )
     {
         assert(false, "Not implemented");
     }
