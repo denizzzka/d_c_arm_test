@@ -27,7 +27,8 @@ nothrow:
 /// Term threads module
 extern (C) void thread_term() @nogc
 {
-    assert(false, "Not implemented");
+    //FIXME
+    //~ assert(false, "Not implemented");
 }
 
 extern (C) static Thread thread_findByAddr(ThreadID addr)

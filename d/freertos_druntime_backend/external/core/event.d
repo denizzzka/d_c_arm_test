@@ -17,7 +17,8 @@ struct Event
      */
     this(bool manualReset, bool initialState)
     {
-        assert(false, "Not implemented");
+        //FIXME
+        //~ assert(false, "Not implemented");
     }
 
     /**
@@ -89,6 +90,7 @@ struct Event
      */
     bool wait(Duration tmout)
     {
-        assert(false, "Not implemented");
+        //FIXME
+        return signaled;
     }
 }

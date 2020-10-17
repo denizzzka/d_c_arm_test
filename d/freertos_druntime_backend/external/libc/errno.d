@@ -3,9 +3,9 @@ module external.libc.errno;
 @nogc:
 nothrow:
 
-extern (C) ref int __error()
-{
-    assert(false, "Not implemented");
-}
+extern(C) extern __gshared int errno;
 
-alias errno = __error;
+extern (C) ref int __error() @system
+{
+    return errno;
+}
