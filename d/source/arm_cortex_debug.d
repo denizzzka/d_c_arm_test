@@ -6,16 +6,11 @@ import ldc.attributes;
 
 version(ARM):
 
-//~ alias Handler = extern (C) void function() nothrow @nogc;
+extern(C) void hard_fault_handler() nothrow @nogc @naked @assumeUsed { hardFaultHandler; }
+extern(C) void usage_fault_handler() nothrow @nogc @naked @assumeUsed { hardFaultHandler; }
+extern(C) void mem_manage_handler() nothrow @nogc @naked @assumeUsed { hardFaultHandler; }
 
-//~ shared static this()
-//~ {
-	//~ Handler vector_hardFault_ptr = cast(Handler) (cast(size_t*) 0x00)[3];
-
-	//~ vector_hardFault_ptr = &hardFaultHandler;
-//~ }
-
-extern(C) void mem_manage_handler() nothrow @nogc @naked @assumeUsed
+void hardFaultHandler() nothrow @nogc @naked
 {
     import ldc.llvmasm;
 
