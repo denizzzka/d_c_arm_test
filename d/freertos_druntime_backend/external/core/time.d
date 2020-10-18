@@ -12,7 +12,8 @@ import core.time : TickDuration; //FIXME: deprecated!
 
 static @property TickDuration currSystemTick() @trusted nothrow @nogc
 {
-    assert(false, "Not implemented");
+    //FIXME: implement it
+    return TickDuration(789);
 }
 
 long currTicks; //FIXME
