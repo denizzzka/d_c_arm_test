@@ -3,11 +3,6 @@ import freertos;
 
 int main()
 {
-	malloc_stats();
-
-	//~ import std.stdio;
-	//~ writeln("Entering into D main()");
-
 	gpio_setup();
 
 	xTaskCreate(
