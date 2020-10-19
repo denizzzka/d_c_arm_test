@@ -12,11 +12,21 @@ import core.time : TickDuration; //FIXME: deprecated!
 
 static @property TickDuration currSystemTick() @trusted nothrow @nogc
 {
-    //FIXME: implement it
-    return TickDuration(789);
+    return TickDuration(currTicks);
 }
 
-long currTicks = 789; //FIXME
+//FIXME: dirty, implemented only for unittests
+version(unittest)
+long currTicks() @trusted nothrow @nogc
+{
+    import core.atomic;
+
+    __gshared static long curr;
+
+    curr++;
+
+    return curr;
+}
 
 enum tickDuration_ticksPerSec = 1_000_000;
 
