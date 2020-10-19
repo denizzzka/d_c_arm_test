@@ -1,5 +1,7 @@
 module arm_cortex_debug;
 
+extern(C) void malloc_stats();
+
 version (LDC):
 
 import ldc.attributes;

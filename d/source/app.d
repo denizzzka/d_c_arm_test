@@ -28,5 +28,3 @@ extern(C) void blinkTask(void *pvParametres) @nogc nothrow
 }
 
 extern(C) __gshared string[] rt_options = [ "gcopt=minPoolSize:16K maxPoolSize:5M incPoolSize:4K" ];
-
-extern(C) void malloc_stats();
