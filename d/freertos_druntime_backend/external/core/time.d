@@ -18,12 +18,11 @@ static @property TickDuration currSystemTick() @trusted nothrow @nogc
 
 long currTicks; //FIXME
 
+enum tickDuration_ticksPerSec = 1_000_000;
+
 void initTicksPerSecond(ref long[] tps)
 {
-    //FIXME
-    enum ticksPerSecond = 1_000_000;
-
-    tps[0] = ticksPerSecond; // ClockType.normal
+    tps[0] = tickDuration_ticksPerSec; // ClockType.normal
 }
 
 // Linked by picolibc
