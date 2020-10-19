@@ -52,6 +52,7 @@ freertos_druntime_backend = [
     'freertos_druntime_backend/external/core/types.d',
     'freertos_druntime_backend/external/libc/errno.d',
     'freertos_druntime_backend/external/libc/stdio_.d',
+    'freertos_druntime_backend/external/libc/wchar_.d',
     'freertos_druntime_backend/external/rt/config.d',
     'freertos_druntime_backend/external/rt/dmain.d',
     'freertos_druntime_backend/external/rt/monitor_.d',
