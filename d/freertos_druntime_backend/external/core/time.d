@@ -16,7 +16,7 @@ static @property TickDuration currSystemTick() @trusted nothrow @nogc
     return TickDuration(789);
 }
 
-long currTicks; //FIXME
+long currTicks = 789; //FIXME
 
 enum tickDuration_ticksPerSec = 1_000_000;
 
