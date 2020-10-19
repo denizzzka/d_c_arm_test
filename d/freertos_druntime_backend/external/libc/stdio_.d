@@ -6,20 +6,20 @@ import external.libc.config;
 alias c_long fpos_t;
 
 ///
-struct _iobuf
-{
-    char* _ptr;
-    int   _cnt;
-    char* _base;
-    int   _flag;
-    int   _file;
-    int   _charbuf;
-    int   _bufsiz;
-    char* __tmpnum;
-}
+struct FILE;
 
-///
-alias FILE = shared(_iobuf);
+__gshared extern(C) extern FILE*[3] __iob;
+
+__gshared FILE* stdin;
+__gshared FILE* stdout;
+__gshared FILE* stderr;
+
+shared static this()
+{
+    stdin  = __iob[0];
+    stdout = __iob[1];
+    stderr = __iob[2];
+}
 
 enum
 {
@@ -30,10 +30,6 @@ enum
     ///
     _IONBF = 2,
 }
-
-export shared FILE* stdin;
-export shared FILE* stdout;
-export shared FILE* stderr;
 
 enum
 {
