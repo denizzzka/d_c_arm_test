@@ -15,12 +15,9 @@ static @property TickDuration currSystemTick() @trusted nothrow @nogc
     return TickDuration(currTicks);
 }
 
-//FIXME: dirty, implemented only for unittests
-version(unittest)
+//FIXME: dirty implementation, only for unittests
 long currTicks() @trusted nothrow @nogc
 {
-    import core.atomic;
-
     __gshared static long curr;
 
     curr++;
