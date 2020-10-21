@@ -82,6 +82,8 @@ druntime_lib = library(
         'CRuntime_Abstract',
         'ExternStackShell',
         'AsmExternal', #used by fiber module
+        'CoreUnittest',
+        'OnlyLowMemUnittest', #disables memory-greedy unittests
     ],
 )
 
