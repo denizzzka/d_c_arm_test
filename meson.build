@@ -86,18 +86,6 @@ firmware = executable(
     ]
 )
 
-add_test_setup(
-    'QEMU_ARM_CortexM3_mps2_an511',
-    exe_wrapper: [
-        'qemu-system-arm',
-            '-machine', 'mps2-an511',
-            '-nographic',
-            '-semihosting',
-            '-kernel',
-    ],
-    is_default: true,
-)
-
 test(
     'unittests',
     firmware,
