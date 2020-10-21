@@ -8,17 +8,24 @@ alias c_long fpos_t;
 ///
 struct FILE;
 
-__gshared extern(C) extern FILE*[3] __iob;
+private __gshared extern(C) extern FILE*[3] __iob;
 
 __gshared FILE* stdin;
 __gshared FILE* stdout;
 __gshared FILE* stderr;
 
-shared static this()
+import ldc.attributes;
+
+@section(".init_array")
+immutable initStdioDescriptors_ptr = &initStdioDescriptors;
+
+void initStdioDescriptors()
 {
     stdin  = __iob[0];
     stdout = __iob[1];
     stderr = __iob[2];
+
+    assert(stdout !is null);
 }
 
 enum
