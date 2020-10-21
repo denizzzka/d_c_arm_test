@@ -41,6 +41,7 @@ picolibc_sub = subproject(
     'picolibc',
     default_options: [
         'multilib=false',
+        'newlib-global-errno=true',
         'newlib-io-c99-formats=true',
         'newlib-long-time_t=true',
         'newlib-multithread=true',
@@ -64,7 +65,7 @@ freertos_lib = library(
 
 subdir('d')
 
-executable(
+firmware = executable(
     'firmware.elf',
     dependencies: [
         d_dep,
@@ -82,4 +83,21 @@ executable(
         '-Xlinker', '--script=../linker_script.ld', #FIXME: hardcoded path
         '-L/usr/lib/gcc/arm-none-eabi/8.3.1/thumb/v7-m/nofp/', '-lgcc',
     ]
+)
+
+add_test_setup(
+    'QEMU_ARM_CortexM3_mps2_an511',
+    exe_wrapper: [
+        'qemu-system-arm',
+            '-machine', 'mps2-an511',
+            '-nographic',
+            '-semihosting',
+            '-kernel',
+    ],
+    is_default: true,
+)
+
+test(
+    'unittests',
+    firmware,
 )
