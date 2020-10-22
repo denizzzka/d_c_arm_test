@@ -196,13 +196,13 @@ class Thread : ThreadBase
     this(void function() fn, size_t sz = 0) @safe pure nothrow @nogc
     in(fn !is null)
     {
-        assert(false, "Not implemented");
+        super(fn, sz);
     }
 
     this(void delegate() dg, size_t sz = 0) @safe pure nothrow @nogc
     in(dg !is null)
     {
-        assert(false, "Not implemented");
+        super(dg, sz);
     }
 
     final Thread start() nothrow
