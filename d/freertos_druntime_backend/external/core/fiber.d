@@ -6,39 +6,28 @@ version (ARM):
 
 import core.thread.context: StackContext;
 
-void initStack(StackContext* m_ctxt) nothrow @nogc
+extern(C) void fiber_entryPoint() nothrow;
+
+void initStack(bool isStackGrowingDown)(StackContext* m_ctxt) nothrow @nogc
+if(isStackGrowingDown)
 {
-    //FIXME: Not implemented
-}
+    void* pstack = m_ctxt.tstack;
+    scope(exit) m_ctxt.tstack = pstack;
 
-extern (C) void fiber_switchContext(size_t** for_store_curr_sp, size_t* switch_to_sp) nothrow @nogc @naked
-{
-    import ldc.llvmasm;
+    void push( size_t val ) nothrow
+    {
+        pstack -= size_t.sizeof;
+        *(cast(size_t*) pstack) = val;
+    }
 
-    assert(false, "FIXME: https://github.com/ldc-developers/ldc/issues/3573");
-    //~ __asm!()(`
-    //~ // stack grows down (sp is decrementing while grow)
-    //~ PUSH    {r0-r12}                @ Push user registers (except two what contain arguments)
+    pstack -= int.sizeof * 8;
 
-    //~ @FIXME:
-    //~ @MRS     r0, SPSR                @ Pick up Saved Program Status Register
-    //~ PUSH    {r0, lr}                @ and push it with return address.
+    // link register
+    push( cast(size_t) &fiber_entryPoint );
 
-    //~ LDRH    r1, [$0]                @ Get pointer to storage ptr
-    //~ MOV     r2, sp                  @ Get sp and
-    //~ STRH    r2, [r1]                @ store its value into storage
-
-    //~ LDRH    r3, [$1]                @ Load new process sp from switch_to_sp argument
-    //~ MOV     sp, r3                  @ Set up new sp value
-
-    //~ POP     {r0, lr}                @ Pop SPSR data
-    //~ @FIXME:
-    //~ @MSR     SPSR_cxsf, r0           @ and restore some SPSR fields.
-
-    //~ POP     {r0-r12}                @ Pop the rest of the registers
-
-    //~ BX      lr                      @ Return (also sets PC to new value)
-    //~ `,
-    //~ "r,r",
-    //~ for_store_curr_sp, switch_to_sp);
+    /*
+     * We do not push padding and d15-d8 as those are zero initialized anyway
+     * Position the stack pointer above the lr register
+     */
+    pstack += int.sizeof;
 }
