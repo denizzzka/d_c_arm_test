@@ -19,7 +19,7 @@ extern (C) void thread_init() @nogc
     _mainThreadStore[] = typeid(Thread).initializer[];
 
     // Creating main thread
-    Thread.sm_main = external_attachThread((cast(Thread)_mainThreadStore.ptr).__ctor());
+    ThreadBase.sm_main = external_attachThread((cast(Thread)_mainThreadStore.ptr).__ctor());
 }
 
 nothrow:
@@ -185,12 +185,6 @@ Thread external_attachThread(ThreadBase thisThread) @nogc
 
 class Thread : ThreadBase
 {
-    /// Main process thread
-    private __gshared Thread sm_main;
-
-    /// Current thread
-    private static Thread sm_this;
-
     bool m_isInCriticalRegion;
 
     /// Initializes a thread object which has no associated executable function.
@@ -218,7 +212,7 @@ class Thread : ThreadBase
 
     static Thread getThis() @safe nothrow @nogc
     {
-        return sm_this;
+        return cast(Thread) ThreadBase.getThis;
     }
 
     override final @property bool isRunning() nothrow @nogc
