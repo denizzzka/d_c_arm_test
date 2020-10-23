@@ -22,14 +22,13 @@ extern (C) void thread_init() @nogc
     ThreadBase.sm_main = external_attachThread((cast(Thread)_mainThreadStore.ptr).__ctor());
 }
 
-nothrow:
-
 /// Term threads module
 extern (C) void thread_term() @nogc
 {
-    //FIXME
-    //~ assert(false, "Not implemented");
+    thread_term_tpl!(Thread)(_mainThreadStore);
 }
+
+nothrow:
 
 extern (C) static Thread thread_findByAddr(ThreadID addr)
 {
@@ -201,6 +200,11 @@ class Thread : ThreadBase
     in(dg !is null)
     {
         super(dg, sz);
+    }
+
+    ~this() nothrow @nogc
+    {
+        //FIXME
     }
 
     final Thread start() nothrow
