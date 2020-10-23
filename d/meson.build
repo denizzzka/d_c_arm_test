@@ -84,7 +84,11 @@ druntime_lib = library(
         'AsmExternal', #used by fiber module
         'CoreUnittest',
         'OnlyLowMemUnittest', #disables memory-greedy unittests
+        'SupportSanitizers', #FIXME: remove, for debugging purposes only
     ],
+    d_debug: [
+        'SENTINEL',
+    ]
 )
 
 d_dep = declare_dependency(
