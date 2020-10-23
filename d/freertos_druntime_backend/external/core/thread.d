@@ -185,8 +185,6 @@ Thread external_attachThread(ThreadBase thisThread) @nogc
 
 class Thread : ThreadBase
 {
-    bool m_isInCriticalRegion;
-
     /// Initializes a thread object which has no associated executable function.
     /// This is used for the main thread initialized in thread_init().
     private this(size_t sz = 0) @safe pure nothrow @nogc
