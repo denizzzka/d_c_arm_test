@@ -1,3 +1,3 @@
 module external.core.memory;
 
-enum getPageSize = 4096;
+enum PageSize = 4096;
