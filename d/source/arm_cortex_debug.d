@@ -1,62 +1,69 @@
 module arm_cortex_debug;
 
 version (LDC):
+version (ARM_Thumb):
+
+nothrow:
+@nogc:
 
 import ldc.attributes;
-
-extern(C) void malloc_stats() @assumeUsed;
+import ldc.llvmasm;
 
 version(ARM):
 
-extern(C) void hard_fault_handler() nothrow @nogc @naked @assumeUsed { hardFaultHandler; }
-extern(C) void usage_fault_handler() nothrow @nogc @naked @assumeUsed { hardFaultHandler; }
-extern(C) void mem_manage_handler() nothrow @nogc @naked @assumeUsed { hardFaultHandler; }
+extern(C) void hard_fault_handler() @naked @assumeUsed { hardFaultHandler; }
+extern(C) void usage_fault_handler() @naked @assumeUsed { hardFaultHandler; }
+extern(C) void mem_manage_handler() @naked @assumeUsed { hardFaultHandler; }
 
-void hardFaultHandler() nothrow @nogc @naked
+__gshared Registers regs;
+
+extern(C) void hardFaultHandler() @naked
 {
-    import ldc.llvmasm;
-
-    __asm!()(`
-    tst lr, #4
-    ite eq
-    mrseq r0, msp
-    mrsne r0, psp
-    ldr r1, [r0, #24]
-    ldr r2, handler2_address_const
-    bx r2
-    handler2_address_const: .word prvGetRegistersFromStack
-    `,
-    ``
+    // Get fault stack address
+    regs.sp = __asm!(void*)(`
+        tst lr, #4      // check 3 bit
+        ite eq          // (bit == 1)
+        mrseq $0, msp   // ? main stack pointer is used, save it
+        mrsne $0, msp //FIXME:here is something is broken, must be psp   // : process stack pointer is used, save it
+        `,
+        `=&r`,
     );
+
+    import ldc.intrinsics;
+    regs.other = *(cast(InterruptStackFrame*) llvm_frameaddress(0));
+
+    regs.sp += InterruptStackFrame.sizeof;
+
+    while(true)
+        llvm_debugtrap();
+}
+
+struct InterruptStackFrame
+{
+    uint r0;
+    uint r1;
+    uint r2;
+    uint r3;
+    uint r12;
+    void* lr;    /// Link register
+    void* pc;    /// Program counter
+    uint psr;    /// Program status register
 }
 
 struct Registers
 {
-	uint r0;
-	uint r1;
-	uint r2;
-	uint r3;
-	uint r12;
-	uint lr; /* Link register. */
-	uint pc; /* Program counter. */
-	uint psr;/* Program status register. */
+    void* sp;
+
+    InterruptStackFrame other;
+    alias other this;
 }
 
-extern(C) void prvGetRegistersFromStack(uint* pulFaultStackAddress)
+void doHardFault()
 {
-	Registers regs;
-	with(regs)
-	{
-		r0 = pulFaultStackAddress[ 0 ];
-		r1 = pulFaultStackAddress[ 1 ];
-		r2 = pulFaultStackAddress[ 2 ];
-		r3 = pulFaultStackAddress[ 3 ];
-
-		r12 = pulFaultStackAddress[ 4 ];
-		lr = pulFaultStackAddress[ 5 ];
-		pc = pulFaultStackAddress[ 6 ];
-		psr = pulFaultStackAddress[ 7 ];
-	}
-
-    while(true){}
+    __asm!()(`
+        LDR R1, =0x0800029A;
+        BX r1;
+        `,
+        ``,
+    );
 }
