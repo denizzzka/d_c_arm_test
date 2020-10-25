@@ -39,6 +39,7 @@ extern (C) void* thread_entryPoint( void* arg ) nothrow
 {
     Thread obj = cast(Thread) arg;
     Thread.setThis(obj);
+    ThreadBase.add(obj);
 
     obj.tlsGCdataInit();
 
@@ -175,9 +176,20 @@ Thread external_attachThread(ThreadBase thisThread) @nogc
 {
     Thread t = thisThread.toThread;
 
+    StackContext* thisContext = &thisThread.m_main;
+    assert(thisContext);
+    assert(thisContext == t.m_curr);
+
     Thread.setThis(t);
 
+    t.m_isDaemon = true;
     t.tlsGCdataInit();
+    Thread.setThis( thisThread );
+
+    ThreadBase.add( t, false );
+    ThreadBase.add( thisContext );
+    if ( Thread.sm_main !is null )
+        multiThreadedFlag = true;
 
     return t;
 }
@@ -219,10 +231,8 @@ class Thread : ThreadBase
 
     override final @property bool isRunning() nothrow @nogc
     {
-        if (!super.isRunning())
-            return false;
-
-        assert(false, "Not implemented");
+        //FIXME: Not implemented
+        return true;
     }
 
     //
