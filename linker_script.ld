@@ -8,6 +8,17 @@ MEMORY
 }
 SECTIONS
 {
+  /* fake output .got section */
+  /* Dynamic relocations are unsupported. This section is only used to detect
+     relocatable code in the input files and raise an error if relocatable code
+     is found */
+  .got :
+  {
+    _sgot = .;
+    KEEP(*(.got .got.*));
+    _egot = .;
+  } >ram AT>rom
+
  .vectors : {
   *(.vectors)
  } >flash
@@ -62,14 +73,15 @@ SECTIONS
   PROVIDE( _tdata = .);
   *(.tdata .tdata.* .gnu.linkonce.td.*)
   . = ALIGN(4);
- } >ram AT>rom :tls :ram_init
+ } >rom :tls :ram_init
+ _tdata_size = SIZEOF(.tdata);
  .tbss : {
   PROVIDE( _tbss = . );
   *(.tbss .tbss.* .gnu.linkonce.tb.*)
   *(.tcommon)
   PROVIDE( _etbss = . );
   . = ALIGN(4);
- } >ram AT>ram :tls :ram
+ } >rom :tls
  _tbss_size = SIZEOF(.tbss);
  .data : {
   _data = .;
@@ -90,3 +102,7 @@ SECTIONS
 PROVIDE(_stack = ORIGIN(ram) + LENGTH(ram));
 PROVIDE( __heap_start = end );
 PROVIDE( __heap_end = ORIGIN(ram) + LENGTH(ram) - 0x800 );
+
+#ASSERT(_sgot == _egot, "
+#.got section detected in the input files. Dynamic relocations are not
+#supported. Please modify your build to compile code _without_ PIC.");
