@@ -3,7 +3,8 @@ project(
     ['d'],
     version: 'v0.0.1',
     default_options: [
-        'default_library=static' #move out it
+        'default_library=static', #move out it
+        'b_staticpic=false',
     ]
 )
 
@@ -46,6 +47,7 @@ picolibc_sub = subproject(
         'newlib-long-time_t=true',
         'newlib-multithread=true',
         'newlib-tinystdio=true',
+        'thread-local-storage=true',
     ]
 )
 picolibc_dep = picolibc_sub.get_variable('picolibc_dep')
