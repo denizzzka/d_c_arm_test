@@ -52,12 +52,11 @@ void fillGlobalSectionGroup(ref SectionGroup gsg) nothrow @nogc
     gsg._gcRanges.insertBack(data_start[0 .. size]);
 
     // TLS
-    import core.stdc.stdlib: malloc;
     import core.stdc.string: memcpy, memset;
 
     auto p = getTLSParams();
 
-    void* tls = malloc(p.full_tls_size);
+    void* tls = aligned_alloc(8, p.full_tls_size);
     assert(tls, "cannot allocate TLS block");
 
     // Copying TLS data
@@ -70,6 +69,8 @@ void fillGlobalSectionGroup(ref SectionGroup gsg) nothrow @nogc
 
     debug(PRINTF) printf(__FUNCTION__~" done\n");
 }
+
+extern(C) void* aligned_alloc(size_t _align, size_t size) nothrow @nogc;
 
 /***
  * Called once per thread; returns array of thread local storage ranges
