@@ -78,19 +78,12 @@ void[] initTLSRanges() nothrow @nogc
 
     _set_tls(tls);
 
-    return getTLSBlock();
-}
+    // Register in GC
+    //TODO: move this info into our own SectionGroup implementation
+    import core.memory;
+    GC.addRange(tls, p.full_tls_size);
 
-void[] getTLSBlock() nothrow @nogc
-{
-    import external.core.thread;
-    import ldc.intrinsics;
-
-    //FIXME: redundant calculations
-    auto p = getTLSParams;
-
-    // FIXME: return an empty but non-null slice if there's no TLS data
-    return __aeabi_read_tp()[0 .. p.full_tls_size];
+    return tls[0 .. p.full_tls_size];
 }
 
 extern(C) void _set_tls(void* p) nothrow @nogc; // provided by picolibc
