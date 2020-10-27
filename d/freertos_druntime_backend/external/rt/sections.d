@@ -40,7 +40,6 @@ TLSParams getTLSParams() nothrow @nogc
     );
 }
 
-//TODO: rename to initSections
 void fillGlobalSectionGroup(ref SectionGroup gsg) nothrow @nogc
 {
     debug(PRINTF) printf(__FUNCTION__~" called\n");
@@ -50,6 +49,18 @@ void fillGlobalSectionGroup(ref SectionGroup gsg) nothrow @nogc
     ptrdiff_t size = cast(void*)&_ebss - data_start;
 
     gsg._gcRanges.insertBack(data_start[0 .. size]);
+
+    debug(PRINTF) printf(__FUNCTION__~" done\n");
+}
+
+extern(C) void* aligned_alloc(size_t _align, size_t size) nothrow @nogc;
+
+/***
+ * Called once per thread; returns array of thread local storage ranges
+ */
+void[] initTLSRanges() nothrow @nogc
+{
+    debug(PRINTF) printf("external initTLSRanges called\n");
 
     // TLS
     import core.stdc.string: memcpy, memset;
@@ -67,18 +78,6 @@ void fillGlobalSectionGroup(ref SectionGroup gsg) nothrow @nogc
 
     _set_tls(tls);
 
-    debug(PRINTF) printf(__FUNCTION__~" done\n");
-}
-
-extern(C) void* aligned_alloc(size_t _align, size_t size) nothrow @nogc;
-
-/***
- * Called once per thread; returns array of thread local storage ranges
- */
-void[] initTLSRanges() nothrow @nogc
-{
-    debug(PRINTF) printf("external initTLSRanges called\n");
-
     return getTLSBlock();
 }
 
@@ -87,6 +86,7 @@ void[] getTLSBlock() nothrow @nogc
     import external.core.thread;
     import ldc.intrinsics;
 
+    //FIXME: redundant calculations
     auto p = getTLSParams;
 
     // FIXME: return an empty but non-null slice if there's no TLS data
