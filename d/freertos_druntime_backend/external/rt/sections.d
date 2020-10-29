@@ -67,6 +67,7 @@ void[] initTLSRanges() nothrow @nogc
 
     auto p = getTLSParams();
 
+    // For multithread it is need to allocate additional TCB data too?
     void* tls = aligned_alloc(8, p.full_tls_size);
     assert(tls, "cannot allocate TLS block");
 
@@ -76,10 +77,14 @@ void[] initTLSRanges() nothrow @nogc
     // Init local bss by zeroes
     memset(tls + p.tdata_size, 0x00, p.tbss_size);
 
-    _set_tls(tls);
+    enum TCB_size = 8;
+    _set_tls(tls); // picolibc decrements TCB in _set_tls
+
+    void* tls_arm = __aeabi_read_tp();
+    assert(tls - tls_arm == TCB_size);
 
     // Register in GC
-    //TODO: move this info into our own SectionGroup implementation
+    //TODO: move this info into our own SectionGroup implementation?
     import core.memory;
     GC.addRange(tls, p.full_tls_size);
 
