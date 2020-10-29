@@ -62,10 +62,21 @@ void[] initTLSRanges() nothrow @nogc
 {
     debug(PRINTF) printf("external initTLSRanges called\n");
 
+    auto p = getTLSParams();
+
+    enum TCB_size = 8;
+
+    //FIXME: initTLSRanges() must be called only once!
+    __gshared bool isInitialized;
+    if(isInitialized)
+    {
+        auto tls_with_tcb = __aeabi_read_tp();
+
+        return (tls_with_tcb + TCB_size)[0 .. p.full_tls_size];
+    }
+
     // TLS
     import core.stdc.string: memcpy, memset;
-
-    auto p = getTLSParams();
 
     // For multithread it is need to allocate additional TCB data too?
     void* tls = aligned_alloc(8, p.full_tls_size);
@@ -77,7 +88,6 @@ void[] initTLSRanges() nothrow @nogc
     // Init local bss by zeroes
     memset(tls + p.tdata_size, 0x00, p.tbss_size);
 
-    enum TCB_size = 8;
     _set_tls(tls); // picolibc decrements TCB in _set_tls
 
     void* tls_arm = __aeabi_read_tp();
@@ -87,6 +97,8 @@ void[] initTLSRanges() nothrow @nogc
     //TODO: move this info into our own SectionGroup implementation?
     import core.memory;
     GC.addRange(tls, p.full_tls_size);
+
+    isInitialized = true;
 
     return tls[0 .. p.full_tls_size];
 }
