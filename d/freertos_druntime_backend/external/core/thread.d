@@ -6,6 +6,20 @@ import core.thread.types: ThreadID;
 import core.thread.context: StackContext;
 static import freertos;
 
+extern (C) void* thread_entryPoint( void* arg ) nothrow
+{
+    Thread obj = cast(Thread) arg;
+    obj.initDataStorage();
+    Thread.setThis(obj);
+    ThreadBase.add(obj);
+
+    obj.tlsGCdataInit();
+
+    //FIXME: osthread.d contains more stuff here
+
+    return null;
+}
+
 @nogc:
 
 /// Init threads module
@@ -33,19 +47,6 @@ nothrow:
 extern (C) static Thread thread_findByAddr(ThreadID addr)
 {
     assert(false, "Not implemented");
-}
-
-extern (C) void* thread_entryPoint( void* arg ) nothrow
-{
-    Thread obj = cast(Thread) arg;
-    Thread.setThis(obj);
-    ThreadBase.add(obj);
-
-    obj.tlsGCdataInit();
-
-    //FIXME: osthread.d contains more stuff here
-
-    return null;
 }
 
 extern (C) void thread_suspendHandler( int sig ) nothrow
@@ -156,9 +157,11 @@ private void* getStackTop() nothrow @nogc
     return llvm_frameaddress(0);
 }
 
+private extern(C) extern __gshared void* _stack;
+
 void* getStackBottom() nothrow @nogc
 {
-    assert(false, "Not implemented");
+    return &_stack;
 }
 
 ThreadID createLowLevelThread(void delegate() nothrow dg, uint stacksize = 0,
@@ -180,11 +183,12 @@ Thread external_attachThread(ThreadBase thisThread) @nogc
     assert(thisContext);
     assert(thisContext == t.m_curr);
 
-    Thread.setThis(t);
+    thisContext.bstack = getStackBottom();
+    thisContext.tstack = thisContext.bstack;
 
     t.m_isDaemon = true;
     t.tlsGCdataInit();
-    Thread.setThis( thisThread );
+    Thread.setThis(t);
 
     ThreadBase.add( t, false );
     ThreadBase.add( thisContext );
