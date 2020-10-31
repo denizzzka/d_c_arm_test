@@ -40,8 +40,6 @@ headers = files(
     'src/Unwind-EHABI.h',
 )
 
-#libc_dep = subproject('picolibc').get_variable('picolibc_dep')
-
 libunwind_dep = declare_dependency(
     sources:[
         c_src,
