@@ -39,7 +39,7 @@ template _d_cmain()
         auto creation_res = xTaskCreate(
             &_d_run_main,
             cast(const(char*)) "_d_run_main",
-            512, // usStackDepth
+            1024, // usStackDepth
             null, // *pvParameters
             5, // uxPriority
             null // task handler
