@@ -28,7 +28,7 @@
 #define configSUPPORT_DYNAMIC_ALLOCATION         1
 #define configUSE_IDLE_HOOK                      0
 #define configUSE_TICK_HOOK                      0
-#define configCPU_CLOCK_HZ                       ( 72000000 )
+#define configCPU_CLOCK_HZ                       ( 25000000 )
 #define configTICK_RATE_HZ                       ((TickType_t)1000)
 #define configMAX_PRIORITIES                     ( 7 )
 #define configMINIMAL_STACK_SIZE                 ((uint16_t)128)
@@ -40,6 +40,10 @@
 #define configUSE_COUNTING_SEMAPHORES            1
 #define configQUEUE_REGISTRY_SIZE                8
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION  1
+
+/* Debugging */
+#define configCHECK_FOR_STACK_OVERFLOW           2
+#define configTASK_RETURN_ADDRESS                0 // place 0 task return address on stack to help FreeRTOS-aware debugger (GDB unwind thread stack)
 
 /* Co-routine definitions. */
 #define configUSE_CO_ROUTINES                    0

@@ -5,16 +5,16 @@ int main()
 {
 	gpio_setup();
 
-	xTaskCreate(
-		&blinkTask,
-		cast(const(char*)) "LED Blink",
-		32, // usStackDepth
-		null, // *pvParameters
-		1, // uxPriority
-		null // task handler
-	);
+	//~ xTaskCreate(
+		//~ &blinkTask,
+		//~ cast(const(char*)) "LED Blink",
+		//~ 32, // usStackDepth
+		//~ null, // *pvParameters
+		//~ 1, // uxPriority
+		//~ null // task handler
+	//~ );
 
-	vTaskStartScheduler();
+	//~ vTaskStartScheduler();
 
 	// Will not get here unless there is insufficient RAM
 	return 1;
