@@ -89,13 +89,7 @@ druntime_lib = library(
     ],
     d_debug: [
         'SENTINEL',
-        'MEMSTOMP',
-        'PTRCHECK',
-        'PTRCHECK2',
-        #'PRINTF',
-        #'MARK_PRINTF',
-        #'COLLECT_PRINTF',
-    ],
+    ]
 )
 
 d_dep = declare_dependency(
