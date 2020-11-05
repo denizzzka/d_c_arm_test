@@ -27,6 +27,8 @@ template _d_cmain()
 
         int main_ret = 7; // _d_run_main2 uncatched exception occured
         scope(exit) systick_interrupt_disable(); // disable FreeRTOS tasks switching
+
+        // It is impossible to escape from FreeRTOS main loop, so just exit
         scope(exit) _Exit(main_ret);
 
         main_ret = _d_run_main2(null, 0, &_Dmain);
