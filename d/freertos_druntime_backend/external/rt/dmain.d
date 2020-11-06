@@ -5,13 +5,22 @@ import freertos;
 nothrow:
 @nogc:
 
+struct MainTaskProperties
+{
+    enum taskStackSizeBytes = ushort.max * 4;
+    enum taskStackSize = taskStackSizeBytes / 4; // words, not bytes!
+    void* stackBottom; // filled out after task starts
+}
+
+__gshared MainTaskProperties mainTaskProperties;
+
 template _d_cmain()
 {
     nothrow:
     @nogc:
     extern(C):
 
-    void systick_interrupt_disable(); // provided by FreeRTOS
+    void systick_interrupt_disable(); // provided by libopencm3
 
     int _Dmain(char[][] args);
 
@@ -20,16 +29,23 @@ template _d_cmain()
 
     int _d_run_main2(char[][] args, size_t totalArgsLength, MainFunc mainFunc);
 
-    void _d_run_main(void* unused_param)
+    import external.rt.dmain: MainTaskProperties, mainTaskProperties;
+
+    void _d_run_main(void* mtp)
     {
         //~ systick_interrupt_disable(); // FIXME remove
         import core.stdc.stdlib: _Exit;
+        import external.core.thread: getStackTop;
 
-        int main_ret = 7; // _d_run_main2 uncatched exception occured
-        scope(exit) systick_interrupt_disable(); // disable FreeRTOS tasks switching
+        // stack isn't used yet, so assumed what we on top
+        (cast(MainTaskProperties*) mtp).stackBottom = getStackTop();
 
-        // It is impossible to escape from FreeRTOS main loop, so just exit
-        scope(exit) _Exit(main_ret);
+        __gshared int main_ret = 7; // _d_run_main2 uncatched exception occured
+        scope(exit)
+        {
+            systick_interrupt_disable(); // tell FreeRTOS to doesn't interfere with exiting code
+            _Exit(main_ret); // It is impossible to escape from FreeRTOS main loop, thus just exit
+        }
 
         main_ret = _d_run_main2(null, 0, &_Dmain);
     }
@@ -41,8 +57,8 @@ template _d_cmain()
         auto creation_res = xTaskCreate(
             &_d_run_main,
             cast(const(char*)) "_d_run_main",
-            1024, // usStackDepth
-            null, // *pvParameters
+            mainTaskProperties.taskStackSize, // usStackDepth
+            cast(void*) &mainTaskProperties, // *pvParameters
             5, // uxPriority
             null // task handler
         );

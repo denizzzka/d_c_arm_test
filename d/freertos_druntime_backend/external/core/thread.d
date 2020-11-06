@@ -150,18 +150,18 @@ void thread_intermediateShutdown() nothrow @nogc
     assert(false, "Not implemented");
 }
 
-private void* getStackTop() nothrow @nogc
+public void* getStackTop() nothrow @nogc
 {
     import ldc.intrinsics;
     pragma(LDC_never_inline);
     return llvm_frameaddress(0);
 }
 
-private extern(C) extern __gshared void* _stack;
-
 void* getStackBottom() nothrow @nogc
 {
-    return &_stack;
+    import external.rt.dmain: mainTaskProperties;
+
+    return mainTaskProperties.stackBottom;
 }
 
 ThreadID createLowLevelThread(void delegate() nothrow dg, uint stacksize = 0,
