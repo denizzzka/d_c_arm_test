@@ -1,5 +1,6 @@
 module external.rt.sections;
 
+static import freertos;
 import rt.sections_ldc : SectionGroup;
 debug(PRINTF) import core.stdc.stdio : printf;
 
@@ -71,8 +72,6 @@ void[] initTLSRanges() nothrow @nogc
 
     auto p = getTLSParams();
 
-    enum TCB_size = 8;
-
     // TLS
     import core.stdc.string: memcpy, memset;
 
@@ -86,10 +85,15 @@ void[] initTLSRanges() nothrow @nogc
     // Init local bss by zeroes
     memset(tls + p.tdata_size, 0x00, p.tbss_size);
 
-    _set_tls(tls); // picolibc decrements TCB in _set_tls
+    enum TCB_size = 8;
 
-    void* tls_arm = __aeabi_read_tp();
-    assert(tls - tls_arm == TCB_size);
+    freertos.vTaskSetThreadLocalStoragePointer(null, 0, tls - TCB_size /* ARM EABI specific offset */);
+
+    debug
+    {
+        void* tls_arm = __aeabi_read_tp();
+        assert(tls - tls_arm == TCB_size);
+    }
 
     // Register in GC
     //TODO: move this info into our own SectionGroup implementation?
@@ -99,5 +103,7 @@ void[] initTLSRanges() nothrow @nogc
     return tls[0 .. p.full_tls_size];
 }
 
-extern(C) void _set_tls(void* p) nothrow @nogc; // provided by picolibc
-extern(C) void* __aeabi_read_tp() nothrow @nogc; // provided by picolibc
+extern(C) void* __aeabi_read_tp() nothrow @nogc
+{
+    return freertos.pvTaskGetThreadLocalStoragePointer(null, 0);
+}

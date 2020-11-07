@@ -4187,3 +4187,9 @@ alias xSemaphoreTakeRecursive = xQueueTakeMutexRecursive;
 alias xSemaphoreGiveRecursive = xQueueGiveMutexRecursive;
 
 alias xSemaphoreCreateCounting = xQueueCreateCountingSemaphore;
+
+extern(C) void vTaskSetThreadLocalStoragePointer( TaskHandle_t xTaskToSet,
+                                        BaseType_t xIndex,
+                                        void* pvValue ) nothrow @nogc;
+extern(C) void* pvTaskGetThreadLocalStoragePointer( TaskHandle_t xTaskToQuery,
+                                           BaseType_t xIndex ) nothrow @nogc;
