@@ -59,6 +59,8 @@ extern (C) void thread_resumeHandler( int sig ) nothrow
     assert(false, "Not implemented");
 }
 
+/// Suspend all threads but the calling thread
+//TODO: remove, call suspend() from druntime code
 extern (C) void thread_suspendAll() nothrow
 {
     if ( !multiThreadedFlag && Thread.sm_tbeg )
@@ -175,6 +177,7 @@ bool findLowLevelThread(ThreadID tid) nothrow @nogc
     assert(false, "Not implemented");
 }
 
+//TODO: this is only for internal use, rename it to more appropriate?
 Thread external_attachThread(ThreadBase thisThread) @nogc
 {
     Thread t = thisThread.toThread;
@@ -183,6 +186,7 @@ Thread external_attachThread(ThreadBase thisThread) @nogc
     assert(thisContext);
     assert(thisContext == t.m_curr);
 
+    t.m_addr = freertos.xTaskGetCurrentTaskHandle();
     thisContext.bstack = getStackBottom();
     thisContext.tstack = thisContext.bstack;
 
