@@ -60,7 +60,6 @@ extern (C) void thread_resumeHandler( int sig ) nothrow
 }
 
 /// Suspend all threads but the calling thread
-//TODO: remove, call suspend() from druntime code
 extern (C) void thread_suspendAll() nothrow
 {
     if ( !multiThreadedFlag && Thread.sm_tbeg )
@@ -72,14 +71,17 @@ extern (C) void thread_suspendAll() nothrow
     }
 
     ThreadBase.slock.lock_nothrow();
+
     {
         if ( ++suspendDepth > 1 )
             return;
 
         ThreadBase.criticalRegionLock.lock_nothrow();
         scope (exit) ThreadBase.criticalRegionLock.unlock_nothrow();
+
         size_t cnt;
         Thread t = ThreadBase.sm_tbeg.toThread;
+
         while (t)
         {
             auto tn = t.next.toThread;
@@ -88,32 +90,14 @@ extern (C) void thread_suspendAll() nothrow
             t = tn;
         }
 
-        version (Darwin)
-        {}
-        else version (Posix)
-        {
-            // subtract own thread
-            assert(cnt >= 1);
-            --cnt;
-        Lagain:
-            // wait for semaphore notifications
-            for (; cnt; --cnt)
-            {
-                while (sem_wait(&suspendCount) != 0)
-                {
-                    if (errno != EINTR)
-                        onThreadError("Unable to wait for semaphore");
-                    errno = 0;
-                }
-            }
-        }
+        assert(cnt >= 1);
     }
 }
 
 /// Suspend the specified thread and load stack and register information
 private extern (D) bool suspend( Thread t ) nothrow
 {
-    // Common code (TODO: use druntime code instead):
+    // Common code (TODO: use druntime code instead?):
     import core.time;
 
     Duration waittime = dur!"usecs"(10);
