@@ -10,23 +10,29 @@ libopencm3_binding = dpp.process(
         'source/bindings/gpio.dpp',
     ),
     extra_args: [
-        '--include-path=' + subprojects_dir + 'libopencm3/include/',
+        '--include-path=' + subprojects_dir / 'libopencm3/include/',
         '--define=STM32F1'
     ]
 )
-
-#FIXME: https://github.com/mesonbuild/meson/issues/7330
-freertos_subdir = 'FreeRTOS-Kernel-10.3.1-kernel-only'
 
 freertos_binding = dpp.process(
     files(
         'freertos_dpp_bindings/freertos.dpp',
     ),
     extra_args: [
-        '--include-path=' + subprojects_dir + 'freertos/' + freertos_subdir + '/include/',
-        '--include-path=' + subprojects_dir + 'freertos/' + freertos_subdir + '/portable/GCC/ARM_CM3/', #TODO: get this from freertos_dep?
+        '--include-path=' + subprojects_dir / 'freertos' / 'include',
+        '--include-path=' + subprojects_dir / 'freertos' / 'portable/GCC/ARM_CM3', #TODO: get this from freertos_dep?
         '--include-path=' + root_dir, #for FreeRTOSConfig.h
     ]
+)
+
+cp = find_program('cp')
+freertos_d = custom_target(
+    'Temporary FreeRTOS bindings generator',
+    input: freertos_binding,
+    output: 'freertos.d',
+    command : [cp, '@INPUT@', '@OUTPUT@'],
+    build_by_default: true,
 )
 
 freertos_d_dep = declare_dependency(
@@ -83,13 +89,19 @@ druntime_lib = library(
         'ExternStackShell',
         'AsmExternal', #used by fiber module
         'CoreUnittest',
-        'ThreadsDisabled',
+        #'ThreadsDisabled',
         'OnlyLowMemUnittest', #disables memory-greedy unittests
         'SupportSanitizers', #FIXME: remove, for debugging purposes only
     ],
     d_debug: [
         'SENTINEL',
-    ]
+        'MEMSTOMP',
+        'PTRCHECK',
+        'PTRCHECK2',
+        #'PRINTF',
+        #'MARK_PRINTF',
+        #'COLLECT_PRINTF',
+    ],
 )
 
 d_dep = declare_dependency(
