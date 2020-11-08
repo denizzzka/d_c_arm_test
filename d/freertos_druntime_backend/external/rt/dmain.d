@@ -58,7 +58,7 @@ template _d_cmain()
             &_d_run_main,
             cast(const(char*)) "_d_run_main",
             mainTaskProperties.taskStackSize, // usStackDepth
-            cast(void*) &mainTaskProperties, // *pvParameters
+            cast(void*) &mainTaskProperties, // pvParameters*
             5, // uxPriority
             null // task handler
         );

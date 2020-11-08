@@ -4,7 +4,7 @@ import core.thread.osthread;
 import core.thread.threadbase;
 import core.thread.types: ThreadID;
 import core.thread.context: StackContext;
-static import freertos;
+static import os = freertos;
 
 extern(C) void thread_entryPoint(void* arg) nothrow
 in(arg)
@@ -142,9 +142,9 @@ private extern (D) bool suspend( Thread t ) nothrow
 
     // OS-specific code:
 
-    if (t.m_addr != freertos.xTaskGetCurrentTaskHandle())
+    if (t.m_addr != os.xTaskGetCurrentTaskHandle())
     {
-        freertos.vTaskSuspend(t.m_addr);
+        os.vTaskSuspend(t.m_addr);
     }
     else if (!t.m_lock)
     {
@@ -195,7 +195,7 @@ Thread external_attachThread(ThreadBase thisThread) @nogc
     assert(thisContext);
     assert(thisContext == t.m_curr);
 
-    t.m_addr = freertos.xTaskGetCurrentTaskHandle();
+    t.m_addr = os.xTaskGetCurrentTaskHandle();
     thisContext.bstack = getStackBottom();
     thisContext.tstack = thisContext.bstack;
 
@@ -243,7 +243,44 @@ class Thread : ThreadBase
 
     final Thread start() nothrow
     {
-        assert(false, "Not implemented");
+        auto wasThreaded  = multiThreadedFlag;
+        multiThreadedFlag = true;
+        scope( failure )
+        {
+            if ( !wasThreaded )
+                multiThreadedFlag = false;
+        }
+
+        slock.lock_nothrow();
+        scope(exit) slock.unlock_nothrow();
+
+        {
+            import core.stdc.stdlib: realloc;
+
+            ++nAboutToStart;
+            pAboutToStart = cast(ThreadBase*)realloc(pAboutToStart, Thread.sizeof * nAboutToStart);
+            pAboutToStart[nAboutToStart - 1] = this;
+
+            assert(m_sz <= ushort.max * size_t.sizeof, "FreeRTOS stack size limit");
+
+            auto wordsStackSize = m_sz / os.StackType_t.sizeof
+                + (m_sz % os.StackType_t.sizeof ? 1 : 0);
+
+            auto stackBuff = new os.StackType_t[wordsStackSize];
+            auto tcb = new os.StaticTask_t;
+
+            m_addr = os.xTaskCreateStatic(
+                &thread_entryPoint,
+                cast(const(char*)) "D thread",
+                stackBuff.length,
+                null, // pvParameters*
+                5, // uxPriority
+                stackBuff.ptr,
+                tcb
+            );
+
+            return this;
+        }
     }
 
     static Thread getThis() @safe nothrow @nogc
