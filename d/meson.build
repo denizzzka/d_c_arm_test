@@ -48,6 +48,7 @@ freertos_d_dep = declare_dependency(
 
 freertos_druntime_backend = [
     'freertos_druntime_backend/external/core/abort.d',
+    'freertos_druntime_backend/external/core/condition.d',
     'freertos_druntime_backend/external/core/event.d',
     'freertos_druntime_backend/external/core/fiber.d',
     'freertos_druntime_backend/external/core/memory.d',
