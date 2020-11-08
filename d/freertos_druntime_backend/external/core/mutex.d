@@ -20,6 +20,11 @@ class Mutex : Object.Monitor
             abort("Error: memory required to hold mutex could not be allocated.");
     }
 
+    this() @nogc shared
+    {
+        assert(false);
+    }
+
     ~this() @nogc
     {
         _vSemaphoreDelete(mtx);
