@@ -1,6 +1,6 @@
 module external.core.semaphore;
 
-import freertos;
+static import os = freertos;
 import core.stdc.errno;
 import core.sync.exception: SyncError;
 
@@ -8,26 +8,31 @@ enum SEM_VALUE_MAX = 0x7FFFU;
 
 class Semaphore
 {
-    private SemaphoreHandle_t m_hndl;
+    private os.SemaphoreHandle_t m_hndl;
 
-    this(uint count = 0) nothrow @nogc
+    this(size_t initialCount = 0) nothrow @nogc
     {
-        m_hndl = xSemaphoreCreateCounting(SEM_VALUE_MAX, count);
+        m_hndl = os.xSemaphoreCreateCounting(SEM_VALUE_MAX, initialCount);
 
         assert(m_hndl);
     }
 
     ~this() nothrow @nogc
     {
-        _vSemaphoreDelete(m_hndl);
+        os._vSemaphoreDelete(m_hndl);
     }
 
     private immutable unableToWait = "Unable to wait for semaphore";
 
     void wait()
     {
-        if(xSemaphoreTakeRecursive(m_hndl, portMAX_DELAY) != pdTRUE)
+        if(waitOrError())
             throw new SyncError(unableToWait);
+    }
+
+    bool waitOrError() nothrow @nogc
+    {
+        return os.xSemaphoreTakeRecursive(m_hndl, os.portMAX_DELAY) == os.pdTRUE;
     }
 
     import core.time;
@@ -38,17 +43,22 @@ class Semaphore
         MonoTime mt;
         mt += period;
 
-        return xSemaphoreTakeRecursive(m_hndl, cast(uint) mt.ticks) != pdTRUE;
+        return os.xSemaphoreTakeRecursive(m_hndl, cast(uint) mt.ticks) == os.pdTRUE;
     }
 
     bool tryWait() nothrow @nogc
     {
-        return xSemaphoreTakeRecursive(m_hndl, portMAX_DELAY) != pdTRUE;
+        return os.xSemaphoreTakeRecursive(m_hndl, 0) == os.pdTRUE;
     }
 
     void notify()
     {
-        if(xSemaphoreGiveRecursive(m_hndl) != pdTRUE)
+        if(notifyOrError())
             throw new SyncError("Unable to notify semaphore");
+    }
+
+    bool notifyOrError() nothrow @nogc
+    {
+        return os.xSemaphoreGiveRecursive(m_hndl) == os.pdTRUE;
     }
 }
