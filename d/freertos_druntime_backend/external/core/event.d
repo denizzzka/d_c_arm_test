@@ -49,16 +49,21 @@ struct Event
 
     void set()
     {
-        os.xEventGroupSetBits(group, BITS_MASK);
+        if(group !is null)
+            os.xEventGroupSetBits(group, BITS_MASK);
     }
 
     void reset()
     {
-        os.xEventGroupClearBits(group, BITS_MASK);
+        if(group !is null)
+            os.xEventGroupClearBits(group, BITS_MASK);
     }
 
     bool wait()
     {
+        if(group is null)
+            return false;
+
         auto r = os.xEventGroupWaitBits(
            group,
            BITS_MASK,
@@ -73,6 +78,9 @@ struct Event
     bool wait(Duration tmout)
     in(!tmout.isNegative)
     {
+        if(group is null)
+            return false;
+
         auto mt = MonoTime.currTime;
         mt += tmout;
 
