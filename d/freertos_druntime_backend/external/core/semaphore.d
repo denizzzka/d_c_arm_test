@@ -40,7 +40,7 @@ class Semaphore
     bool wait(Duration period)
     in(!period.isNegative)
     {
-        MonoTime mt;
+        auto mt = MonoTime.currTime;
         mt += period;
 
         return os.xSemaphoreTakeRecursive(m_hndl, cast(uint) mt.ticks) == os.pdTRUE;

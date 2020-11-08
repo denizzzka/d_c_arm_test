@@ -1,36 +1,33 @@
 module external.core.event;
 
+static import os = freertos;
 import core.time;
 
 struct Event
 {
-    private bool signaled;
+    private os.EventGroupHandle_t group;
+    private os.BaseType_t clearOnExit;
 
     nothrow @nogc:
 
-    /**
-     * Creates an event object.
-     *
-     * Params:
-     *  manualReset  = the state of the event is not reset automatically after resuming waiting clients
-     *  initialState = initial state of the signal
-     */
     this(bool manualReset, bool initialState)
     {
-        //FIXME
-        //~ assert(false, "Not implemented");
+        initialize(manualReset, initialState);
     }
 
-    /**
-     * Initializes an event object. Does nothing if the event is already initialized.
-     *
-     * Params:
-     *  manualReset  = the state of the event is not reset automatically after resuming waiting clients
-     *  initialState = initial state of the signal
-     */
     void initialize(bool manualReset, bool initialState)
     {
-        assert(false, "Not implemented");
+        import core.exception: onOutOfMemoryError;
+
+        group = os.xEventGroupCreate();
+
+        if(group is null)
+            onOutOfMemoryError();
+
+        clearOnExit = manualReset ? os.pdFALSE : os.pdTRUE;
+
+        if(initialState)
+            set();
     }
 
     // copying not allowed, can produce resource leaks
@@ -39,58 +36,54 @@ struct Event
 
     ~this()
     {
-        //FIXME
-        //~ assert(false, "Not implemented");
+        terminate();
     }
 
-    /**
-     * deinitialize event. Does nothing if the event is not initialized. There must not be
-     * threads currently waiting for the event to be signaled.
-    */
     void terminate()
     {
-        assert(false, "Not implemented");
+        os.vEventGroupDelete(group);
+        group = null;
     }
 
+    private enum BITS_MASK = 0x01; // using one first bit
 
-    /// Set the event to "signaled", so that waiting clients are resumed
     void set()
     {
-        //FIXME
-        signaled = true;
+        os.xEventGroupSetBits(group, BITS_MASK);
     }
 
-    /// Reset the event manually
     void reset()
     {
-        //FIXME
-        signaled = false;
+        os.xEventGroupClearBits(group, BITS_MASK);
     }
 
-    /**
-     * Wait for the event to be signaled without timeout.
-     *
-     * Returns:
-     *  `true` if the event is in signaled state, `false` if the event is uninitialized or another error occured
-     */
     bool wait()
     {
-        //FIXME
-        return signaled;
+        auto r = os.xEventGroupWaitBits(
+           group,
+           BITS_MASK,
+           clearOnExit,
+           false, // xWaitForAllBits
+           os.portMAX_DELAY // xTicksToWait
+        );
+
+        return r & BITS_MASK;
     }
 
-    /**
-     * Wait for the event to be signaled with timeout.
-     *
-     * Params:
-     *  tmout = the maximum time to wait
-     * Returns:
-     *  `true` if the event is in signaled state, `false` if the event was nonsignaled for the given time or
-     *  the event is uninitialized or another error occured
-     */
     bool wait(Duration tmout)
+    in(!tmout.isNegative)
     {
-        //FIXME
-        return signaled;
+        auto mt = MonoTime.currTime;
+        mt += tmout;
+
+        auto r = os.xEventGroupWaitBits(
+           group,
+           BITS_MASK,
+           clearOnExit,
+           false, // xWaitForAllBits
+           cast(uint) mt.ticks // xTicksToWait
+        );
+
+        return r & BITS_MASK;
     }
 }
