@@ -213,6 +213,15 @@ Thread external_attachThread(ThreadBase thisThread) @nogc
 
 class Thread : ThreadBase
 {
+    import core.sync.event: Event;
+
+    static Event joinEvent;
+
+    static this()
+    {
+        joinEvent = Event(true, true);
+    }
+
     /// Initializes a thread object which has no associated executable function.
     /// This is used for the main thread initialized in thread_init().
     private this(size_t sz = 0) @safe pure nothrow @nogc
@@ -304,7 +313,18 @@ class Thread : ThreadBase
 
     override final Throwable join( bool rethrow = true )
     {
-        assert(false, "Not implemented");
+        joinEvent.wait();
+
+        m_addr = m_addr.init;
+
+        if (m_unhandled)
+        {
+            if (rethrow)
+                throw m_unhandled;
+            return m_unhandled;
+        }
+
+        return null;
     }
 
     final void joinAll( bool rethrow = true )
