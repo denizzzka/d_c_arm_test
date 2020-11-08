@@ -79,6 +79,28 @@ template _d_cmain()
     }
 }
 
+static import os = freertos;
+
+private extern(C) void vApplicationGetIdleTaskMemory(os.StaticTask_t** tcb, os.StackType_t** stackBuffer, uint* stackSize)
+{
+  __gshared os.StaticTask_t idle_TCB;
+  __gshared os.StackType_t[os.configMINIMAL_STACK_SIZE] idle_Stack;
+
+  *tcb = &idle_TCB;
+  *stackBuffer = idle_Stack.ptr;
+  *stackSize = os.configMINIMAL_STACK_SIZE;
+}
+
+private extern(C) void vApplicationGetTimerTaskMemory (os.StaticTask_t** timerTaskTCBBuffer, os.StackType_t** timerTaskStackBuffer, uint* timerTaskStackSize)
+{
+  __gshared os.StaticTask_t timer_TCB;
+  __gshared os.StackType_t[os.configMINIMAL_STACK_SIZE] timer_Stack;
+
+  *timerTaskTCBBuffer   = &timer_TCB;
+  *timerTaskStackBuffer = timer_Stack.ptr;
+  *timerTaskStackSize   = os.configMINIMAL_STACK_SIZE;
+}
+
 extern(C) void vApplicationStackOverflowHook(TaskHandle_t xTask, char* pcTaskName)
 {
     while(true)
