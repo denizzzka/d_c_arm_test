@@ -6,18 +6,41 @@ import core.thread.types: ThreadID;
 import core.thread.context: StackContext;
 static import freertos;
 
-extern (C) void* thread_entryPoint( void* arg ) nothrow
+extern(C) void thread_entryPoint(void* arg) nothrow
+in(arg)
 {
-    Thread obj = cast(Thread) arg;
+    auto obj = cast(Thread) arg;
+
     obj.initDataStorage();
     Thread.setThis(obj);
     ThreadBase.add(obj);
 
-    obj.tlsGCdataInit();
+    scope (exit)
+    {
+        Thread.remove(obj);
+        obj.destroyDataStorage();
+    }
 
-    //FIXME: osthread.d contains more stuff here
+    Thread.add(&obj.m_main);
 
-    return null;
+    void append(Throwable t)
+    {
+        obj.m_unhandled = Throwable.chainTogether(obj.m_unhandled, t);
+    }
+
+    try
+    {
+        rt_moduleTlsCtor();
+
+        try
+            obj.run();
+        catch (Throwable t)
+            append( t );
+
+        rt_moduleTlsDtor();
+    }
+    catch (Throwable t)
+        append( t );
 }
 
 @nogc:
@@ -147,6 +170,8 @@ void* getStackBottom() nothrow @nogc
 {
     import external.rt.dmain: mainTaskProperties;
 
+    assert(mainTaskProperties.stackBottom !is null);
+
     return mainTaskProperties.stackBottom;
 }
 
@@ -209,6 +234,11 @@ class Thread : ThreadBase
     ~this() nothrow @nogc
     {
         //FIXME
+    }
+
+    override final void run()
+    {
+        super.run();
     }
 
     final Thread start() nothrow
