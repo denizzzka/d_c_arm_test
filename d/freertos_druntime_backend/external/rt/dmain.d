@@ -1,6 +1,6 @@
 module external.rt.dmain;
 
-import freertos;
+static import os = freertos;
 
 nothrow:
 @nogc:
@@ -27,7 +27,7 @@ template _d_cmain()
     /// Type of the D main() function (`_Dmain`).
     private alias int function(char[][] args) MainFunc;
 
-    int _d_run_main2(char[][] args, size_t totalArgsLength, MainFunc mainFunc);
+    int _d_run_main2(char[][] args, object.size_t totalArgsLength, MainFunc mainFunc);
 
     import external.rt.dmain: MainTaskProperties, mainTaskProperties;
 
@@ -79,8 +79,6 @@ template _d_cmain()
     }
 }
 
-static import os = freertos;
-
 private extern(C) void vApplicationGetIdleTaskMemory(os.StaticTask_t** tcb, os.StackType_t** stackBuffer, uint* stackSize)
 {
   __gshared os.StaticTask_t idle_TCB;
@@ -101,7 +99,7 @@ private extern(C) void vApplicationGetTimerTaskMemory (os.StaticTask_t** timerTa
   *timerTaskStackSize   = os.configMINIMAL_STACK_SIZE;
 }
 
-extern(C) void vApplicationStackOverflowHook(TaskHandle_t xTask, char* pcTaskName)
+extern(C) void vApplicationStackOverflowHook(os.TaskHandle_t xTask, char* pcTaskName)
 {
     while(true)
     {}
