@@ -270,6 +270,9 @@ class Thread : ThreadBase
             pAboutToStart = cast(ThreadBase*)realloc(pAboutToStart, Thread.sizeof * nAboutToStart);
             pAboutToStart[nAboutToStart - 1] = this;
 
+            if(m_sz == 0)
+                m_sz = 128 * size_t.sizeof; // assumed default stack size
+
             assert(m_sz <= ushort.max * size_t.sizeof, "FreeRTOS stack size limit");
 
             auto wordsStackSize = m_sz / os.StackType_t.sizeof
@@ -282,7 +285,7 @@ class Thread : ThreadBase
                 &thread_entryPoint,
                 cast(const(char*)) "D thread",
                 stackBuff.length,
-                null, // pvParameters*
+                cast(void*) this, // pvParameters*
                 5, // uxPriority
                 stackBuff.ptr,
                 tcb
