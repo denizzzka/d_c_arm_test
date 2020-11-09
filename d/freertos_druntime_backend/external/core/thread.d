@@ -55,6 +55,9 @@ extern (C) void thread_init() @nogc
     assert(typeid(Thread).initializer.ptr);
     _mainThreadStore[] = typeid(Thread).initializer[];
 
+    import external.rt.dmain: mainTaskProperties;
+    Thread.stackBottom = mainTaskProperties.stackBottom;
+
     // Creating main thread
     ThreadBase.sm_main = external_attachThread((cast(Thread)_mainThreadStore.ptr).__ctor());
 }
@@ -168,11 +171,9 @@ public void* getStackTop() nothrow @nogc
 
 void* getStackBottom() nothrow @nogc
 {
-    import external.rt.dmain: mainTaskProperties;
+    assert(Thread.stackBottom !is null);
 
-    assert(mainTaskProperties.stackBottom !is null);
-
-    return mainTaskProperties.stackBottom;
+    return Thread.stackBottom;
 }
 
 ThreadID createLowLevelThread(void delegate() nothrow dg, uint stacksize = 0,
@@ -215,7 +216,8 @@ class Thread : ThreadBase
 {
     import core.sync.event: Event;
 
-    static Event joinEvent;
+    private static void* stackBottom;
+    private static Event joinEvent;
 
     static this()
     {
@@ -242,7 +244,7 @@ class Thread : ThreadBase
 
     ~this() nothrow @nogc
     {
-        //FIXME
+        assert(false);
     }
 
     override final void run()
@@ -264,7 +266,8 @@ class Thread : ThreadBase
         scope(exit) slock.unlock_nothrow();
 
         {
-            import core.stdc.stdlib: realloc;
+            import core.stdc.stdlib: realloc, malloc;
+            import external.rt.sections: aligned_alloc;
 
             ++nAboutToStart;
             pAboutToStart = cast(ThreadBase*)realloc(pAboutToStart, Thread.sizeof * nAboutToStart);
@@ -278,16 +281,16 @@ class Thread : ThreadBase
             auto wordsStackSize = m_sz / os.StackType_t.sizeof
                 + (m_sz % os.StackType_t.sizeof ? 1 : 0);
 
-            auto stackBuff = new os.StackType_t[wordsStackSize];
-            auto tcb = new os.StaticTask_t;
+            auto tcb = cast(os.StaticTask_t*) malloc(os.StaticTask_t.sizeof);
+            stackBottom = aligned_alloc(size_t.sizeof, os.StackType_t.sizeof * wordsStackSize);
 
             m_addr = os.xTaskCreateStatic(
                 &thread_entryPoint,
                 cast(const(char*)) "D thread",
-                stackBuff.length,
+                wordsStackSize,
                 cast(void*) this, // pvParameters*
                 5, // uxPriority
-                stackBuff.ptr,
+                cast(size_t*) stackBottom,
                 tcb
             );
 
@@ -339,12 +342,12 @@ class Thread : ThreadBase
 
     static void sleep( Duration val ) @nogc nothrow
     {
-        //~ assert(false, "Not implemented");
+        assert(false, "Not implemented");
     }
 
     static void yield() @nogc nothrow
     {
-        //~ assert(false, "Not implemented"); //FIXME
+        assert(false, "Not implemented");
     }
 
     static int opApply(scope int delegate(ref Thread) dg)
