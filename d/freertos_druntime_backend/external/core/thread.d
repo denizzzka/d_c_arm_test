@@ -10,6 +10,12 @@ static import os = freertos;
 extern(C) void thread_entryPoint(void* arg) nothrow
 in(arg)
 {
+    scope(exit)
+    {
+        os.vTaskDelete(null);
+        os.vTaskSuspend(null);
+    }
+
     auto obj = cast(Thread) arg;
 
     obj.initDataStorage();

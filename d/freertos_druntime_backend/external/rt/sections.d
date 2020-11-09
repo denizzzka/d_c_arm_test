@@ -56,6 +56,10 @@ void fillGlobalSectionGroup(ref SectionGroup gsg) nothrow @nogc
 
 extern(C) void* aligned_alloc(size_t _align, size_t size) nothrow @nogc;
 
+import core.memory: GC;
+
+private enum TCB_size = 8; // ARM EABI specific
+
 /***
  * Called once per thread; returns array of thread local storage ranges
  */
@@ -83,8 +87,6 @@ void[] initTLSRanges() nothrow @nogc
     // Init local bss by zeroes
     memset(tls + p.tdata_size, 0x00, p.tbss_size);
 
-    enum TCB_size = 8;
-
     freertos.vTaskSetThreadLocalStoragePointer(null, 0, tls - TCB_size /* ARM EABI specific offset */);
 
     debug
@@ -95,10 +97,18 @@ void[] initTLSRanges() nothrow @nogc
 
     // Register in GC
     //TODO: move this info into our own SectionGroup implementation?
-    import core.memory;
     GC.addRange(tls, p.full_tls_size);
 
     return tls[0 .. p.full_tls_size];
+}
+
+void finiTLSRanges(void[] rng) nothrow @nogc
+{
+    import core.stdc.stdlib: free;
+
+    debug(PRINTF) printf("finiTLSRanges called\n");
+
+    free(rng.ptr);
 }
 
 extern(C) void* __aeabi_read_tp() nothrow @nogc
