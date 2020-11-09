@@ -10,23 +10,20 @@ static import os = freertos;
 extern(C) void thread_entryPoint(void* arg) nothrow
 in(arg)
 {
+    auto obj = cast(Thread) arg;
     scope(exit)
     {
-        os.vTaskDelete(null);
-        os.vTaskSuspend(null);
+        os.vTaskDelete(obj.m_addr);
+        os.vTaskSuspend(obj.m_addr);
     }
-
-    auto obj = cast(Thread) arg;
 
     obj.initDataStorage();
-    Thread.setThis(obj);
-    ThreadBase.add(obj);
+    scope(exit) obj.destroyDataStorage();
 
-    scope (exit)
-    {
-        ThreadBase.remove(obj);
-        obj.destroyDataStorage();
-    }
+    Thread.setThis(obj);
+
+    ThreadBase.add(obj);
+    scope(exit) ThreadBase.remove(obj);
 
     Thread.add(&obj.m_main);
 
