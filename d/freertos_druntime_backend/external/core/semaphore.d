@@ -33,7 +33,7 @@ class Semaphore
 
     bool waitOrError() nothrow @nogc
     {
-        return os.xSemaphoreTakeRecursive(m_hndl, os.portMAX_DELAY) == os.pdTRUE;
+        return os.xSemaphoreTake(m_hndl, os.portMAX_DELAY) == os.pdTRUE;
     }
 
     import core.time;
@@ -41,12 +41,12 @@ class Semaphore
     bool wait(Duration period)
     in(!period.isNegative)
     {
-        return os.xSemaphoreTakeRecursive(m_hndl, period.toTicks) == os.pdTRUE;
+        return os.xSemaphoreTake(m_hndl, period.toTicks) == os.pdTRUE;
     }
 
     bool tryWait() nothrow @nogc
     {
-        return os.xSemaphoreTakeRecursive(m_hndl, 0) == os.pdTRUE;
+        return os.xSemaphoreTake(m_hndl, 0) == os.pdTRUE;
     }
 
     void notify()
@@ -57,6 +57,6 @@ class Semaphore
 
     bool notifyOrError() nothrow @nogc
     {
-        return os.xSemaphoreGiveRecursive(m_hndl) == os.pdTRUE;
+        return os._xSemaphoreGive(m_hndl) == os.pdTRUE;
     }
 }
