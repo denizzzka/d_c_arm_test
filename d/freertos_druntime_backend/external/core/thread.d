@@ -7,20 +7,27 @@ import core.thread.types: ThreadID;
 import core.thread.context: StackContext;
 static import os = freertos;
 
+struct TaskProperties
+{
+    Thread thread;
+}
+
 extern(C) void thread_entryPoint(void* arg) nothrow
 in(arg)
 {
-    auto obj = cast(Thread) arg;
     scope(exit)
     {
-        os.vTaskDelete(obj.m_addr);
-        os.vTaskSuspend(obj.m_addr);
+        os.vTaskDelete(null);
+        os.vTaskSuspend(null); //TODO: it is need here?
     }
+
+    auto props = cast(TaskProperties*) arg;
+    auto obj = props.thread;
+
+    Thread.setThis(obj);
 
     obj.initDataStorage();
     scope(exit) obj.destroyDataStorage();
-
-    Thread.setThis(obj);
 
     ThreadBase.add(obj);
     scope(exit) ThreadBase.remove(obj);
@@ -59,11 +66,13 @@ extern (C) void thread_init() @nogc
     assert(typeid(Thread).initializer.ptr);
     _mainThreadStore[] = typeid(Thread).initializer[];
 
-    import external.rt.dmain: mainTaskProperties;
-    Thread.stackBottom = mainTaskProperties.stackBottom;
-
     // Creating main thread
-    ThreadBase.sm_main = external_attachThread((cast(Thread)_mainThreadStore.ptr).__ctor());
+    Thread mainThread = (cast(Thread) _mainThreadStore.ptr).__ctor();
+
+    import external.rt.dmain: mainTaskProperties;
+    mainThread.m_main.bstack = mainTaskProperties.stackBottom;
+
+    ThreadBase.sm_main = external_attachThread(mainThread);
 }
 
 /// Term threads module
@@ -174,9 +183,9 @@ public void* getStackTop() nothrow @nogc
 
 void* getStackBottom() nothrow @nogc
 {
-    assert(Thread.stackBottom !is null);
+    assert(Thread.getThis().m_main.bstack !is null);
 
-    return Thread.stackBottom;
+    return Thread.getThis().m_main.bstack;
 }
 
 ThreadID createLowLevelThread(void delegate() nothrow dg, uint stacksize = 0,
@@ -200,7 +209,7 @@ Thread external_attachThread(ThreadBase thisThread) @nogc
     assert(thisContext == t.m_curr);
 
     t.m_addr = os.xTaskGetCurrentTaskHandle();
-    thisContext.bstack = getStackBottom();
+    assert(thisContext.bstack);
     thisContext.tstack = thisContext.bstack;
 
     t.m_isDaemon = true;
@@ -219,7 +228,6 @@ class Thread : ThreadBase
 {
     import core.sync.event: Event;
 
-    private static void* stackBottom;
     private static Event joinEvent;
 
     static this()
@@ -285,11 +293,16 @@ class Thread : ThreadBase
                 + (m_sz % os.StackType_t.sizeof ? 1 : 0);
 
             //FIXME: add error checking
-            auto tcb = cast(os.StaticTask_t*) aligned_alloc(size_t.sizeof, os.StaticTask_t.sizeof);
-            stackBottom = aligned_alloc(os.StackType_t.sizeof, os.StackType_t.sizeof * wordsStackSize);
+            auto taskProps = cast(TaskProperties*) aligned_alloc(size_t.sizeof, TaskProperties.sizeof);
+            assert(taskProps);
+            taskProps.thread = this;
 
+            //FIXME: tcb leaks on thread exit
+            auto tcb = cast(os.StaticTask_t*) aligned_alloc(size_t.sizeof, os.StaticTask_t.sizeof);
             assert(tcb);
-            assert(stackBottom);
+
+            m_main.bstack = aligned_alloc(os.StackType_t.sizeof, os.StackType_t.sizeof * wordsStackSize);
+            assert(m_main.bstack);
 
             *tcb = os.StaticTask_t();
 
@@ -297,9 +310,9 @@ class Thread : ThreadBase
                 &thread_entryPoint,
                 cast(const(char*)) "D thread",
                 wordsStackSize,
-                cast(void*) this, // pvParameters*
+                cast(void*) taskProps, // pvParameters*
                 5, // uxPriority
-                cast(size_t*) stackBottom,
+                cast(size_t*) m_main.bstack,
                 tcb
             );
 
