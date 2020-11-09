@@ -271,7 +271,7 @@ class Thread : ThreadBase
             pAboutToStart[nAboutToStart - 1] = this;
 
             if(m_sz == 0)
-                m_sz = 128 * size_t.sizeof; // assumed default stack size
+                m_sz = 256 * size_t.sizeof; // assumed default stack size
 
             assert(m_sz <= ushort.max * size_t.sizeof, "FreeRTOS stack size limit");
 
