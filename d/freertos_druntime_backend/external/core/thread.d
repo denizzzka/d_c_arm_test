@@ -17,7 +17,7 @@ in(arg)
 
     scope (exit)
     {
-        Thread.remove(obj);
+        ThreadBase.remove(obj);
         obj.destroyDataStorage();
     }
 
@@ -266,7 +266,7 @@ class Thread : ThreadBase
         scope(exit) slock.unlock_nothrow();
 
         {
-            import core.stdc.stdlib: realloc, malloc;
+            import core.stdc.stdlib: realloc;
             import external.rt.sections: aligned_alloc;
 
             ++nAboutToStart;
@@ -281,8 +281,14 @@ class Thread : ThreadBase
             auto wordsStackSize = m_sz / os.StackType_t.sizeof
                 + (m_sz % os.StackType_t.sizeof ? 1 : 0);
 
-            auto tcb = cast(os.StaticTask_t*) malloc(os.StaticTask_t.sizeof);
-            stackBottom = aligned_alloc(size_t.sizeof, os.StackType_t.sizeof * wordsStackSize);
+            //FIXME: add error checking
+            auto tcb = cast(os.StaticTask_t*) aligned_alloc(size_t.sizeof, os.StaticTask_t.sizeof);
+            stackBottom = aligned_alloc(os.StackType_t.sizeof, os.StackType_t.sizeof * wordsStackSize);
+
+            assert(tcb);
+            assert(stackBottom);
+
+            *tcb = os.StaticTask_t();
 
             m_addr = os.xTaskCreateStatic(
                 &thread_entryPoint,
