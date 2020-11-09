@@ -27,4 +27,4 @@ extern(C) void blinkTask(void *pvParametres) @nogc nothrow
 	vTaskDelay(500);
 }
 
-extern(C) __gshared string[] rt_options = [ "gcopt=minPoolSize:16K maxPoolSize:1M incPoolSize:4K" ];
+extern(C) __gshared string[] rt_options = [ "gcopt=minPoolSize:16K maxPoolSize:3M incPoolSize:4K" ];

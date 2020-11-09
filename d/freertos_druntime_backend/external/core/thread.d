@@ -1,5 +1,6 @@
 module external.core.thread;
 
+import core.sync.event: Event;
 import core.time;
 import core.thread.osthread;
 import core.thread.threadbase;
@@ -28,6 +29,9 @@ in(arg)
 
     obj.initDataStorage();
     scope(exit) obj.destroyDataStorage();
+
+    obj.joinEvent = new Event(true, true);
+    scope(exit) obj.joinEvent.set();
 
     ThreadBase.add(obj);
     scope(exit) ThreadBase.remove(obj);
@@ -226,14 +230,7 @@ Thread external_attachThread(ThreadBase thisThread) @nogc
 
 class Thread : ThreadBase
 {
-    import core.sync.event: Event;
-
-    private static Event joinEvent;
-
-    static this()
-    {
-        joinEvent = Event(true, true);
-    }
+    private Event* joinEvent;
 
     /// Initializes a thread object which has no associated executable function.
     /// This is used for the main thread initialized in thread_init().
@@ -288,9 +285,9 @@ class Thread : ThreadBase
                 m_sz = 256 * size_t.sizeof; // assumed default stack size
 
             assert(m_sz <= ushort.max * size_t.sizeof, "FreeRTOS stack size limit");
+            assert(m_sz % os.StackType_t.sizeof == 0, "Stack size must be multiple of word");
 
-            auto wordsStackSize = m_sz / os.StackType_t.sizeof
-                + (m_sz % os.StackType_t.sizeof ? 1 : 0);
+            auto wordsStackSize = m_sz / os.StackType_t.sizeof;
 
             //FIXME: add error checking
             auto taskProps = cast(TaskProperties*) aligned_alloc(size_t.sizeof, TaskProperties.sizeof);
@@ -301,7 +298,7 @@ class Thread : ThreadBase
             auto tcb = cast(os.StaticTask_t*) aligned_alloc(size_t.sizeof, os.StaticTask_t.sizeof);
             assert(tcb);
 
-            m_main.bstack = aligned_alloc(os.StackType_t.sizeof, os.StackType_t.sizeof * wordsStackSize);
+            m_main.bstack = aligned_alloc(os.StackType_t.sizeof, m_sz);
             assert(m_main.bstack);
 
             *tcb = os.StaticTask_t();
