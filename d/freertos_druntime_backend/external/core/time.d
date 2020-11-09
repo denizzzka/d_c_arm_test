@@ -8,8 +8,9 @@ enum ClockType
     second = 6, //TODO: used only for druntime core unittest, do something with this
 }
 
-import core.time : TickDuration; //FIXME: deprecated!
+import core.time;
 
+//FIXME: TickDuration is deprecated!
 static @property TickDuration currSystemTick() @trusted nothrow @nogc
 {
     return TickDuration(currTicks);
@@ -23,6 +24,15 @@ long currTicks() @trusted nothrow @nogc
     curr++;
 
     return curr;
+}
+
+uint toTicks(Duration d) @safe nothrow @nogc pure
+{
+    long r = d.total!"usecs" * (tickDuration_ticksPerSec / 1_000_000);
+
+    assert(r <= uint.max);
+
+    return cast(uint) r;
 }
 
 enum tickDuration_ticksPerSec = 1_000_000;

@@ -1,5 +1,6 @@
 module external.core.thread;
 
+import core.time;
 import core.thread.osthread;
 import core.thread.threadbase;
 import core.thread.types: ThreadID;
@@ -124,7 +125,6 @@ extern (C) void thread_suspendAll() nothrow
 private extern (D) bool suspend( Thread t ) nothrow
 {
     // Common code (TODO: use druntime code instead?):
-    import core.time;
 
     Duration waittime = dur!"usecs"(10);
 
@@ -344,11 +344,11 @@ class Thread : ThreadBase
         assert(false, "Not implemented");
     }
 
-    import core.time: Duration;
-
-    static void sleep( Duration val ) @nogc nothrow
+    static void sleep(Duration val) @nogc nothrow
     {
-        assert(false, "Not implemented");
+        import external.core.time;
+
+        os.vTaskDelay(val.toTicks);
     }
 
     static void yield() @nogc nothrow

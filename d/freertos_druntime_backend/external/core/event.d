@@ -2,6 +2,7 @@ module external.core.event;
 
 static import os = freertos;
 import core.time;
+import external.core.time: toTicks;
 
 struct Event
 {
@@ -81,15 +82,12 @@ struct Event
         if(group is null)
             return false;
 
-        auto mt = MonoTime.currTime;
-        mt += tmout;
-
         auto r = os.xEventGroupWaitBits(
            group,
            BITS_MASK,
            clearOnExit,
            false, // xWaitForAllBits
-           cast(uint) mt.ticks // xTicksToWait
+           tmout.toTicks // xTicksToWait
         );
 
         return r & BITS_MASK;

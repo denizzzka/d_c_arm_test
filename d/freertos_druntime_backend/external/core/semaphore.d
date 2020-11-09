@@ -3,6 +3,7 @@ module external.core.semaphore;
 static import os = freertos;
 import core.stdc.errno;
 import core.sync.exception: SyncError;
+import external.core.time: toTicks;
 
 enum SEM_VALUE_MAX = 0x7FFFU;
 
@@ -40,10 +41,7 @@ class Semaphore
     bool wait(Duration period)
     in(!period.isNegative)
     {
-        auto mt = MonoTime.currTime;
-        mt += period;
-
-        return os.xSemaphoreTakeRecursive(m_hndl, cast(uint) mt.ticks) == os.pdTRUE;
+        return os.xSemaphoreTakeRecursive(m_hndl, period.toTicks) == os.pdTRUE;
     }
 
     bool tryWait() nothrow @nogc
