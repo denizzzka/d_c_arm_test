@@ -65,9 +65,7 @@ void[] initTLSRanges() nothrow @nogc
 
     debug
     {
-        __gshared bool isInitialized;
-        assert(!isInitialized, "initTLSRanges() must be called only once");
-        isInitialized = true;
+        assert(__aeabi_read_tp() is null, "TLS already initialized?");
     }
 
     auto p = getTLSParams();
