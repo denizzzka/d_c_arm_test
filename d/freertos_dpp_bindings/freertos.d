@@ -158,6 +158,7 @@ extern(C)
     static uint ulPortRaiseBASEPRI() @nogc nothrow;
     static void vPortRaiseBASEPRI() @nogc nothrow;
     static c_long xPortIsInsideInterrupt() @nogc nothrow;
+    void vPortValidateInterruptPriority() @nogc nothrow;
     static ubyte ucPortCountLeadingZeros(uint) @nogc nothrow;
     void vPortSuppressTicksAndSleep(uint) @nogc nothrow;
     void vPortExitCritical() @nogc nothrow;
@@ -332,7 +333,6 @@ extern(C)
         c_ulong uxDummy4;
     }
     alias StaticMessageBuffer_t = xSTATIC_STREAM_BUFFER;
-    tskTaskControlBlock* xTaskCreateStatic(void function(void*), const(const(char)*), const(uint), void*, c_ulong, uint*, xSTATIC_TCB*) @nogc nothrow;
     struct EventGroupDef_t;
     alias EventGroupHandle_t = EventGroupDef_t*;
     alias EventBits_t = uint;
@@ -350,6 +350,7 @@ extern(C)
     void vEventGroupClearBitsCallback(void*, const(uint)) @nogc nothrow;
     c_ulong uxEventGroupGetNumber(void*) @nogc nothrow;
     void vEventGroupSetNumber(void*, c_ulong) @nogc nothrow;
+    tskTaskControlBlock* xTaskCreateStatic(void function(void*), const(const(char)*), const(uint), void*, c_ulong, uint*, xSTATIC_TCB*) @nogc nothrow;
     c_long xTaskCreate(void function(void*), const(const(char)*), const(ushort), void*, c_ulong, tskTaskControlBlock**) @nogc nothrow;
     enum _Anonymous_1
     {
@@ -452,13 +453,13 @@ extern(C)
     enum eInvalid = _Anonymous_3.eInvalid;
     alias eTaskState = _Anonymous_3;
     alias TaskHookFunction_t = c_long function(void*);
-    alias TaskHandle_t = tskTaskControlBlock*;
-    struct tskTaskControlBlock;
     void vListInitialise(xLIST*) @nogc nothrow;
     void vListInitialiseItem(xLIST_ITEM*) @nogc nothrow;
     void vListInsert(xLIST*, xLIST_ITEM*) @nogc nothrow;
     void vListInsertEnd(xLIST*, xLIST_ITEM*) @nogc nothrow;
     c_ulong uxListRemove(xLIST_ITEM*) @nogc nothrow;
+    alias TaskHandle_t = tskTaskControlBlock*;
+    struct tskTaskControlBlock;
     uint* pxPortInitialiseStack(uint*, void function(void*), void*) @nogc nothrow;
     alias HeapRegion_t = HeapRegion;
     struct HeapRegion
@@ -509,12 +510,12 @@ extern(C)
     tskTaskControlBlock* xQueueGetMutexHolder(QueueDefinition*) @nogc nothrow;
     c_long xQueueSemaphoreTake(QueueDefinition*, uint) @nogc nothrow;
     QueueDefinition* xQueueCreateCountingSemaphoreStatic(const(c_ulong), const(c_ulong), xSTATIC_QUEUE*) @nogc nothrow;
-    QueueDefinition* xQueueCreateCountingSemaphore(const(c_ulong), const(c_ulong)) @nogc nothrow;
-    QueueDefinition* xQueueCreateMutexStatic(const(ubyte), xSTATIC_QUEUE*) @nogc nothrow;
     struct QueueDefinition;
     alias QueueHandle_t = QueueDefinition*;
     alias QueueSetHandle_t = QueueDefinition*;
     alias QueueSetMemberHandle_t = QueueDefinition*;
+    QueueDefinition* xQueueCreateCountingSemaphore(const(c_ulong), const(c_ulong)) @nogc nothrow;
+    QueueDefinition* xQueueCreateMutexStatic(const(ubyte), xSTATIC_QUEUE*) @nogc nothrow;
     QueueDefinition* xQueueCreateMutex(const(ubyte)) @nogc nothrow;
     c_long xQueueCRReceive(QueueDefinition*, void*, uint) @nogc nothrow;
     c_long xQueueCRSend(QueueDefinition*, const(void)*, uint) @nogc nothrow;
@@ -523,7 +524,6 @@ extern(C)
     c_ulong uxQueueMessagesWaitingFromISR(const(QueueDefinition*)) @nogc nothrow;
     c_long xQueueIsQueueFullFromISR(const(QueueDefinition*)) @nogc nothrow;
     c_long xQueueIsQueueEmptyFromISR(const(QueueDefinition*)) @nogc nothrow;
-    c_long xQueueReceiveFromISR(QueueDefinition*, void*, c_long*) @nogc nothrow;
     c_long xQueueGenericSend(QueueDefinition*, const(const(void)*), uint, const(c_long)) @nogc nothrow;
     c_long xQueuePeek(QueueDefinition*, void*, uint) @nogc nothrow;
     c_long xQueuePeekFromISR(QueueDefinition*, void*) @nogc nothrow;
@@ -531,6 +531,7 @@ extern(C)
     c_ulong uxQueueMessagesWaiting(const(QueueDefinition*)) @nogc nothrow;
     c_ulong uxQueueSpacesAvailable(const(QueueDefinition*)) @nogc nothrow;
     void vQueueDelete(QueueDefinition*) @nogc nothrow;
+    c_long xQueueReceiveFromISR(QueueDefinition*, void*, c_long*) @nogc nothrow;
     c_long xQueueGiveFromISR(QueueDefinition*, c_long*) @nogc nothrow;
     c_long xQueueGenericSendFromISR(QueueDefinition*, const(const(void)*), c_long*, const(c_long)) @nogc nothrow;
     static if(!is(typeof(queueQUEUE_TYPE_RECURSIVE_MUTEX))) {
@@ -745,6 +746,8 @@ extern(C)
 
 
 
+
+
     static if(!is(typeof(pdFREERTOS_ERRNO_ETIMEDOUT))) {
         private enum enumMixinStr_pdFREERTOS_ERRNO_ETIMEDOUT = `enum pdFREERTOS_ERRNO_ETIMEDOUT = 116;`;
         static if(is(typeof({ mixin(enumMixinStr_pdFREERTOS_ERRNO_ETIMEDOUT); }))) {
@@ -771,8 +774,6 @@ extern(C)
             mixin(enumMixinStr_pdFREERTOS_ERRNO_ENOPROTOOPT);
         }
     }
-
-
 
 
 
@@ -1097,6 +1098,8 @@ extern(C)
 
 
 
+
+
     static if(!is(typeof(errQUEUE_BLOCKED))) {
         private enum enumMixinStr_errQUEUE_BLOCKED = `enum errQUEUE_BLOCKED = ( - 4 );`;
         static if(is(typeof({ mixin(enumMixinStr_errQUEUE_BLOCKED); }))) {
@@ -1121,38 +1124,6 @@ extern(C)
         private enum enumMixinStr_errQUEUE_FULL = `enum errQUEUE_FULL = ( cast( BaseType_t ) 0 );`;
         static if(is(typeof({ mixin(enumMixinStr_errQUEUE_FULL); }))) {
             mixin(enumMixinStr_errQUEUE_FULL);
-        }
-    }
-
-
-
-
-
-
-    static if(!is(typeof(errQUEUE_EMPTY))) {
-        private enum enumMixinStr_errQUEUE_EMPTY = `enum errQUEUE_EMPTY = ( cast( BaseType_t ) 0 );`;
-        static if(is(typeof({ mixin(enumMixinStr_errQUEUE_EMPTY); }))) {
-            mixin(enumMixinStr_errQUEUE_EMPTY);
-        }
-    }
-
-
-
-
-    static if(!is(typeof(pdFAIL))) {
-        private enum enumMixinStr_pdFAIL = `enum pdFAIL = ( pdFALSE );`;
-        static if(is(typeof({ mixin(enumMixinStr_pdFAIL); }))) {
-            mixin(enumMixinStr_pdFAIL);
-        }
-    }
-
-
-
-
-    static if(!is(typeof(pdPASS))) {
-        private enum enumMixinStr_pdPASS = `enum pdPASS = ( pdTRUE );`;
-        static if(is(typeof({ mixin(enumMixinStr_pdPASS); }))) {
-            mixin(enumMixinStr_pdPASS);
         }
     }
 
@@ -1189,10 +1160,10 @@ extern(C)
 
 
 
-    static if(!is(typeof(pdTRUE))) {
-        private enum enumMixinStr_pdTRUE = `enum pdTRUE = ( cast( BaseType_t ) 1 );`;
-        static if(is(typeof({ mixin(enumMixinStr_pdTRUE); }))) {
-            mixin(enumMixinStr_pdTRUE);
+    static if(!is(typeof(errQUEUE_EMPTY))) {
+        private enum enumMixinStr_errQUEUE_EMPTY = `enum errQUEUE_EMPTY = ( cast( BaseType_t ) 0 );`;
+        static if(is(typeof({ mixin(enumMixinStr_errQUEUE_EMPTY); }))) {
+            mixin(enumMixinStr_errQUEUE_EMPTY);
         }
     }
 
@@ -1201,6 +1172,30 @@ extern(C)
 
 
 
+    static if(!is(typeof(pdFAIL))) {
+        private enum enumMixinStr_pdFAIL = `enum pdFAIL = ( pdFALSE );`;
+        static if(is(typeof({ mixin(enumMixinStr_pdFAIL); }))) {
+            mixin(enumMixinStr_pdFAIL);
+        }
+    }
+
+
+
+
+
+
+    static if(!is(typeof(pdPASS))) {
+        private enum enumMixinStr_pdPASS = `enum pdPASS = ( pdTRUE );`;
+        static if(is(typeof({ mixin(enumMixinStr_pdPASS); }))) {
+            mixin(enumMixinStr_pdPASS);
+        }
+    }
+    static if(!is(typeof(pdTRUE))) {
+        private enum enumMixinStr_pdTRUE = `enum pdTRUE = ( cast( BaseType_t ) 1 );`;
+        static if(is(typeof({ mixin(enumMixinStr_pdTRUE); }))) {
+            mixin(enumMixinStr_pdTRUE);
+        }
+    }
     static if(!is(typeof(pdFALSE))) {
         private enum enumMixinStr_pdFALSE = `enum pdFALSE = ( cast( BaseType_t ) 0 );`;
         static if(is(typeof({ mixin(enumMixinStr_pdFALSE); }))) {
@@ -1213,6 +1208,10 @@ extern(C)
             mixin(enumMixinStr_portARCH_NAME);
         }
     }
+
+
+
+
     static if(!is(typeof(portHAS_STACK_OVERFLOW_CHECKING))) {
         private enum enumMixinStr_portHAS_STACK_OVERFLOW_CHECKING = `enum portHAS_STACK_OVERFLOW_CHECKING = 0;`;
         static if(is(typeof({ mixin(enumMixinStr_portHAS_STACK_OVERFLOW_CHECKING); }))) {
@@ -1231,8 +1230,6 @@ extern(C)
             mixin(enumMixinStr_portNUM_CONFIGURABLE_REGIONS);
         }
     }
-
-
 
 
 
@@ -2002,13 +1999,11 @@ extern(C)
 
 
     static if(!is(typeof(configASSERT_DEFINED))) {
-        private enum enumMixinStr_configASSERT_DEFINED = `enum configASSERT_DEFINED = 0;`;
+        private enum enumMixinStr_configASSERT_DEFINED = `enum configASSERT_DEFINED = 1;`;
         static if(is(typeof({ mixin(enumMixinStr_configASSERT_DEFINED); }))) {
             mixin(enumMixinStr_configASSERT_DEFINED);
         }
     }
-
-
 
 
 
@@ -2173,16 +2168,6 @@ extern(C)
 
 
 
-    static if(!is(typeof(INCLUDE_xTaskGetIdleTaskHandle))) {
-        private enum enumMixinStr_INCLUDE_xTaskGetIdleTaskHandle = `enum INCLUDE_xTaskGetIdleTaskHandle = 0;`;
-        static if(is(typeof({ mixin(enumMixinStr_INCLUDE_xTaskGetIdleTaskHandle); }))) {
-            mixin(enumMixinStr_INCLUDE_xTaskGetIdleTaskHandle);
-        }
-    }
-
-
-
-
 
 
     static if(!is(typeof(portCHAR))) {
@@ -2255,6 +2240,16 @@ extern(C)
 
 
 
+    static if(!is(typeof(INCLUDE_xTaskGetIdleTaskHandle))) {
+        private enum enumMixinStr_INCLUDE_xTaskGetIdleTaskHandle = `enum INCLUDE_xTaskGetIdleTaskHandle = 0;`;
+        static if(is(typeof({ mixin(enumMixinStr_INCLUDE_xTaskGetIdleTaskHandle); }))) {
+            mixin(enumMixinStr_INCLUDE_xTaskGetIdleTaskHandle);
+        }
+    }
+
+
+
+
     static if(!is(typeof(configUSE_NEWLIB_REENTRANT))) {
         private enum enumMixinStr_configUSE_NEWLIB_REENTRANT = `enum configUSE_NEWLIB_REENTRANT = 0;`;
         static if(is(typeof({ mixin(enumMixinStr_configUSE_NEWLIB_REENTRANT); }))) {
@@ -2277,30 +2272,12 @@ extern(C)
 
 
 
+
+
     static if(!is(typeof(configMAX_SYSCALL_INTERRUPT_PRIORITY))) {
         private enum enumMixinStr_configMAX_SYSCALL_INTERRUPT_PRIORITY = `enum configMAX_SYSCALL_INTERRUPT_PRIORITY = ( configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY << ( 8 - configPRIO_BITS ) );`;
         static if(is(typeof({ mixin(enumMixinStr_configMAX_SYSCALL_INTERRUPT_PRIORITY); }))) {
             mixin(enumMixinStr_configMAX_SYSCALL_INTERRUPT_PRIORITY);
-        }
-    }
-
-
-
-
-    static if(!is(typeof(configKERNEL_INTERRUPT_PRIORITY))) {
-        private enum enumMixinStr_configKERNEL_INTERRUPT_PRIORITY = `enum configKERNEL_INTERRUPT_PRIORITY = ( configLIBRARY_LOWEST_INTERRUPT_PRIORITY << ( 8 - configPRIO_BITS ) );`;
-        static if(is(typeof({ mixin(enumMixinStr_configKERNEL_INTERRUPT_PRIORITY); }))) {
-            mixin(enumMixinStr_configKERNEL_INTERRUPT_PRIORITY);
-        }
-    }
-
-
-
-
-    static if(!is(typeof(configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY))) {
-        private enum enumMixinStr_configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY = `enum configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY = 5;`;
-        static if(is(typeof({ mixin(enumMixinStr_configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY); }))) {
-            mixin(enumMixinStr_configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY);
         }
     }
 
@@ -2386,6 +2363,22 @@ extern(C)
             mixin(enumMixinStr_portNVIC_PENDSVSET_BIT);
         }
     }
+    static if(!is(typeof(configKERNEL_INTERRUPT_PRIORITY))) {
+        private enum enumMixinStr_configKERNEL_INTERRUPT_PRIORITY = `enum configKERNEL_INTERRUPT_PRIORITY = ( configLIBRARY_LOWEST_INTERRUPT_PRIORITY << ( 8 - configPRIO_BITS ) );`;
+        static if(is(typeof({ mixin(enumMixinStr_configKERNEL_INTERRUPT_PRIORITY); }))) {
+            mixin(enumMixinStr_configKERNEL_INTERRUPT_PRIORITY);
+        }
+    }
+
+
+
+
+    static if(!is(typeof(configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY))) {
+        private enum enumMixinStr_configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY = `enum configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY = 5;`;
+        static if(is(typeof({ mixin(enumMixinStr_configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY); }))) {
+            mixin(enumMixinStr_configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY);
+        }
+    }
     static if(!is(typeof(configLIBRARY_LOWEST_INTERRUPT_PRIORITY))) {
         private enum enumMixinStr_configLIBRARY_LOWEST_INTERRUPT_PRIORITY = `enum configLIBRARY_LOWEST_INTERRUPT_PRIORITY = 15;`;
         static if(is(typeof({ mixin(enumMixinStr_configLIBRARY_LOWEST_INTERRUPT_PRIORITY); }))) {
@@ -2396,20 +2389,24 @@ extern(C)
 
 
 
+
+
     static if(!is(typeof(configPRIO_BITS))) {
         private enum enumMixinStr_configPRIO_BITS = `enum configPRIO_BITS = 4;`;
         static if(is(typeof({ mixin(enumMixinStr_configPRIO_BITS); }))) {
             mixin(enumMixinStr_configPRIO_BITS);
         }
     }
+
+
+
+
     static if(!is(typeof(INCLUDE_xTaskGetSchedulerState))) {
         private enum enumMixinStr_INCLUDE_xTaskGetSchedulerState = `enum INCLUDE_xTaskGetSchedulerState = 1;`;
         static if(is(typeof({ mixin(enumMixinStr_INCLUDE_xTaskGetSchedulerState); }))) {
             mixin(enumMixinStr_INCLUDE_xTaskGetSchedulerState);
         }
     }
-
-
 
 
 
@@ -2430,10 +2427,6 @@ extern(C)
             mixin(enumMixinStr_INCLUDE_vTaskDelayUntil);
         }
     }
-
-
-
-
     static if(!is(typeof(INCLUDE_vTaskSuspend))) {
         private enum enumMixinStr_INCLUDE_vTaskSuspend = `enum INCLUDE_vTaskSuspend = 1;`;
         static if(is(typeof({ mixin(enumMixinStr_INCLUDE_vTaskSuspend); }))) {
