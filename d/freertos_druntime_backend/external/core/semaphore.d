@@ -21,6 +21,8 @@ class Semaphore
     ~this() nothrow @nogc
     {
         os._vSemaphoreDelete(m_hndl);
+
+        debug m_hndl = null;
     }
 
     void wait()
