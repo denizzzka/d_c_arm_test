@@ -5,15 +5,15 @@ import core.stdc.errno;
 import core.sync.exception: SyncError;
 import external.core.time: toTicks;
 
-enum SEM_VALUE_MAX = 0x7FFFU;
-
 class Semaphore
 {
     private os.SemaphoreHandle_t m_hndl;
 
     this(size_t initialCount = 0) nothrow @nogc
     {
-        m_hndl = os.xSemaphoreCreateCounting(SEM_VALUE_MAX, initialCount);
+        import core.stdc.config: c_long;
+
+        m_hndl = os.xSemaphoreCreateCounting(c_long.max /* c_ulong */, initialCount);
 
         assert(m_hndl);
     }
@@ -23,12 +23,10 @@ class Semaphore
         os._vSemaphoreDelete(m_hndl);
     }
 
-    private immutable unableToWait = "Unable to wait for semaphore";
-
     void wait()
     {
-        if(waitOrError())
-            throw new SyncError(unableToWait);
+        if(!waitOrError())
+            throw new SyncError("Unable to wait for semaphore");
     }
 
     bool waitOrError() nothrow @nogc
@@ -51,7 +49,7 @@ class Semaphore
 
     void notify()
     {
-        if(notifyOrError())
+        if(!notifyOrError())
             throw new SyncError("Unable to notify semaphore");
     }
 
