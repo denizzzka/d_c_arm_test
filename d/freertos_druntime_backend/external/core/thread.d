@@ -13,6 +13,13 @@ struct TaskProperties
 {
     Thread thread;
     os.StaticTask_t tcb;
+    Event joinEvent;
+
+    this(Thread _this) nothrow
+    {
+        thread = _this;
+        joinEvent = Event(true, true);
+    }
 }
 
 extern(C) void thread_entryPoint(void* arg) nothrow
@@ -25,6 +32,8 @@ in(arg)
     }
 
     auto props = cast(TaskProperties*) arg;
+    scope(exit) props.joinEvent.set();
+
     auto obj = props.thread;
 
     obj.initDataStorage();
@@ -33,13 +42,6 @@ in(arg)
     Thread.setThis(obj);
 
     obj.taskProperties = props;
-
-    obj.joinEvent = new Event(true, true);
-    scope(exit)
-    {
-        obj.joinEvent.set();
-        obj.joinEvent = null;
-    }
 
     ThreadBase.add(obj);
     scope(exit) ThreadBase.remove(obj);
@@ -239,7 +241,6 @@ Thread external_attachThread(ThreadBase thisThread) @nogc
 class Thread : ThreadBase
 {
     private TaskProperties* taskProperties;
-    private Event* joinEvent;
 
     /// Initializes a thread object which has no associated executable function.
     /// This is used for the main thread initialized in thread_init().
@@ -263,8 +264,7 @@ class Thread : ThreadBase
     {
         if(taskProperties) // not main thread
         {
-            free(m_main.bstack);
-            free(taskProperties);
+            destroy(taskProperties);
         }
     }
 
@@ -312,10 +312,7 @@ class Thread : ThreadBase
 
             auto wordsStackSize = m_sz / os.StackType_t.sizeof;
 
-            //FIXME: add error checking
-            auto taskProps = cast(TaskProperties*) aligned_alloc(size_t.sizeof, TaskProperties.sizeof);
-            assert(taskProps);
-            taskProps.thread = this;
+            auto taskProps = new TaskProperties(this);
 
             m_main.bstack = aligned_alloc(os.StackType_t.sizeof, m_sz);
             assert(m_main.bstack);
@@ -355,7 +352,9 @@ class Thread : ThreadBase
 
     override final Throwable join( bool rethrow = true )
     {
-        joinEvent.wait();
+        assert(taskProperties !is null, "Can't join main thread");
+
+        taskProperties.joinEvent.wait();
 
         m_addr = m_addr.init;
 
