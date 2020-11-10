@@ -47,7 +47,7 @@ picolibc_sub = subproject(
         'newlib-long-time_t=true',
         'newlib-multithread=true',
         'newlib-tinystdio=true',
-        'thread-local-storage=true',
+        'thread-local-storage=false',
     ]
 )
 picolibc_dep = picolibc_sub.get_variable('picolibc_dep')

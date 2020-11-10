@@ -16,7 +16,7 @@ class Mutex : Object.Monitor
     {
         mtx = _xSemaphoreCreateRecursiveMutex();
 
-        if(mtx == null)
+        if(mtx is null)
             abort("Error: memory required to hold mutex could not be allocated.");
     }
 

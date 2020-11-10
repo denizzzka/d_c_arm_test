@@ -5,16 +5,16 @@ int main()
 {
 	gpio_setup();
 
-	xTaskCreate(
-		&blinkTask,
-		cast(const(char*)) "LED Blink",
-		32, // usStackDepth
-		null, // *pvParameters
-		1, // uxPriority
-		null // task handler
-	);
+	//~ xTaskCreate(
+		//~ &blinkTask,
+		//~ cast(const(char*)) "LED Blink",
+		//~ 32, // usStackDepth
+		//~ null, // *pvParameters
+		//~ 1, // uxPriority
+		//~ null // task handler
+	//~ );
 
-	vTaskStartScheduler();
+	//~ vTaskStartScheduler();
 
 	// Will not get here unless there is insufficient RAM
 	return 1;
@@ -27,4 +27,4 @@ extern(C) void blinkTask(void *pvParametres) @nogc nothrow
 	vTaskDelay(500);
 }
 
-extern(C) __gshared string[] rt_options = [ "gcopt=minPoolSize:16K maxPoolSize:3600K incPoolSize:4K" ];
+extern(C) __gshared string[] rt_options = [ "gcopt=minPoolSize:16K maxPoolSize:3M incPoolSize:4K" ];

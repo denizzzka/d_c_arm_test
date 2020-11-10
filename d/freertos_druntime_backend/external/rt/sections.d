@@ -1,5 +1,6 @@
 module external.rt.sections;
 
+static import freertos;
 import rt.sections_ldc : SectionGroup;
 debug(PRINTF) import core.stdc.stdio : printf;
 
@@ -55,6 +56,10 @@ void fillGlobalSectionGroup(ref SectionGroup gsg) nothrow @nogc
 
 extern(C) void* aligned_alloc(size_t _align, size_t size) nothrow @nogc;
 
+import core.memory: GC;
+
+private enum TCB_size = 8; // ARM EABI specific
+
 /***
  * Called once per thread; returns array of thread local storage ranges
  */
@@ -64,19 +69,14 @@ void[] initTLSRanges() nothrow @nogc
 
     debug
     {
-        __gshared bool isInitialized;
-        assert(!isInitialized, "initTLSRanges() must be called only once");
-        isInitialized = true;
+        assert(__aeabi_read_tp() is null, "TLS already initialized?");
     }
 
     auto p = getTLSParams();
 
-    enum TCB_size = 8;
-
     // TLS
     import core.stdc.string: memcpy, memset;
 
-    // For multithread it is need to allocate additional TCB data too?
     void* tls = aligned_alloc(8, p.full_tls_size);
     assert(tls, "cannot allocate TLS block");
 
@@ -86,18 +86,33 @@ void[] initTLSRanges() nothrow @nogc
     // Init local bss by zeroes
     memset(tls + p.tdata_size, 0x00, p.tbss_size);
 
-    _set_tls(tls); // picolibc decrements TCB in _set_tls
+    freertos.vTaskSetThreadLocalStoragePointer(null, 0, tls - TCB_size /* ARM EABI specific offset */);
 
-    void* tls_arm = __aeabi_read_tp();
-    assert(tls - tls_arm == TCB_size);
+    debug
+    {
+        void* tls_arm = __aeabi_read_tp();
+        assert(tls - tls_arm == TCB_size);
+    }
 
     // Register in GC
     //TODO: move this info into our own SectionGroup implementation?
-    import core.memory;
     GC.addRange(tls, p.full_tls_size);
 
     return tls[0 .. p.full_tls_size];
 }
 
-extern(C) void _set_tls(void* p) nothrow @nogc; // provided by picolibc
-extern(C) void* __aeabi_read_tp() nothrow @nogc; // provided by picolibc
+void finiTLSRanges(void[] rng) nothrow @nogc
+{
+    import core.stdc.stdlib: free;
+
+    debug(PRINTF) printf("finiTLSRanges called\n");
+
+    assert(__aeabi_read_tp() !is null);
+
+    free(rng.ptr);
+}
+
+extern(C) void* __aeabi_read_tp() nothrow @nogc
+{
+    return freertos.pvTaskGetThreadLocalStoragePointer(null, 0);
+}

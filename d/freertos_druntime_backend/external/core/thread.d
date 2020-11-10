@@ -1,23 +1,69 @@
 module external.core.thread;
 
+import core.sync.event: Event;
+import core.stdc.stdlib: free;
+import core.time;
 import core.thread.osthread;
 import core.thread.threadbase;
 import core.thread.types: ThreadID;
 import core.thread.context: StackContext;
-static import freertos;
+static import os = freertos;
 
-extern (C) void* thread_entryPoint( void* arg ) nothrow
+struct TaskProperties
 {
-    Thread obj = cast(Thread) arg;
+    Thread thread;
+    os.StaticTask_t tcb;
+}
+
+extern(C) void thread_entryPoint(void* arg) nothrow
+in(arg)
+{
+    scope(exit)
+    {
+        os.vTaskDelete(null);
+        os.vTaskSuspend(null); //TODO: it is need here?
+    }
+
+    auto props = cast(TaskProperties*) arg;
+    auto obj = props.thread;
+
     obj.initDataStorage();
+    scope(exit) obj.destroyDataStorage();
+
     Thread.setThis(obj);
+
+    obj.taskProperties = props;
+
+    obj.joinEvent = new Event(true, true);
+    scope(exit)
+    {
+        obj.joinEvent.set();
+        obj.joinEvent = null;
+    }
+
     ThreadBase.add(obj);
+    scope(exit) ThreadBase.remove(obj);
 
-    obj.tlsGCdataInit();
+    Thread.add(&obj.m_main);
 
-    //FIXME: osthread.d contains more stuff here
+    void append(Throwable t)
+    {
+        obj.m_unhandled = Throwable.chainTogether(obj.m_unhandled, t);
+    }
 
-    return null;
+    try
+    {
+        rt_moduleTlsCtor();
+
+        try
+            obj.run();
+        catch (Throwable t)
+            append( t );
+
+        rt_moduleTlsDtor();
+    }
+    catch (Throwable t)
+        append( t );
 }
 
 @nogc:
@@ -33,7 +79,12 @@ extern (C) void thread_init() @nogc
     _mainThreadStore[] = typeid(Thread).initializer[];
 
     // Creating main thread
-    ThreadBase.sm_main = external_attachThread((cast(Thread)_mainThreadStore.ptr).__ctor());
+    Thread mainThread = (cast(Thread) _mainThreadStore.ptr).__ctor();
+
+    import external.rt.dmain: mainTaskProperties;
+    mainThread.m_main.bstack = mainTaskProperties.stackBottom;
+
+    ThreadBase.sm_main = external_attachThread(mainThread);
 }
 
 /// Term threads module
@@ -59,6 +110,7 @@ extern (C) void thread_resumeHandler( int sig ) nothrow
     assert(false, "Not implemented");
 }
 
+/// Suspend all threads but the calling thread
 extern (C) void thread_suspendAll() nothrow
 {
     if ( !multiThreadedFlag && Thread.sm_tbeg )
@@ -70,14 +122,17 @@ extern (C) void thread_suspendAll() nothrow
     }
 
     ThreadBase.slock.lock_nothrow();
+
     {
         if ( ++suspendDepth > 1 )
             return;
 
         ThreadBase.criticalRegionLock.lock_nothrow();
         scope (exit) ThreadBase.criticalRegionLock.unlock_nothrow();
+
         size_t cnt;
         Thread t = ThreadBase.sm_tbeg.toThread;
+
         while (t)
         {
             auto tn = t.next.toThread;
@@ -86,33 +141,14 @@ extern (C) void thread_suspendAll() nothrow
             t = tn;
         }
 
-        version (Darwin)
-        {}
-        else version (Posix)
-        {
-            // subtract own thread
-            assert(cnt >= 1);
-            --cnt;
-        Lagain:
-            // wait for semaphore notifications
-            for (; cnt; --cnt)
-            {
-                while (sem_wait(&suspendCount) != 0)
-                {
-                    if (errno != EINTR)
-                        onThreadError("Unable to wait for semaphore");
-                    errno = 0;
-                }
-            }
-        }
+        assert(cnt >= 1);
     }
 }
 
 /// Suspend the specified thread and load stack and register information
 private extern (D) bool suspend( Thread t ) nothrow
 {
-    // Common code (TODO: use druntime code instead):
-    import core.time;
+    // Common code (TODO: use druntime code instead?):
 
     Duration waittime = dur!"usecs"(10);
 
@@ -133,9 +169,9 @@ private extern (D) bool suspend( Thread t ) nothrow
 
     // OS-specific code:
 
-    if (t.m_addr != freertos.xTaskGetCurrentTaskHandle())
+    if (t.m_addr != os.xTaskGetCurrentTaskHandle())
     {
-        freertos.vTaskSuspend(t.m_addr);
+        os.vTaskSuspend(t.m_addr);
     }
     else if (!t.m_lock)
     {
@@ -150,18 +186,18 @@ void thread_intermediateShutdown() nothrow @nogc
     assert(false, "Not implemented");
 }
 
-private void* getStackTop() nothrow @nogc
+public void* getStackTop() nothrow @nogc
 {
     import ldc.intrinsics;
     pragma(LDC_never_inline);
     return llvm_frameaddress(0);
 }
 
-private extern(C) extern __gshared void* _stack;
-
 void* getStackBottom() nothrow @nogc
 {
-    return &_stack;
+    assert(Thread.getThis().m_main.bstack !is null);
+
+    return Thread.getThis().m_main.bstack;
 }
 
 ThreadID createLowLevelThread(void delegate() nothrow dg, uint stacksize = 0,
@@ -175,6 +211,7 @@ bool findLowLevelThread(ThreadID tid) nothrow @nogc
     assert(false, "Not implemented");
 }
 
+//TODO: this is only for internal use, rename it to more appropriate?
 Thread external_attachThread(ThreadBase thisThread) @nogc
 {
     Thread t = thisThread.toThread;
@@ -183,7 +220,8 @@ Thread external_attachThread(ThreadBase thisThread) @nogc
     assert(thisContext);
     assert(thisContext == t.m_curr);
 
-    thisContext.bstack = getStackBottom();
+    t.m_addr = os.xTaskGetCurrentTaskHandle();
+    assert(thisContext.bstack);
     thisContext.tstack = thisContext.bstack;
 
     t.m_isDaemon = true;
@@ -200,6 +238,9 @@ Thread external_attachThread(ThreadBase thisThread) @nogc
 
 class Thread : ThreadBase
 {
+    private TaskProperties* taskProperties;
+    private Event* joinEvent;
+
     /// Initializes a thread object which has no associated executable function.
     /// This is used for the main thread initialized in thread_init().
     private this(size_t sz = 0) @safe pure nothrow @nogc
@@ -220,12 +261,77 @@ class Thread : ThreadBase
 
     ~this() nothrow @nogc
     {
-        //FIXME
+        if(taskProperties) // not main thread
+        {
+            free(m_main.bstack);
+            free(taskProperties);
+        }
+    }
+
+    private void initDataStorage() nothrow
+    {
+        assert(m_curr is &m_main);
+
+        assert(m_main.bstack);
+        m_main.tstack = m_main.bstack;
+
+        tlsGCdataInit();
+    }
+
+    override final void run()
+    {
+        super.run();
     }
 
     final Thread start() nothrow
     {
-        assert(false, "Not implemented");
+        auto wasThreaded  = multiThreadedFlag;
+        multiThreadedFlag = true;
+        scope( failure )
+        {
+            if ( !wasThreaded )
+                multiThreadedFlag = false;
+        }
+
+        slock.lock_nothrow();
+        scope(exit) slock.unlock_nothrow();
+
+        {
+            import core.stdc.stdlib: realloc;
+            import external.rt.sections: aligned_alloc;
+
+            ++nAboutToStart;
+            pAboutToStart = cast(ThreadBase*)realloc(pAboutToStart, Thread.sizeof * nAboutToStart);
+            pAboutToStart[nAboutToStart - 1] = this;
+
+            if(m_sz == 0)
+                m_sz = 512 * size_t.sizeof; // assumed default stack size
+
+            assert(m_sz <= ushort.max * size_t.sizeof, "FreeRTOS stack size limit");
+            assert(m_sz % os.StackType_t.sizeof == 0, "Stack size must be multiple of word");
+
+            auto wordsStackSize = m_sz / os.StackType_t.sizeof;
+
+            //FIXME: add error checking
+            auto taskProps = cast(TaskProperties*) aligned_alloc(size_t.sizeof, TaskProperties.sizeof);
+            assert(taskProps);
+            taskProps.thread = this;
+
+            m_main.bstack = aligned_alloc(os.StackType_t.sizeof, m_sz);
+            assert(m_main.bstack);
+
+            m_addr = os.xTaskCreateStatic(
+                &thread_entryPoint,
+                cast(const(char*)) "D thread",
+                wordsStackSize,
+                cast(void*) taskProps, // pvParameters*
+                5, // uxPriority
+                cast(size_t*) m_main.bstack,
+                &taskProps.tcb
+            );
+
+            return this;
+        }
     }
 
     static Thread getThis() @safe nothrow @nogc
@@ -249,7 +355,18 @@ class Thread : ThreadBase
 
     override final Throwable join( bool rethrow = true )
     {
-        assert(false, "Not implemented");
+        joinEvent.wait();
+
+        m_addr = m_addr.init;
+
+        if (m_unhandled)
+        {
+            if (rethrow)
+                throw m_unhandled;
+            return m_unhandled;
+        }
+
+        return null;
     }
 
     final void joinAll( bool rethrow = true )
@@ -257,22 +374,47 @@ class Thread : ThreadBase
         assert(false, "Not implemented");
     }
 
-    import core.time: Duration;
-
-    static void sleep( Duration val ) @nogc nothrow
+    static void sleep(Duration val) @nogc nothrow
     {
-        //~ assert(false, "Not implemented");
+        import external.core.time;
+
+        os.vTaskDelay(val.toTicks);
     }
 
     static void yield() @nogc nothrow
     {
-        //~ assert(false, "Not implemented"); //FIXME
+        _taskYield();
     }
 
     static int opApply(scope int delegate(ref Thread) dg)
     {
         assert(false, "Not implemented");
     }
+}
+
+private void _taskYield() @nogc nothrow
+{
+    version(__ARM_ARCH_ISA_ARM)
+    {
+        // taskYield() code what dpp can't convert from FreeRTOS headers
+
+        /* Set a PendSV to request a context switch. */
+        //os.portNVIC_INT_CTRL_REG = os.portNVIC_PENDSVSET_BIT;
+        __gshared portNVIC_INT_CTRL_REG = cast(uint*) 0xe000ed04;
+        portNVIC_INT_CTRL_REG = os.portNVIC_PENDSVSET_BIT;
+
+        /* Barriers are normally not required but do ensure the code is completely
+         * within the specified behaviour for the architecture. */
+        // __asm volatile ( "dsb" ::: "memory" );
+        // __asm volatile ( "isb" );
+
+        __asm!()(`
+            dsb memory
+            isb
+        `);
+    }
+    else
+        static assert("Not implemented");
 }
 
 private Thread toThread(ThreadBase t) @trusted nothrow @nogc pure
