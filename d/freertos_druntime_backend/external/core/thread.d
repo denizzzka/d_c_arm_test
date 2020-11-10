@@ -312,19 +312,19 @@ class Thread : ThreadBase
 
             auto wordsStackSize = m_sz / os.StackType_t.sizeof;
 
-            auto taskProps = new TaskProperties(this);
+            taskProperties = new TaskProperties(this);
 
             m_main.bstack = aligned_alloc(os.StackType_t.sizeof, m_sz);
             assert(m_main.bstack);
 
             m_addr = os.xTaskCreateStatic(
                 &thread_entryPoint,
-                cast(const(char*)) "D thread",
+                cast(const(char*)) "D thread", //FIXME: fill name from m_name
                 wordsStackSize,
-                cast(void*) taskProps, // pvParameters*
+                cast(void*) taskProperties, // pvParameters*
                 5, // uxPriority
                 cast(size_t*) m_main.bstack,
-                &taskProps.tcb
+                &taskProperties.tcb
             );
 
             return this;
