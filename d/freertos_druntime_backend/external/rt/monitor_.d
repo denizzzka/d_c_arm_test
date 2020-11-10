@@ -4,14 +4,17 @@ nothrow:
 @nogc:
 
 import freertos;
+import core.exception;
 
-alias MonitorMutex = SemaphoreHandle_t;
+private alias MonitorMutex = SemaphoreHandle_t;
 alias Mutex = MonitorMutex;
 
 void initMutex(MonitorMutex* mtx)
-out(;mtx !is null)
 {
     *mtx = _xSemaphoreCreateMutex();
+
+    if(*mtx is null)
+        onOutOfMemoryError();
 }
 
 void destroyMutex(MonitorMutex* mtx)
@@ -22,11 +25,11 @@ void destroyMutex(MonitorMutex* mtx)
 void lockMutex(MonitorMutex* mtx)
 {
     if(xSemaphoreTake(*mtx, portMAX_DELAY) != pdTRUE)
-        assert(false);
+        onInvalidMemoryOperationError();
 }
 
 void unlockMutex(MonitorMutex* mtx)
 {
     if(_xSemaphoreGive(*mtx) != pdTRUE)
-        assert(false);
+        onInvalidMemoryOperationError();
 }
