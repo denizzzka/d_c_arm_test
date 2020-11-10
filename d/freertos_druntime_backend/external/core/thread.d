@@ -1,6 +1,7 @@
 module external.core.thread;
 
 import core.sync.event: Event;
+import core.stdc.stdlib: free;
 import core.time;
 import core.thread.osthread;
 import core.thread.threadbase;
@@ -11,6 +12,7 @@ static import os = freertos;
 struct TaskProperties
 {
     Thread thread;
+    os.StaticTask_t tcb;
 }
 
 extern(C) void thread_entryPoint(void* arg) nothrow
@@ -30,8 +32,14 @@ in(arg)
 
     Thread.setThis(obj);
 
+    obj.taskProperties = props;
+
     obj.joinEvent = new Event(true, true);
-    scope(exit) obj.joinEvent.set();
+    scope(exit)
+    {
+        obj.joinEvent.set();
+        obj.joinEvent = null;
+    }
 
     ThreadBase.add(obj);
     scope(exit) ThreadBase.remove(obj);
@@ -230,6 +238,7 @@ Thread external_attachThread(ThreadBase thisThread) @nogc
 
 class Thread : ThreadBase
 {
+    private TaskProperties* taskProperties;
     private Event* joinEvent;
 
     /// Initializes a thread object which has no associated executable function.
@@ -252,8 +261,11 @@ class Thread : ThreadBase
 
     ~this() nothrow @nogc
     {
-        while(true)
-        {}
+        if(taskProperties) // not main thread
+        {
+            free(m_main.bstack);
+            free(taskProperties);
+        }
     }
 
     private void initDataStorage() nothrow
@@ -305,14 +317,8 @@ class Thread : ThreadBase
             assert(taskProps);
             taskProps.thread = this;
 
-            //FIXME: tcb leaks on thread exit
-            auto tcb = cast(os.StaticTask_t*) aligned_alloc(size_t.sizeof, os.StaticTask_t.sizeof);
-            assert(tcb);
-
             m_main.bstack = aligned_alloc(os.StackType_t.sizeof, m_sz);
             assert(m_main.bstack);
-
-            *tcb = os.StaticTask_t();
 
             m_addr = os.xTaskCreateStatic(
                 &thread_entryPoint,
@@ -321,7 +327,7 @@ class Thread : ThreadBase
                 cast(void*) taskProps, // pvParameters*
                 5, // uxPriority
                 cast(size_t*) m_main.bstack,
-                tcb
+                &taskProps.tcb
             );
 
             return this;
