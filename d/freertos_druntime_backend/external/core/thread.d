@@ -25,10 +25,10 @@ in(arg)
     auto props = cast(TaskProperties*) arg;
     auto obj = props.thread;
 
-    Thread.setThis(obj);
-
     obj.initDataStorage();
     scope(exit) obj.destroyDataStorage();
+
+    Thread.setThis(obj);
 
     obj.joinEvent = new Event(true, true);
     scope(exit) obj.joinEvent.set();
@@ -252,7 +252,18 @@ class Thread : ThreadBase
 
     ~this() nothrow @nogc
     {
-        assert(false);
+        while(true)
+        {}
+    }
+
+    private void initDataStorage() nothrow
+    {
+        assert(m_curr is &m_main);
+
+        assert(m_main.bstack);
+        m_main.tstack = m_main.bstack;
+
+        tlsGCdataInit();
     }
 
     override final void run()
