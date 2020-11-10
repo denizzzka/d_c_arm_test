@@ -15,7 +15,7 @@ struct TaskProperties
     os.StaticTask_t tcb;
     Event joinEvent;
 
-    this(Thread _this) nothrow
+    this(Thread _this) nothrow @trusted @nogc
     {
         thread = _this;
         joinEvent = Event(true, false);
@@ -37,7 +37,6 @@ in(arg)
     auto obj = props.thread;
 
     obj.initDataStorage();
-    scope(exit) obj.destroyDataStorage();
 
     Thread.setThis(obj);
 
@@ -248,16 +247,18 @@ class Thread : ThreadBase
     {
     }
 
-    this(void function() fn, size_t sz = 0) @safe pure nothrow @nogc
+    this(void function() fn, size_t sz = 0) @safe nothrow
     in(fn !is null)
     {
         super(fn, sz);
+        initTaskProperties();
     }
 
-    this(void delegate() dg, size_t sz = 0) @safe pure nothrow @nogc
+    this(void delegate() dg, size_t sz = 0) @safe nothrow
     in(dg !is null)
     {
         super(dg, sz);
+        initTaskProperties();
     }
 
     ~this() nothrow @nogc
@@ -266,6 +267,25 @@ class Thread : ThreadBase
         {
             destroy(taskProperties);
         }
+
+        destructBeforeDtor();
+    }
+
+    private void initTaskProperties() @safe nothrow
+    {
+        import external.rt.sections: aligned_alloc;
+
+        if(m_sz == 0)
+            m_sz = 512 * size_t.sizeof; // default stack size
+
+        assert(m_sz <= ushort.max * size_t.sizeof, "FreeRTOS stack size limit");
+        assert(m_sz % os.StackType_t.sizeof == 0, "Stack size must be multiple of word");
+
+        m_main.bstack = (() @trusted => aligned_alloc(os.StackType_t.sizeof, m_sz))();
+
+        assert(m_main.bstack); //TODO: release memory check
+
+        taskProperties = new TaskProperties(this);
     }
 
     private void initDataStorage() nothrow
@@ -298,24 +318,12 @@ class Thread : ThreadBase
 
         {
             import core.stdc.stdlib: realloc;
-            import external.rt.sections: aligned_alloc;
 
             ++nAboutToStart;
             pAboutToStart = cast(ThreadBase*)realloc(pAboutToStart, Thread.sizeof * nAboutToStart);
             pAboutToStart[nAboutToStart - 1] = this;
 
-            if(m_sz == 0)
-                m_sz = 512 * size_t.sizeof; // assumed default stack size
-
-            assert(m_sz <= ushort.max * size_t.sizeof, "FreeRTOS stack size limit");
-            assert(m_sz % os.StackType_t.sizeof == 0, "Stack size must be multiple of word");
-
             auto wordsStackSize = m_sz / os.StackType_t.sizeof;
-
-            taskProperties = new TaskProperties(this);
-
-            m_main.bstack = aligned_alloc(os.StackType_t.sizeof, m_sz);
-            assert(m_main.bstack);
 
             m_addr = os.xTaskCreateStatic(
                 &thread_entryPoint,
