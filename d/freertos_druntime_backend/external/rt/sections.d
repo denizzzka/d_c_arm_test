@@ -77,7 +77,6 @@ void[] initTLSRanges() nothrow @nogc
     // TLS
     import core.stdc.string: memcpy, memset;
 
-    // For multithread it is need to allocate additional TCB data too?
     void* tls = aligned_alloc(8, p.full_tls_size);
     assert(tls, "cannot allocate TLS block");
 
@@ -107,6 +106,8 @@ void finiTLSRanges(void[] rng) nothrow @nogc
     import core.stdc.stdlib: free;
 
     debug(PRINTF) printf("finiTLSRanges called\n");
+
+    assert(__aeabi_read_tp() !is null);
 
     free(rng.ptr);
 }
