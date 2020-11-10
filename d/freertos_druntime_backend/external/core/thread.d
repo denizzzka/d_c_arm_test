@@ -18,7 +18,7 @@ struct TaskProperties
     this(Thread _this) nothrow
     {
         thread = _this;
-        joinEvent = Event(true, true);
+        joinEvent = Event(true, false);
     }
 }
 
