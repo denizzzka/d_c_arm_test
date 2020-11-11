@@ -410,11 +410,6 @@ class Thread : ThreadBase
     {
         _taskYield();
     }
-
-    static int opApply(scope int delegate(ref Thread) dg)
-    {
-        assert(false, "Not implemented");
-    }
 }
 
 private void _taskYield() @nogc nothrow
