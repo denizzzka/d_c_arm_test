@@ -11,38 +11,25 @@ static import os = freertos;
 
 struct TaskProperties
 {
-    Thread thread;
     os.StaticTask_t tcb;
     Event joinEvent;
     void* stackBuff;
-
-    this(Thread _this) nothrow @trusted @nogc
-    {
-        thread = _this;
-        joinEvent = Event(true, false);
-    }
 }
 
 extern(C) void thread_entryPoint(void* arg) nothrow
 in(arg)
 {
+    auto obj = cast(Thread) arg;
+
     scope(exit)
     {
+        obj.taskProperties.joinEvent.set();
         os.vTaskDelete(null);
-        os.vTaskSuspend(null); //TODO: it is need here?
     }
-
-    auto props = cast(TaskProperties*) arg;
-    assert(!props.joinEvent.wait(0.msecs), "event already in set state");
-    scope(exit) props.joinEvent.set();
-
-    auto obj = props.thread;
 
     obj.initDataStorage();
 
     Thread.setThis(obj);
-
-    obj.taskProperties = props;
 
     ThreadBase.add(obj);
     scope(exit) ThreadBase.remove(obj);
@@ -184,6 +171,21 @@ private extern (D) bool suspend( Thread t ) nothrow
     return true;
 }
 
+//FIXME: name must be "resume", extern(D)
+private extern(C) void _D8external4core6thread6resumeFNbCQxQu10threadbase10ThreadBaseZv(ThreadBase _t) nothrow
+{
+    Thread t = _t.toThread;
+
+    if(t.m_addr != os.xTaskGetCurrentTaskHandle())
+    {
+        os.vTaskResume(t.m_addr);
+    }
+    else if ( !t.m_lock )
+    {
+        t.m_curr.tstack = t.m_curr.bstack;
+    }
+}
+
 void thread_intermediateShutdown() nothrow @nogc
 {
     assert(false, "Not implemented");
@@ -241,7 +243,7 @@ Thread external_attachThread(ThreadBase thisThread) @nogc
 
 class Thread : ThreadBase
 {
-    private TaskProperties* taskProperties;
+    private TaskProperties taskProperties;
 
     /// Initializes a thread object which has no associated executable function.
     /// This is used for the main thread initialized in thread_init().
@@ -254,6 +256,7 @@ class Thread : ThreadBase
     {
         super(fn, sz);
         initTaskProperties();
+        taskProperties.joinEvent = Event(true, false);
         printTcbCreated(file, line);
     }
 
@@ -262,16 +265,14 @@ class Thread : ThreadBase
     {
         super(dg, sz);
         initTaskProperties();
+        taskProperties.joinEvent = Event(true, false);
         printTcbCreated(file, line);
     }
 
     ~this() nothrow @nogc
     {
-        if(taskProperties) // not main thread
-        {
+        if(taskProperties.stackBuff) // not main thread
             free(taskProperties.stackBuff);
-            destroy(taskProperties);
-        }
 
         destructBeforeDtor();
     }
@@ -286,8 +287,6 @@ class Thread : ThreadBase
 
         assert(m_sz <= ushort.max * size_t.sizeof, "FreeRTOS stack size limit");
         assert(m_sz % os.StackType_t.sizeof == 0, "Stack size must be multiple of word");
-
-        taskProperties = new TaskProperties(this);
 
         taskProperties.stackBuff = (() @trusted => aligned_alloc(os.StackType_t.sizeof, m_sz))();
         if(!taskProperties.stackBuff)
@@ -344,7 +343,7 @@ class Thread : ThreadBase
                 &thread_entryPoint,
                 cast(const(char*)) "D thread", //FIXME: fill name from m_name
                 wordsStackSize,
-                cast(void*) taskProperties, // pvParameters*
+                cast(void*) this, // pvParameters*
                 5, // uxPriority
                 cast(os.StackType_t*) taskProperties.stackBuff,
                 &taskProperties.tcb
@@ -375,7 +374,7 @@ class Thread : ThreadBase
 
     override final Throwable join( bool rethrow = true )
     {
-        assert(taskProperties !is null, "Can't join main thread");
+        assert(taskProperties.stackBuff !is null, "Can't join main thread");
 
         taskProperties.joinEvent.wait();
 
