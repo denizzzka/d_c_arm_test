@@ -4,6 +4,8 @@ static import os = freertos;
 import core.time;
 import external.core.time: toTicks;
 
+//TODO: push changes to mainstream Event implementation too
+
 struct Event
 {
     private os.EventGroupHandle_t group;
@@ -17,6 +19,7 @@ struct Event
     }
 
     void initialize(bool manualReset, bool initialState) @trusted
+    in(group is null)
     {
         import core.exception: onOutOfMemoryError;
 
@@ -41,52 +44,49 @@ struct Event
     }
 
     void terminate() @trusted
+    in(group)
     {
         os.vEventGroupDelete(group);
         group = null;
     }
 
-    private enum BITS_MASK = 0x01; // using one first bit
+    private enum uint BITS_MASK = 0x01; // using one first bit
 
     void set()
+    in(group)
     {
-        if(group !is null)
-            os.xEventGroupSetBits(group, BITS_MASK);
+        os.xEventGroupSetBits(group, BITS_MASK);
     }
 
     void reset()
+    in(group)
     {
-        if(group !is null)
-            os.xEventGroupClearBits(group, BITS_MASK);
+        os.xEventGroupClearBits(group, BITS_MASK);
     }
 
-    bool wait()
+    void wait()
+    in(group)
     {
-        if(group is null)
-            return false;
-
         auto r = os.xEventGroupWaitBits(
            group,
            BITS_MASK,
            clearOnExit,
-           false, // xWaitForAllBits
+           os.pdFALSE, // xWaitForAllBits
            os.portMAX_DELAY // xTicksToWait
         );
 
-        return r & BITS_MASK;
+        assert(r & BITS_MASK, "Timeout can't expire in this function");
     }
 
     bool wait(Duration tmout)
     in(!tmout.isNegative)
+    in(group)
     {
-        if(group is null)
-            return false;
-
         auto r = os.xEventGroupWaitBits(
            group,
            BITS_MASK,
            clearOnExit,
-           false, // xWaitForAllBits
+           os.pdFALSE, // xWaitForAllBits
            tmout.toTicks // xTicksToWait
         );
 
