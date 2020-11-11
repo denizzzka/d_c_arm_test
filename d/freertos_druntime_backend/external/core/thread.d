@@ -14,6 +14,7 @@ struct TaskProperties
     Thread thread;
     os.StaticTask_t tcb;
     Event joinEvent;
+    void* stackBuff;
 
     this(Thread _this) nothrow @trusted @nogc
     {
@@ -32,6 +33,7 @@ in(arg)
     }
 
     auto props = cast(TaskProperties*) arg;
+    assert(!props.joinEvent.wait(0.msecs), "event already in set state");
     scope(exit) props.joinEvent.set();
 
     auto obj = props.thread;
@@ -247,24 +249,27 @@ class Thread : ThreadBase
     {
     }
 
-    this(void function() fn, size_t sz = 0) @safe nothrow
+    this(void function() fn, size_t sz = 0, string file = __FILE__, size_t line = __LINE__) @safe nothrow
     in(fn !is null)
     {
         super(fn, sz);
         initTaskProperties();
+        printTcbCreated(file, line);
     }
 
-    this(void delegate() dg, size_t sz = 0) @safe nothrow
+    this(void delegate() dg, size_t sz = 0, string file = __FILE__, size_t line = __LINE__) @safe nothrow
     in(dg !is null)
     {
         super(dg, sz);
         initTaskProperties();
+        printTcbCreated(file, line);
     }
 
     ~this() nothrow @nogc
     {
         if(taskProperties) // not main thread
         {
+            free(taskProperties.stackBuff);
             destroy(taskProperties);
         }
 
@@ -274,18 +279,28 @@ class Thread : ThreadBase
     private void initTaskProperties() @safe nothrow
     {
         import external.rt.sections: aligned_alloc;
+        import core.exception: onOutOfMemoryError;
 
         if(m_sz == 0)
-            m_sz = 512 * size_t.sizeof; // default stack size
+            m_sz = 2048 * size_t.sizeof; // default stack size
 
         assert(m_sz <= ushort.max * size_t.sizeof, "FreeRTOS stack size limit");
         assert(m_sz % os.StackType_t.sizeof == 0, "Stack size must be multiple of word");
 
-        m_main.bstack = (() @trusted => aligned_alloc(os.StackType_t.sizeof, m_sz))();
-
-        assert(m_main.bstack); //TODO: release memory check
-
         taskProperties = new TaskProperties(this);
+
+        taskProperties.stackBuff = (() @trusted => aligned_alloc(os.StackType_t.sizeof, m_sz))();
+        if(!taskProperties.stackBuff)
+            onOutOfMemoryError();
+
+        m_main.bstack = (() @trusted => taskProperties.stackBuff + m_sz - 1)();
+    }
+
+    debug/*(PRINTF)*/ private void printTcbCreated(string file, size_t line) @trusted nothrow
+    {
+        import core.stdc.stdio: printf;
+
+        printf("TCB %p created from file %s line %d\n", &taskProperties.tcb, cast(char*) file, line);
     }
 
     private void initDataStorage() nothrow
@@ -331,7 +346,7 @@ class Thread : ThreadBase
                 wordsStackSize,
                 cast(void*) taskProperties, // pvParameters*
                 5, // uxPriority
-                cast(size_t*) m_main.bstack,
+                cast(os.StackType_t*) taskProperties.stackBuff,
                 &taskProperties.tcb
             );
 
