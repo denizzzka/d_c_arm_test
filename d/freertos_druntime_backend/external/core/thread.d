@@ -251,22 +251,22 @@ class Thread : ThreadBase
     {
     }
 
-    this(void function() fn, size_t sz = 0, string file = __FILE__, size_t line = __LINE__) @safe nothrow
+    this(void function() fn, size_t sz = 0, /* string file = __FILE__, size_t line = __LINE__ */) @safe nothrow
     in(fn !is null)
     {
         super(fn, sz);
         initTaskProperties();
         taskProperties.joinEvent = Event(true, false);
-        printTcbCreated(file, line);
+        //printTcbCreated(file, line);
     }
 
-    this(void delegate() dg, size_t sz = 0, string file = __FILE__, size_t line = __LINE__) @safe nothrow
+    this(void delegate() dg, size_t sz = 0, /* string file = __FILE__, size_t line = __LINE__ */) @safe nothrow
     in(dg !is null)
     {
         super(dg, sz);
         initTaskProperties();
         taskProperties.joinEvent = Event(true, false);
-        printTcbCreated(file, line);
+        //printTcbCreated(file, line);
     }
 
     ~this() nothrow @nogc
@@ -295,11 +295,14 @@ class Thread : ThreadBase
         m_main.bstack = (() @trusted => taskProperties.stackBuff + m_sz - 1)();
     }
 
-    debug/*(PRINTF)*/ private void printTcbCreated(string file, size_t line) @trusted nothrow
+    private void printTcbCreated(string file, size_t line) @trusted nothrow
     {
-        import core.stdc.stdio: printf;
+        debug(PRINTF)
+        {
+            import core.stdc.stdio: printf;
 
-        printf("TCB %p created from file %s line %d\n", &taskProperties.tcb, cast(char*) file, line);
+            printf("TCB %p created from file %s line %d\n", &taskProperties.tcb, cast(char*) file, line);
+        }
     }
 
     private void initDataStorage() nothrow
