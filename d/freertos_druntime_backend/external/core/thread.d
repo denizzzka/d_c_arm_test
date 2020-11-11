@@ -379,7 +379,8 @@ class Thread : ThreadBase
     {
         assert(taskProperties.stackBuff !is null, "Can't join main thread");
 
-        taskProperties.joinEvent.wait();
+        //FIXME: remove loop. Currently wait() call isn't works (FreeRTOS-related problem?)
+        while(!taskProperties.joinEvent.wait(1.seconds)){}
 
         m_addr = m_addr.init;
 
