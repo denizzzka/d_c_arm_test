@@ -11,12 +11,12 @@ struct Event
 
     nothrow @nogc:
 
-    this(bool manualReset, bool initialState)
+    this(bool manualReset, bool initialState) @safe
     {
         initialize(manualReset, initialState);
     }
 
-    void initialize(bool manualReset, bool initialState)
+    void initialize(bool manualReset, bool initialState) @trusted
     {
         import core.exception: onOutOfMemoryError;
 
@@ -35,12 +35,12 @@ struct Event
     @disable this(this);
     @disable void opAssign(Event);
 
-    ~this()
+    ~this() @safe
     {
         terminate();
     }
 
-    void terminate()
+    void terminate() @trusted
     {
         os.vEventGroupDelete(group);
         group = null;
