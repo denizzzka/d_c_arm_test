@@ -1,7 +1,7 @@
 module external.core.thread;
 
 import core.sync.event: Event;
-import core.stdc.stdlib: free;
+import core.stdc.stdlib: realloc, free;
 import core.time;
 import core.thread.osthread;
 import core.thread.threadbase;
@@ -54,6 +54,77 @@ in(arg)
     }
     catch (Throwable t)
         append( t );
+}
+
+struct LowLevelThreadSystemParams
+{
+    const(char*) name = "D low-level";
+}
+
+alias LLThreadDg = void delegate() nothrow;
+
+/**
+ * Create a thread not under control of the runtime, i.e. TLS module constructors are
+ * not run and the GC does not suspend it during a collection.
+ *
+ *  cbDllUnload = Windows only: if running in a dynamically loaded DLL, this delegate will be called
+ *              if the DLL is supposed to be unloaded, but the thread is still running.
+ *              The thread must be terminated via `joinLowLevelThread` by the callback.
+ */
+ThreadID createLowLevelThread(
+    LLThreadDg dg, uint stacksize = 0,
+    LLThreadDg cbDllUnload = null, //TODO: remove this arg in upstream
+    LowLevelThreadSystemParams params = LowLevelThreadSystemParams.init
+) nothrow @nogc
+in(stacksize % os.StackType_t.sizeof == 0)
+{
+    import core.sys.posix.stdlib: malloc;
+
+    auto context = cast(LLThreadDg*) malloc(dg.sizeof);
+    if(!context) return ThreadID.init;
+
+    *context = dg;
+
+    import core.thread.types: ll_ThreadData;
+
+    lowlevelLock.lock_nothrow();
+    scope(exit) lowlevelLock.unlock_nothrow();
+
+    ll_nThreads++;
+    auto new_ll_pThreads = cast(ll_ThreadData*) realloc(ll_pThreads, ll_ThreadData.sizeof * ll_nThreads);
+    if(!new_ll_pThreads) return ThreadID.init;
+    ll_pThreads = new_ll_pThreads;
+
+    static extern(C) void thread_lowlevelEntry(void* ctx) nothrow
+    {
+        auto dg = *cast(void delegate() nothrow*) ctx;
+        free(ctx);
+
+        dg();
+
+        os.vTaskDelete(null);
+    }
+
+    auto wordsStackSize = stacksize / os.StackType_t.sizeof; // add stack size checker
+
+    import external.rt.sections: aligned_alloc;
+
+    auto stackBuff = cast(os.StackType_t*) aligned_alloc(os.StackType_t.sizeof, stacksize);
+    auto tcb = cast(os.StaticTask_t*) malloc(os.StaticTask_t.sizeof);
+
+    ThreadID tid = os.xTaskCreateStatic(
+        &thread_lowlevelEntry,
+        params.name,
+        wordsStackSize,
+        cast(void*) context, // pvParameters*
+        5, // uxPriority
+        stackBuff,
+        tcb
+    );
+
+    ll_pThreads[ll_nThreads - 1].tid = tid;
+
+    return tid;
 }
 
 @nogc:
@@ -205,12 +276,6 @@ void* getStackBottom() nothrow @nogc
     return Thread.getThis().m_main.bstack;
 }
 
-ThreadID createLowLevelThread(void delegate() nothrow dg, uint stacksize = 0,
-                              void delegate() nothrow cbDllUnload = null) nothrow @nogc
-{
-    assert(false, "Not implemented");
-}
-
 bool findLowLevelThread(ThreadID tid) nothrow @nogc
 {
     assert(false, "Not implemented");
@@ -334,8 +399,6 @@ class Thread : ThreadBase
         scope(exit) slock.unlock_nothrow();
 
         {
-            import core.stdc.stdlib: realloc;
-
             ++nAboutToStart;
             pAboutToStart = cast(ThreadBase*)realloc(pAboutToStart, Thread.sizeof * nAboutToStart);
             pAboutToStart[nAboutToStart - 1] = this;
