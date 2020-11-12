@@ -504,3 +504,20 @@ private Thread toThread(ThreadBase t) @trusted nothrow @nogc pure
 {
     return cast(Thread) cast(void*) t;
 }
+
+// Picolibc malloc threads support:
+private:
+
+import core.internal.spinlock;
+
+shared SpinLock memLock = SpinLock(SpinLock.Contention.medium);
+
+extern(C) void __malloc_lock()
+{
+    memLock.lock();
+}
+
+extern(C) void __malloc_unlock()
+{
+    memLock.unlock();
+}
