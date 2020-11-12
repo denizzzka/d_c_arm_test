@@ -1,5 +1,6 @@
 module external.core.thread;
 
+import core.internal.spinlock;
 import core.sync.event: Event;
 import core.stdc.stdlib: aligned_alloc, realloc, free;
 import core.time;
@@ -9,7 +10,7 @@ import core.thread.types: ThreadID;
 import core.thread.context: StackContext;
 static import os = freertos;
 
-struct TaskProperties
+private struct TaskProperties
 {
     os.StaticTask_t tcb;
     Event joinEvent;
@@ -61,12 +62,12 @@ struct LowLevelThreadSystemParams
     const(char*) name = "D low-level";
 }
 
-struct ll_ThreadData
-{
-    ThreadID tid;
-}
-
 alias LLThreadDg = void delegate() nothrow;
+
+private struct LLTaskProperties
+{
+    LLThreadDg dg;
+}
 
 /**
  * Create a thread not under control of the runtime, i.e. TLS module constructors are
@@ -85,10 +86,10 @@ in(stacksize % os.StackType_t.sizeof == 0)
 {
     import core.sys.posix.stdlib: malloc;
 
-    auto context = cast(LLThreadDg*) malloc(dg.sizeof);
+    auto context = cast(LLTaskProperties*) malloc(LLTaskProperties.sizeof);
     if(!context) return ThreadID.init;
 
-    *context = dg;
+    *context = LLTaskProperties(dg);
 
     import core.thread.types: ll_ThreadData;
 
@@ -100,20 +101,13 @@ in(stacksize % os.StackType_t.sizeof == 0)
     if(!new_ll_pThreads) return ThreadID.init;
     ll_pThreads = new_ll_pThreads;
 
-    static extern(C) void thread_lowlevelEntry(void* ctx) nothrow
-    {
-        auto dg = *cast(void delegate() nothrow*) ctx;
-        free(ctx);
-
-        dg();
-
-        os.vTaskDelete(null);
-    }
-
     auto wordsStackSize = stacksize / os.StackType_t.sizeof;
 
     auto stackBuff = cast(os.StackType_t*) aligned_alloc(os.StackType_t.sizeof, stacksize);
     auto tcb = cast(os.StaticTask_t*) malloc(os.StaticTask_t.sizeof);
+
+    auto currThread = &ll_pThreads[ll_nThreads - 1];
+    currThread.initialize();
 
     ThreadID tid = os.xTaskCreateStatic(
         &thread_lowlevelEntry,
@@ -125,9 +119,72 @@ in(stacksize % os.StackType_t.sizeof == 0)
         tcb
     );
 
-    ll_pThreads[ll_nThreads - 1].tid = tid;
+    currThread.tid = tid;
 
     return tid;
+}
+
+private extern(C) void thread_lowlevelEntry(void* ctx) nothrow
+{
+    LLTaskProperties lltp = *cast(LLTaskProperties*) ctx; 
+    free(ctx);
+
+    lltp.dg();
+
+    ThreadID tid = os.xTaskGetCurrentTaskHandle();
+
+    lowlevelLock.lock_nothrow();
+
+    ll_ThreadData* td = getLLThreadNotThreadSafe(tid);
+    assert(td);
+
+    td.joinEvent.set();
+    ll_removeThread(tid);
+
+    lowlevelLock.unlock_nothrow();
+
+    os.vTaskDelete(null);
+}
+
+void joinLowLevelThread(in ThreadID tid) nothrow @nogc
+{
+    ll_ThreadData* t = lockAndGetLowLevelThread(tid);
+
+    if(t is null) // thread already exited
+        return;
+
+    t.joinEvent.wait();
+    t.lockDeletion.unlock_nothrow(); // thread can be safely deleted
+}
+
+import external.core.types: ll_ThreadData;
+
+private ll_ThreadData* lockAndGetLowLevelThread(in ThreadID tid) nothrow @nogc
+{
+    lowlevelLock.lock_nothrow();
+
+    auto t = getLLThreadNotThreadSafe(tid);
+
+    // thread still not deleted? lock its deletion
+    if(t !is null)
+        t.lockDeletion.lock_nothrow();
+
+    lowlevelLock.unlock_nothrow();
+
+    return t;
+}
+
+private ll_ThreadData* getLLThreadNotThreadSafe(in ThreadID tid) nothrow @nogc
+{
+    foreach (i; 0 .. ll_nThreads)
+    {
+        auto curr = &ll_pThreads[i];
+
+        if (tid is curr.tid)
+            return curr;
+    }
+
+    return null;
 }
 
 @nogc:
@@ -459,11 +516,6 @@ class Thread : ThreadBase
         return null;
     }
 
-    final void joinAll( bool rethrow = true )
-    {
-        assert(false, "Not implemented");
-    }
-
     static void sleep(Duration val) @nogc nothrow
     {
         import external.core.time;
@@ -510,9 +562,7 @@ private Thread toThread(ThreadBase t) @trusted nothrow @nogc pure
 // Picolibc malloc threads support:
 private:
 
-import core.internal.spinlock;
-
-shared SpinLock memLock = SpinLock(SpinLock.Contention.medium);
+shared SpinLock memLock = SpinLock(SpinLock.Contention.lengthy);
 
 extern(C) void __malloc_lock()
 {

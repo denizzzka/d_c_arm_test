@@ -12,7 +12,7 @@ class Mutex : Object.Monitor
 
     private SemaphoreHandle_t mtx = void;
 
-    this() @nogc
+    this() @nogc nothrow
     {
         mtx = _xSemaphoreCreateRecursiveMutex();
 
