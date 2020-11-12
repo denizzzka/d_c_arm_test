@@ -1,7 +1,7 @@
 module external.core.thread;
 
 import core.sync.event: Event;
-import core.stdc.stdlib: realloc, free;
+import core.stdc.stdlib: aligned_alloc, realloc, free;
 import core.time;
 import core.thread.osthread;
 import core.thread.threadbase;
@@ -105,9 +105,7 @@ in(stacksize % os.StackType_t.sizeof == 0)
         os.vTaskDelete(null);
     }
 
-    auto wordsStackSize = stacksize / os.StackType_t.sizeof; // add stack size checker
-
-    import external.rt.sections: aligned_alloc;
+    auto wordsStackSize = stacksize / os.StackType_t.sizeof;
 
     auto stackBuff = cast(os.StackType_t*) aligned_alloc(os.StackType_t.sizeof, stacksize);
     auto tcb = cast(os.StaticTask_t*) malloc(os.StaticTask_t.sizeof);
@@ -344,7 +342,6 @@ class Thread : ThreadBase
 
     private void initTaskProperties() @safe nothrow
     {
-        import external.rt.sections: aligned_alloc;
         import core.exception: onOutOfMemoryError;
 
         if(m_sz == 0)
