@@ -1,4 +1,4 @@
-module external.libc.stdio;
+module external.libc.stdlib;
 
 nothrow @nogc:
 
