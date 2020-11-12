@@ -61,6 +61,11 @@ struct LowLevelThreadSystemParams
     const(char*) name = "D low-level";
 }
 
+struct ll_ThreadData
+{
+    ThreadID tid;
+}
+
 alias LLThreadDg = void delegate() nothrow;
 
 /**
