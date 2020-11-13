@@ -50,6 +50,18 @@ struct Event
         group = null;
     }
 
+    bool setIfInitialized()
+    {
+        if(group is null)
+            return false;
+        else
+        {
+            set();
+
+            return true;
+        }
+    }
+
     private enum uint BITS_MASK = 0x01; // using one first bit
 
     void set()
