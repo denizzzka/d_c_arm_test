@@ -105,6 +105,8 @@ extern(C) void vApplicationStackOverflowHook(os.TaskHandle_t xTask, char* pcTask
     {}
 }
 
+extern(C) void malloc_stats();
+
 extern(C) void vApplicationTickHook(os.TaskHandle_t xTask, char* pcTaskName)
 {
     import core.stdc.stdio;
@@ -121,7 +123,8 @@ extern(C) void vApplicationTickHook(os.TaskHandle_t xTask, char* pcTaskName)
         cnt = 0;
         seconds++;
 
-        //~ printf(">>> Tick %d\r", seconds);
+        printf(">>> Uptime:\t%d sec\n", seconds);
+        malloc_stats();
     }
 }
 

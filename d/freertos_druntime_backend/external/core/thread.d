@@ -503,6 +503,7 @@ class Thread : ThreadBase
 
         //FIXME: remove loop. Currently wait() call isn't works (FreeRTOS-related problem?)
         while(!taskProperties.joinEvent.wait(1.seconds)){}
+        //~ taskProperties.joinEvent.wait();
 
         m_addr = m_addr.init;
 
