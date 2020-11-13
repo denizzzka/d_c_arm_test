@@ -1,6 +1,7 @@
 module external.core.semaphore;
 
 static import os = freertos;
+import core.exception: onOutOfMemoryError;
 import core.stdc.errno;
 import core.sync.exception: SyncError;
 import external.core.time: toTicks;
@@ -15,7 +16,8 @@ class Semaphore
 
         m_hndl = os.xSemaphoreCreateCounting(c_long.max /* c_ulong */, initialCount);
 
-        assert(m_hndl);
+        if(!m_hndl)
+            onOutOfMemoryError();
     }
 
     ~this() nothrow @nogc
