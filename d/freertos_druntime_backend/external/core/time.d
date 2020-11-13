@@ -23,6 +23,7 @@ long currTicks() @trusted nothrow @nogc
     return os.xTaskGetTickCount();
 }
 
+//TODO: templatize this calculations to avoid wasting CPU time
 uint toTicks(Duration d) @safe nothrow @nogc pure
 in(_ticksPerSec >= 1000)
 {
