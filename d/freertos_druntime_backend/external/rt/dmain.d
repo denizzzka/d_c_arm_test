@@ -105,6 +105,26 @@ extern(C) void vApplicationStackOverflowHook(os.TaskHandle_t xTask, char* pcTask
     {}
 }
 
+extern(C) void vApplicationTickHook(os.TaskHandle_t xTask, char* pcTaskName)
+{
+    import core.stdc.stdio;
+
+    __gshared int cnt;
+    __gshared int seconds;
+
+    cnt++;
+    if(cnt == 1000)
+    {
+        if(!seconds)
+            printf("\n");
+
+        cnt = 0;
+        seconds++;
+
+        //~ printf(">>> Tick %d\r", seconds);
+    }
+}
+
 import ldc.attributes;
 extern(C) void vPortSVCHandler() @naked; // provided by FreeRTOS
 extern(C) void xPortPendSVHandler() @naked; // provided by FreeRTOS
