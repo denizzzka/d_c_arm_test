@@ -226,6 +226,7 @@ extern(C)
     tskTaskControlBlock* xTaskGetIdleTaskHandle() @nogc nothrow;
     c_long xTaskCallApplicationTaskHook(tskTaskControlBlock*, void*) @nogc nothrow;
     void vApplicationGetIdleTaskMemory(xSTATIC_TCB**, uint**, uint*) @nogc nothrow;
+    void vApplicationTickHook() @nogc nothrow;
     void vApplicationStackOverflowHook(tskTaskControlBlock*, char*) @nogc nothrow;
     void* pvTaskGetThreadLocalStoragePointer(tskTaskControlBlock*, c_long) @nogc nothrow;
     void vTaskSetThreadLocalStoragePointer(tskTaskControlBlock*, c_long, void*) @nogc nothrow;
@@ -252,7 +253,6 @@ extern(C)
     void vTaskDelayUntil(uint*, const(uint)) @nogc nothrow;
     void vTaskDelay(const(uint)) @nogc nothrow;
     void vTaskDelete(tskTaskControlBlock*) @nogc nothrow;
-    void vTaskAllocateMPURegions(tskTaskControlBlock*, const(const(xMEMORY_REGION)*)) @nogc nothrow;
     struct xSTATIC_LIST_ITEM
     {
         uint xDummy2;
@@ -333,6 +333,7 @@ extern(C)
         c_ulong uxDummy4;
     }
     alias StaticMessageBuffer_t = xSTATIC_STREAM_BUFFER;
+    void vTaskAllocateMPURegions(tskTaskControlBlock*, const(const(xMEMORY_REGION)*)) @nogc nothrow;
     struct EventGroupDef_t;
     alias EventGroupHandle_t = EventGroupDef_t*;
     alias EventBits_t = uint;
@@ -374,7 +375,6 @@ extern(C)
         uint* pxStackBase;
         ushort usStackHighWaterMark;
     }
-    alias TaskStatus_t = xTASK_STATUS;
     struct xLIST
     {
         c_ulong uxNumberOfItems;
@@ -398,6 +398,7 @@ extern(C)
     }
     alias MiniListItem_t = xMINI_LIST_ITEM;
     alias List_t = xLIST;
+    alias TaskStatus_t = xTASK_STATUS;
     struct xTASK_PARAMETERS
     {
         void function(void*) pvTaskCode;
@@ -452,12 +453,12 @@ extern(C)
     enum eDeleted = _Anonymous_3.eDeleted;
     enum eInvalid = _Anonymous_3.eInvalid;
     alias eTaskState = _Anonymous_3;
-    alias TaskHookFunction_t = c_long function(void*);
     void vListInitialise(xLIST*) @nogc nothrow;
     void vListInitialiseItem(xLIST_ITEM*) @nogc nothrow;
     void vListInsert(xLIST*, xLIST_ITEM*) @nogc nothrow;
     void vListInsertEnd(xLIST*, xLIST_ITEM*) @nogc nothrow;
     c_ulong uxListRemove(xLIST_ITEM*) @nogc nothrow;
+    alias TaskHookFunction_t = c_long function(void*);
     alias TaskHandle_t = tskTaskControlBlock*;
     struct tskTaskControlBlock;
     uint* pxPortInitialiseStack(uint*, void function(void*), void*) @nogc nothrow;
@@ -523,7 +524,6 @@ extern(C)
     c_long xQueueCRSendFromISR(QueueDefinition*, const(void)*, c_long) @nogc nothrow;
     c_ulong uxQueueMessagesWaitingFromISR(const(QueueDefinition*)) @nogc nothrow;
     c_long xQueueIsQueueFullFromISR(const(QueueDefinition*)) @nogc nothrow;
-    c_long xQueueIsQueueEmptyFromISR(const(QueueDefinition*)) @nogc nothrow;
     c_long xQueueGenericSend(QueueDefinition*, const(const(void)*), uint, const(c_long)) @nogc nothrow;
     c_long xQueuePeek(QueueDefinition*, void*, uint) @nogc nothrow;
     c_long xQueuePeekFromISR(QueueDefinition*, void*) @nogc nothrow;
@@ -531,9 +531,10 @@ extern(C)
     c_ulong uxQueueMessagesWaiting(const(QueueDefinition*)) @nogc nothrow;
     c_ulong uxQueueSpacesAvailable(const(QueueDefinition*)) @nogc nothrow;
     void vQueueDelete(QueueDefinition*) @nogc nothrow;
+    c_long xQueueIsQueueEmptyFromISR(const(QueueDefinition*)) @nogc nothrow;
     c_long xQueueReceiveFromISR(QueueDefinition*, void*, c_long*) @nogc nothrow;
-    c_long xQueueGiveFromISR(QueueDefinition*, c_long*) @nogc nothrow;
     c_long xQueueGenericSendFromISR(QueueDefinition*, const(const(void)*), c_long*, const(c_long)) @nogc nothrow;
+    c_long xQueueGiveFromISR(QueueDefinition*, c_long*) @nogc nothrow;
     static if(!is(typeof(queueQUEUE_TYPE_RECURSIVE_MUTEX))) {
         private enum enumMixinStr_queueQUEUE_TYPE_RECURSIVE_MUTEX = `enum queueQUEUE_TYPE_RECURSIVE_MUTEX = ( cast( uint8_t ) 4U );`;
         static if(is(typeof({ mixin(enumMixinStr_queueQUEUE_TYPE_RECURSIVE_MUTEX); }))) {
@@ -736,14 +737,14 @@ extern(C)
 
 
 
+
+
     static if(!is(typeof(pdFREERTOS_ERRNO_EINPROGRESS))) {
         private enum enumMixinStr_pdFREERTOS_ERRNO_EINPROGRESS = `enum pdFREERTOS_ERRNO_EINPROGRESS = 119;`;
         static if(is(typeof({ mixin(enumMixinStr_pdFREERTOS_ERRNO_EINPROGRESS); }))) {
             mixin(enumMixinStr_pdFREERTOS_ERRNO_EINPROGRESS);
         }
     }
-
-
 
 
 
@@ -1088,14 +1089,14 @@ extern(C)
 
 
 
+
+
     static if(!is(typeof(errQUEUE_YIELD))) {
         private enum enumMixinStr_errQUEUE_YIELD = `enum errQUEUE_YIELD = ( - 5 );`;
         static if(is(typeof({ mixin(enumMixinStr_errQUEUE_YIELD); }))) {
             mixin(enumMixinStr_errQUEUE_YIELD);
         }
     }
-
-
 
 
 
@@ -1114,16 +1115,6 @@ extern(C)
         private enum enumMixinStr_errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY = `enum errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY = ( - 1 );`;
         static if(is(typeof({ mixin(enumMixinStr_errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY); }))) {
             mixin(enumMixinStr_errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY);
-        }
-    }
-
-
-
-
-    static if(!is(typeof(errQUEUE_FULL))) {
-        private enum enumMixinStr_errQUEUE_FULL = `enum errQUEUE_FULL = ( cast( BaseType_t ) 0 );`;
-        static if(is(typeof({ mixin(enumMixinStr_errQUEUE_FULL); }))) {
-            mixin(enumMixinStr_errQUEUE_FULL);
         }
     }
 
@@ -1160,6 +1151,18 @@ extern(C)
 
 
 
+    static if(!is(typeof(errQUEUE_FULL))) {
+        private enum enumMixinStr_errQUEUE_FULL = `enum errQUEUE_FULL = ( cast( BaseType_t ) 0 );`;
+        static if(is(typeof({ mixin(enumMixinStr_errQUEUE_FULL); }))) {
+            mixin(enumMixinStr_errQUEUE_FULL);
+        }
+    }
+
+
+
+
+
+
     static if(!is(typeof(errQUEUE_EMPTY))) {
         private enum enumMixinStr_errQUEUE_EMPTY = `enum errQUEUE_EMPTY = ( cast( BaseType_t ) 0 );`;
         static if(is(typeof({ mixin(enumMixinStr_errQUEUE_EMPTY); }))) {
@@ -1178,12 +1181,6 @@ extern(C)
             mixin(enumMixinStr_pdFAIL);
         }
     }
-
-
-
-
-
-
     static if(!is(typeof(pdPASS))) {
         private enum enumMixinStr_pdPASS = `enum pdPASS = ( pdTRUE );`;
         static if(is(typeof({ mixin(enumMixinStr_pdPASS); }))) {
@@ -1212,6 +1209,8 @@ extern(C)
 
 
 
+
+
     static if(!is(typeof(portHAS_STACK_OVERFLOW_CHECKING))) {
         private enum enumMixinStr_portHAS_STACK_OVERFLOW_CHECKING = `enum portHAS_STACK_OVERFLOW_CHECKING = 0;`;
         static if(is(typeof({ mixin(enumMixinStr_portHAS_STACK_OVERFLOW_CHECKING); }))) {
@@ -1222,14 +1221,14 @@ extern(C)
 
 
 
-
-
     static if(!is(typeof(portNUM_CONFIGURABLE_REGIONS))) {
         private enum enumMixinStr_portNUM_CONFIGURABLE_REGIONS = `enum portNUM_CONFIGURABLE_REGIONS = 1;`;
         static if(is(typeof({ mixin(enumMixinStr_portNUM_CONFIGURABLE_REGIONS); }))) {
             mixin(enumMixinStr_portNUM_CONFIGURABLE_REGIONS);
         }
     }
+
+
 
 
 
@@ -1246,6 +1245,12 @@ extern(C)
             mixin(enumMixinStr_portUSING_MPU_WRAPPERS);
         }
     }
+
+
+
+
+
+
     static if(!is(typeof(tskKERNEL_VERSION_NUMBER))) {
         private enum enumMixinStr_tskKERNEL_VERSION_NUMBER = `enum tskKERNEL_VERSION_NUMBER = "V10.4.1";`;
         static if(is(typeof({ mixin(enumMixinStr_tskKERNEL_VERSION_NUMBER); }))) {
@@ -2696,7 +2701,7 @@ extern(C)
 
 
     static if(!is(typeof(configUSE_TICK_HOOK))) {
-        private enum enumMixinStr_configUSE_TICK_HOOK = `enum configUSE_TICK_HOOK = 0;`;
+        private enum enumMixinStr_configUSE_TICK_HOOK = `enum configUSE_TICK_HOOK = 1;`;
         static if(is(typeof({ mixin(enumMixinStr_configUSE_TICK_HOOK); }))) {
             mixin(enumMixinStr_configUSE_TICK_HOOK);
         }
@@ -4440,8 +4445,8 @@ auto _xSemaphoreGive(SemaphoreHandle_t xSemaphore)
     return xQueueGenericSend ( cast( QueueHandle_t ) ( xSemaphore ) , null , ( cast( TickType_t ) 0U ) , ( cast( BaseType_t ) 0 ) );
 }
 
-alias xSemaphoreTakeRecursive = xQueueTakeMutexRecursive;
+alias xSemaphoreTakeMutexRecursive = xQueueTakeMutexRecursive;
 
-alias xSemaphoreGiveRecursive = xQueueGiveMutexRecursive;
+alias xSemaphoreGiveMutexRecursive = xQueueGiveMutexRecursive;
 
 alias xSemaphoreCreateCounting = xQueueCreateCountingSemaphore;
