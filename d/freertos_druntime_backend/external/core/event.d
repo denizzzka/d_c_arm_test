@@ -4,8 +4,6 @@ static import os = freertos;
 import core.time;
 import external.core.time: toTicks;
 
-//TODO: push changes to mainstream Event implementation too
-
 struct Event
 {
     private os.EventGroupHandle_t group;
@@ -21,12 +19,12 @@ struct Event
     void initialize(bool manualReset, bool initialState) @trusted
     in(group is null)
     {
-        import core.exception: onOutOfMemoryError;
+        import core.internal.abort: abort;
 
         group = os.xEventGroupCreate();
 
         if(group is null)
-            onOutOfMemoryError();
+            abort("xEventGroupCreate failed");
 
         clearOnExit = manualReset ? os.pdFALSE : os.pdTRUE;
 
