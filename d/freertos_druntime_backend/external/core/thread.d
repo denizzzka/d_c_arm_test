@@ -10,6 +10,8 @@ import core.thread.types: ThreadID;
 import core.thread.context: StackContext;
 static import os = freertos;
 
+enum DefaultStackSize = 2048 * os.StackType_t.sizeof;
+
 private struct TaskProperties
 {
     os.StaticTask_t tcb;
@@ -73,13 +75,20 @@ private struct LLTaskProperties
  * Create a thread not under control of the runtime, i.e. TLS module constructors are
  * not run and the GC does not suspend it during a collection.
  *
+ * Params:
+ *  dg        = delegate to execute in the created thread.
+ *  stacksize = size of the stack of the created thread. The default of 0 will select the
+ *              platform-specific default size.
  *  cbDllUnload = Windows only: if running in a dynamically loaded DLL, this delegate will be called
  *              if the DLL is supposed to be unloaded, but the thread is still running.
  *              The thread must be terminated via `joinLowLevelThread` by the callback.
+ *
+ * Returns: the platform specific thread ID of the new thread. If an error occurs, `ThreadID.init`
+ *  is returned.
  */
 ThreadID createLowLevelThread(
     LLThreadDg dg, uint stacksize = 0,
-    LLThreadDg cbDllUnload = null, //TODO: remove this arg in upstream
+    LLThreadDg cbDllUnload = null, //TODO: propose to remove this arg in upstream?
     LowLevelThreadSystemParams params = LowLevelThreadSystemParams.init
 ) nothrow @nogc
 in(stacksize % os.StackType_t.sizeof == 0)
@@ -101,7 +110,12 @@ in(stacksize % os.StackType_t.sizeof == 0)
     if(!new_ll_pThreads) return ThreadID.init;
     ll_pThreads = new_ll_pThreads;
 
+    if(stacksize == 0)
+        stacksize = DefaultStackSize;
+
     auto wordsStackSize = stacksize / os.StackType_t.sizeof;
+    if(wordsStackSize < os.configMINIMAL_STACK_SIZE)
+        return ThreadID.init;
 
     auto stackBuff = cast(os.StackType_t*) aligned_alloc(os.StackType_t.sizeof, stacksize);
     auto tcb = cast(os.StaticTask_t*) malloc(os.StaticTask_t.sizeof);
@@ -109,8 +123,8 @@ in(stacksize % os.StackType_t.sizeof == 0)
     auto currThread = &ll_pThreads[ll_nThreads - 1];
     currThread.initialize();
 
-    ThreadID tid = os.xTaskCreateStatic(
-        &thread_lowlevelEntry,
+    currThread.tid = os.xTaskCreateStatic(
+        &lowlevelThread_entryPoint,
         params.name,
         wordsStackSize,
         cast(void*) context, // pvParameters*
@@ -119,12 +133,13 @@ in(stacksize % os.StackType_t.sizeof == 0)
         tcb
     );
 
-    currThread.tid = tid;
+    // xTaskCreateStatic returns 0 if some error occured, ensure what this is ThreadID.init
+    static assert(ThreadID.init is null);
 
-    return tid;
+    return currThread.tid;
 }
 
-private extern(C) void thread_lowlevelEntry(void* ctx) nothrow
+private extern(C) void lowlevelThread_entryPoint(void* ctx) nothrow
 {
     LLTaskProperties lltp = *cast(LLTaskProperties*) ctx; 
     free(ctx);
@@ -139,9 +154,16 @@ private extern(C) void thread_lowlevelEntry(void* ctx) nothrow
     assert(td);
 
     td.joinEvent.set();
-    ll_removeThread(tid);
 
     lowlevelLock.unlock_nothrow();
+
+    //FIXME: replace this dumb condvar implementation
+    while(td.getSubscribersNum() != 0)
+    {
+        os.vTaskDelay(100); // ticks, 0.1 second
+    }
+
+    ll_removeThread(tid);
 
     os.vTaskDelete(null);
 }
@@ -153,8 +175,11 @@ void joinLowLevelThread(in ThreadID tid) nothrow @nogc
     if(t is null) // thread already exited
         return;
 
-    t.joinEvent.wait();
-    t.lockDeletion.unlock_nothrow(); // thread can be safely deleted
+    //FIXME: remove loop. Currently wait() call isn't works (FreeRTOS-related problem?)
+    while(!t.joinEvent.wait(1.seconds)){}
+    //~ t.joinEvent.wait();
+
+    t.deletionUnlock(); // then thread can be safely deleted
 }
 
 import external.core.types: ll_ThreadData;
@@ -167,7 +192,7 @@ private ll_ThreadData* lockAndGetLowLevelThread(in ThreadID tid) nothrow @nogc
 
     // thread still not deleted? lock its deletion
     if(t !is null)
-        t.lockDeletion.lock_nothrow();
+        t.deletionLock();
 
     lowlevelLock.unlock_nothrow();
 
@@ -407,7 +432,7 @@ class Thread : ThreadBase
         import core.exception: onOutOfMemoryError;
 
         if(m_sz == 0)
-            m_sz = 2048 * size_t.sizeof; // default stack size
+            m_sz = DefaultStackSize;
 
         assert(m_sz <= ushort.max * size_t.sizeof, "FreeRTOS stack size limit");
         assert(m_sz % os.StackType_t.sizeof == 0, "Stack size must be multiple of word");
@@ -463,6 +488,7 @@ class Thread : ThreadBase
             pAboutToStart[nAboutToStart - 1] = this;
 
             auto wordsStackSize = m_sz / os.StackType_t.sizeof;
+            assert(wordsStackSize >= os.configMINIMAL_STACK_SIZE);
 
             m_addr = os.xTaskCreateStatic(
                 &thread_entryPoint,

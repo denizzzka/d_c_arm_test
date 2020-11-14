@@ -1,29 +1,37 @@
 module external.core.types;
 
 import freertos: TaskHandle_t;
+import external.core.mutex: Mutex;
 
 alias ThreadID = TaskHandle_t;
 
 struct ll_ThreadData
 {
-    import external.core.mutex: Mutex;
     import external.core.event: Event;
+    import core.atomic;
 
     ThreadID tid;
     Event joinEvent;
-    private void[__traits(classInstanceSize, Mutex)] lockDeletionObject;
+    private shared size_t joinEventSubscribersNum;
 
     void initialize() nothrow @nogc
     {
         joinEvent.initialize(true, false);
-
-        lockDeletionObject = typeid(Mutex).initializer[];
-        (cast(Mutex) lockDeletionObject.ptr).__ctor();
     }
 
-    Mutex lockDeletion() @nogc nothrow
+    auto getSubscribersNum()
     {
-        return *cast(Mutex*) lockDeletionObject.ptr;
+        return atomicLoad(joinEventSubscribersNum);
+    }
+
+    void deletionLock() @nogc nothrow
+    {
+        joinEventSubscribersNum.atomicOp!"+="(1);
+    }
+
+    void deletionUnlock() @nogc nothrow
+    {
+        joinEventSubscribersNum.atomicOp!"-="(1);
     }
 }
 
@@ -32,6 +40,13 @@ unittest
     ll_ThreadData td;
     td.initialize();
 
-    td.lockDeletion.lock();
-    td.lockDeletion.unlock();
+    assert(td.getSubscribersNum() == 0);
+    td.deletionLock();
+    assert(td.getSubscribersNum() == 1);
+    td.deletionLock();
+    assert(td.getSubscribersNum() == 2);
+    td.deletionUnlock();
+    assert(td.getSubscribersNum() == 1);
+    td.deletionUnlock();
+    assert(td.getSubscribersNum() == 0);
 }
