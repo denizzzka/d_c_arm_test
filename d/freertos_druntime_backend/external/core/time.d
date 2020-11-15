@@ -16,30 +16,34 @@ static @property TickDuration currSystemTick() @trusted nothrow @nogc
     return TickDuration(currTicks);
 }
 
-//FIXME: dirty implementation, only for unittests
+static import os = freertos;
+
 long currTicks() @trusted nothrow @nogc
 {
-    __gshared static long curr;
-
-    curr++;
-
-    return curr;
+    return os.xTaskGetTickCount();
 }
 
+//TODO: templatize this calculations to avoid wasting CPU time
 uint toTicks(Duration d) @safe nothrow @nogc pure
+in(_ticksPerSec >= 1000)
 {
-    long r = d.total!"usecs" * (tickDuration_ticksPerSec / 1_000_000);
+    long r = _ticksPerSec / 1000 * d.total!"msecs";
 
     assert(r <= uint.max);
 
     return cast(uint) r;
 }
 
-enum tickDuration_ticksPerSec = 1_000_000;
+unittest
+{
+    assert(1.seconds.toTicks == _ticksPerSec);
+}
+
+enum _ticksPerSec = os.configTICK_RATE_HZ;
 
 void initTicksPerSecond(ref long[] tps)
 {
-    tps[0] = tickDuration_ticksPerSec; // ClockType.normal
+    tps[0] = _ticksPerSec; // ClockType.normal
 }
 
 // Linked by picolibc

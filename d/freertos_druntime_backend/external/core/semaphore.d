@@ -1,11 +1,10 @@
 module external.core.semaphore;
 
 static import os = freertos;
+import core.exception: onOutOfMemoryError;
 import core.stdc.errno;
 import core.sync.exception: SyncError;
 import external.core.time: toTicks;
-
-enum SEM_VALUE_MAX = 0x7FFFU;
 
 class Semaphore
 {
@@ -13,22 +12,25 @@ class Semaphore
 
     this(size_t initialCount = 0) nothrow @nogc
     {
-        m_hndl = os.xSemaphoreCreateCounting(SEM_VALUE_MAX, initialCount);
+        import core.stdc.config: c_long;
 
-        assert(m_hndl);
+        m_hndl = os.xSemaphoreCreateCounting(c_long.max /* c_ulong */, initialCount);
+
+        if(!m_hndl)
+            onOutOfMemoryError();
     }
 
     ~this() nothrow @nogc
     {
         os._vSemaphoreDelete(m_hndl);
-    }
 
-    private immutable unableToWait = "Unable to wait for semaphore";
+        debug m_hndl = null;
+    }
 
     void wait()
     {
-        if(waitOrError())
-            throw new SyncError(unableToWait);
+        if(!waitOrError())
+            throw new SyncError("Unable to wait for semaphore");
     }
 
     bool waitOrError() nothrow @nogc
@@ -51,7 +53,7 @@ class Semaphore
 
     void notify()
     {
-        if(notifyOrError())
+        if(!notifyOrError())
             throw new SyncError("Unable to notify semaphore");
     }
 

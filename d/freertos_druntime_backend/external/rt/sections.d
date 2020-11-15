@@ -54,8 +54,7 @@ void fillGlobalSectionGroup(ref SectionGroup gsg) nothrow @nogc
     debug(PRINTF) printf(__FUNCTION__~" done\n");
 }
 
-extern(C) void* aligned_alloc(size_t _align, size_t size) nothrow @nogc;
-
+import external.libc.stdlib: aligned_alloc;
 import core.memory: GC;
 
 private enum TCB_size = 8; // ARM EABI specific

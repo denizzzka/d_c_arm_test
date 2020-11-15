@@ -34,8 +34,8 @@ auto _xSemaphoreGive(SemaphoreHandle_t xSemaphore)
     return xSemaphoreGive(xSemaphore);
 }
 
-alias xSemaphoreTakeRecursive = xQueueTakeMutexRecursive;
+alias xSemaphoreTakeMutexRecursive = xQueueTakeMutexRecursive;
 
-alias xSemaphoreGiveRecursive = xQueueGiveMutexRecursive;
+alias xSemaphoreGiveMutexRecursive = xQueueGiveMutexRecursive;
 
 alias xSemaphoreCreateCounting = xQueueCreateCountingSemaphore;

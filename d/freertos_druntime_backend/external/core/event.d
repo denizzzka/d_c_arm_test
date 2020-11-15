@@ -11,19 +11,20 @@ struct Event
 
     nothrow @nogc:
 
-    this(bool manualReset, bool initialState)
+    this(bool manualReset, bool initialState) @safe
     {
         initialize(manualReset, initialState);
     }
 
-    void initialize(bool manualReset, bool initialState)
+    void initialize(bool manualReset, bool initialState) @trusted
+    in(group is null)
     {
-        import core.exception: onOutOfMemoryError;
+        import core.internal.abort: abort;
 
         group = os.xEventGroupCreate();
 
         if(group is null)
-            onOutOfMemoryError();
+            abort("xEventGroupCreate failed");
 
         clearOnExit = manualReset ? os.pdFALSE : os.pdTRUE;
 
@@ -35,58 +36,67 @@ struct Event
     @disable this(this);
     @disable void opAssign(Event);
 
-    ~this()
+    ~this() @safe
     {
         terminate();
     }
 
-    void terminate()
+    void terminate() @trusted
+    in(group)
     {
         os.vEventGroupDelete(group);
         group = null;
     }
 
-    private enum BITS_MASK = 0x01; // using one first bit
-
-    void set()
-    {
-        if(group !is null)
-            os.xEventGroupSetBits(group, BITS_MASK);
-    }
-
-    void reset()
-    {
-        if(group !is null)
-            os.xEventGroupClearBits(group, BITS_MASK);
-    }
-
-    bool wait()
+    bool setIfInitialized()
     {
         if(group is null)
             return false;
+        else
+        {
+            set();
 
+            return true;
+        }
+    }
+
+    private enum uint BITS_MASK = 0x01; // using one first bit
+
+    void set()
+    in(group)
+    {
+        os.xEventGroupSetBits(group, BITS_MASK);
+    }
+
+    void reset()
+    in(group)
+    {
+        os.xEventGroupClearBits(group, BITS_MASK);
+    }
+
+    void wait()
+    in(group)
+    {
         auto r = os.xEventGroupWaitBits(
            group,
            BITS_MASK,
            clearOnExit,
-           false, // xWaitForAllBits
+           os.pdFALSE, // xWaitForAllBits
            os.portMAX_DELAY // xTicksToWait
         );
 
-        return r & BITS_MASK;
+        assert(r & BITS_MASK, "Timeout can't expire in this function");
     }
 
     bool wait(Duration tmout)
     in(!tmout.isNegative)
+    in(group)
     {
-        if(group is null)
-            return false;
-
         auto r = os.xEventGroupWaitBits(
            group,
            BITS_MASK,
            clearOnExit,
-           false, // xWaitForAllBits
+           os.pdFALSE, // xWaitForAllBits
            tmout.toTicks // xTicksToWait
         );
 

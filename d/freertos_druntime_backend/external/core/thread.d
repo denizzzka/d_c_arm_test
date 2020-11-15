@@ -1,7 +1,8 @@
 module external.core.thread;
 
+import core.internal.spinlock;
 import core.sync.event: Event;
-import core.stdc.stdlib: free;
+import core.stdc.stdlib: aligned_alloc, realloc, free;
 import core.time;
 import core.thread.osthread;
 import core.thread.threadbase;
@@ -9,37 +10,29 @@ import core.thread.types: ThreadID;
 import core.thread.context: StackContext;
 static import os = freertos;
 
-struct TaskProperties
+enum DefaultStackSize = 2048 * os.StackType_t.sizeof;
+
+private struct TaskProperties
 {
-    Thread thread;
     os.StaticTask_t tcb;
+    Event joinEvent;
+    void* stackBuff;
 }
 
 extern(C) void thread_entryPoint(void* arg) nothrow
 in(arg)
 {
+    auto obj = cast(Thread) arg;
+
     scope(exit)
     {
+        obj.taskProperties.joinEvent.set();
         os.vTaskDelete(null);
-        os.vTaskSuspend(null); //TODO: it is need here?
     }
-
-    auto props = cast(TaskProperties*) arg;
-    auto obj = props.thread;
 
     obj.initDataStorage();
-    scope(exit) obj.destroyDataStorage();
 
     Thread.setThis(obj);
-
-    obj.taskProperties = props;
-
-    obj.joinEvent = new Event(true, true);
-    scope(exit)
-    {
-        obj.joinEvent.set();
-        obj.joinEvent = null;
-    }
 
     ThreadBase.add(obj);
     scope(exit) ThreadBase.remove(obj);
@@ -64,6 +57,161 @@ in(arg)
     }
     catch (Throwable t)
         append( t );
+}
+
+struct LowLevelThreadSystemParams
+{
+    const(char*) name = "D low-level";
+}
+
+alias LLThreadDg = void delegate() nothrow;
+
+private struct LLTaskProperties
+{
+    LLThreadDg dg;
+}
+
+/**
+ * Create a thread not under control of the runtime, i.e. TLS module constructors are
+ * not run and the GC does not suspend it during a collection.
+ *
+ * Params:
+ *  dg        = delegate to execute in the created thread.
+ *  stacksize = size of the stack of the created thread. The default of 0 will select the
+ *              platform-specific default size.
+ *  cbDllUnload = Windows only: if running in a dynamically loaded DLL, this delegate will be called
+ *              if the DLL is supposed to be unloaded, but the thread is still running.
+ *              The thread must be terminated via `joinLowLevelThread` by the callback.
+ *
+ * Returns: the platform specific thread ID of the new thread. If an error occurs, `ThreadID.init`
+ *  is returned.
+ */
+ThreadID createLowLevelThread(
+    LLThreadDg dg, uint stacksize = 0,
+    LLThreadDg cbDllUnload = null, //TODO: propose to remove this arg in upstream?
+    LowLevelThreadSystemParams params = LowLevelThreadSystemParams.init
+) nothrow @nogc
+in(stacksize % os.StackType_t.sizeof == 0)
+{
+    import core.stdc.stdlib: malloc;
+    import core.stdc.string: memset;
+
+    auto context = cast(LLTaskProperties*) malloc(LLTaskProperties.sizeof);
+    if(!context) return ThreadID.init;
+
+    *context = LLTaskProperties(dg);
+
+    import core.thread.types: ll_ThreadData;
+
+    lowlevelLock.lock_nothrow();
+    scope(exit) lowlevelLock.unlock_nothrow();
+
+    ll_nThreads++;
+    auto new_ll_pThreads = cast(ll_ThreadData*) realloc(ll_pThreads, ll_ThreadData.sizeof * ll_nThreads);
+    if(!new_ll_pThreads) return ThreadID.init;
+    ll_pThreads = new_ll_pThreads;
+
+    if(stacksize == 0)
+        stacksize = DefaultStackSize;
+
+    auto wordsStackSize = stacksize / os.StackType_t.sizeof;
+    if(wordsStackSize < os.configMINIMAL_STACK_SIZE)
+        return ThreadID.init;
+
+    auto stackBuff = cast(os.StackType_t*) aligned_alloc(os.StackType_t.sizeof, stacksize);
+    auto tcb = cast(os.StaticTask_t*) malloc(os.StaticTask_t.sizeof);
+
+    auto currThread = &ll_pThreads[ll_nThreads - 1];
+    memset(currThread, 0x00, ll_ThreadData.sizeof);
+    currThread.initialize();
+
+    currThread.tid = os.xTaskCreateStatic(
+        &lowlevelThread_entryPoint,
+        params.name,
+        wordsStackSize,
+        cast(void*) context, // pvParameters*
+        5, // uxPriority
+        stackBuff,
+        tcb
+    );
+
+    // xTaskCreateStatic returns 0 if some error occured, ensure what this is ThreadID.init
+    static assert(ThreadID.init is null);
+
+    return currThread.tid;
+}
+
+private extern(C) void lowlevelThread_entryPoint(void* ctx) nothrow
+{
+    LLTaskProperties lltp = *cast(LLTaskProperties*) ctx; 
+    free(ctx);
+
+    lltp.dg();
+
+    ThreadID tid = os.xTaskGetCurrentTaskHandle();
+
+    lowlevelLock.lock_nothrow();
+
+    ll_ThreadData* td = getLLThreadNotThreadSafe(tid);
+    assert(td);
+
+    td.joinEvent.set();
+
+    lowlevelLock.unlock_nothrow();
+
+    //FIXME: replace this dumb condvar implementation
+    while(td.getSubscribersNum() != 0)
+    {
+        os.vTaskDelay(100); // ticks, 0.1 second
+    }
+
+    ll_removeThread(tid);
+
+    os.vTaskDelete(null);
+}
+
+void joinLowLevelThread(in ThreadID tid) nothrow @nogc
+{
+    ll_ThreadData* t = lockAndGetLowLevelThread(tid);
+
+    if(t is null) // thread already exited
+        return;
+
+    //FIXME: remove loop. Currently wait() call isn't works (FreeRTOS-related problem?)
+    while(!t.joinEvent.wait(1.seconds)){}
+    //~ t.joinEvent.wait();
+
+    t.deletionUnlock(); // then thread can be safely deleted
+}
+
+import external.core.types: ll_ThreadData;
+
+private ll_ThreadData* lockAndGetLowLevelThread(in ThreadID tid) nothrow @nogc
+{
+    lowlevelLock.lock_nothrow();
+
+    auto t = getLLThreadNotThreadSafe(tid);
+
+    // thread still not deleted? lock its deletion
+    if(t !is null)
+        t.deletionLock();
+
+    lowlevelLock.unlock_nothrow();
+
+    return t;
+}
+
+private ll_ThreadData* getLLThreadNotThreadSafe(in ThreadID tid) nothrow @nogc
+{
+    foreach (i; 0 .. ll_nThreads)
+    {
+        auto curr = &ll_pThreads[i];
+
+        if (tid is curr.tid)
+            return curr;
+    }
+
+    return null;
 }
 
 @nogc:
@@ -181,6 +329,21 @@ private extern (D) bool suspend( Thread t ) nothrow
     return true;
 }
 
+//FIXME: name must be "resume", extern(D)
+private extern(C) void _D8external4core6thread6resumeFNbCQxQu10threadbase10ThreadBaseZv(ThreadBase _t) nothrow
+{
+    Thread t = _t.toThread;
+
+    if(t.m_addr != os.xTaskGetCurrentTaskHandle())
+    {
+        os.vTaskResume(t.m_addr);
+    }
+    else if ( !t.m_lock )
+    {
+        t.m_curr.tstack = t.m_curr.bstack;
+    }
+}
+
 void thread_intermediateShutdown() nothrow @nogc
 {
     assert(false, "Not implemented");
@@ -198,12 +361,6 @@ void* getStackBottom() nothrow @nogc
     assert(Thread.getThis().m_main.bstack !is null);
 
     return Thread.getThis().m_main.bstack;
-}
-
-ThreadID createLowLevelThread(void delegate() nothrow dg, uint stacksize = 0,
-                              void delegate() nothrow cbDllUnload = null) nothrow @nogc
-{
-    assert(false, "Not implemented");
 }
 
 bool findLowLevelThread(ThreadID tid) nothrow @nogc
@@ -238,8 +395,7 @@ Thread external_attachThread(ThreadBase thisThread) @nogc
 
 class Thread : ThreadBase
 {
-    private TaskProperties* taskProperties;
-    private Event* joinEvent;
+    private TaskProperties taskProperties;
 
     /// Initializes a thread object which has no associated executable function.
     /// This is used for the main thread initialized in thread_init().
@@ -247,24 +403,56 @@ class Thread : ThreadBase
     {
     }
 
-    this(void function() fn, size_t sz = 0) @safe pure nothrow @nogc
+    this(void function() fn, size_t sz = 0, /* string file = __FILE__, size_t line = __LINE__ */) @safe nothrow
     in(fn !is null)
     {
         super(fn, sz);
+        initTaskProperties();
+        taskProperties.joinEvent = Event(true, false);
+        //printTcbCreated(file, line);
     }
 
-    this(void delegate() dg, size_t sz = 0) @safe pure nothrow @nogc
+    this(void delegate() dg, size_t sz = 0, /* string file = __FILE__, size_t line = __LINE__ */) @safe nothrow
     in(dg !is null)
     {
         super(dg, sz);
+        initTaskProperties();
+        taskProperties.joinEvent = Event(true, false);
+        //printTcbCreated(file, line);
     }
 
     ~this() nothrow @nogc
     {
-        if(taskProperties) // not main thread
+        if(taskProperties.stackBuff) // not main thread
+            free(taskProperties.stackBuff);
+
+        destructBeforeDtor();
+    }
+
+    private void initTaskProperties() @safe nothrow
+    {
+        import core.exception: onOutOfMemoryError;
+
+        if(m_sz == 0)
+            m_sz = DefaultStackSize;
+
+        assert(m_sz <= ushort.max * size_t.sizeof, "FreeRTOS stack size limit");
+        assert(m_sz % os.StackType_t.sizeof == 0, "Stack size must be multiple of word");
+
+        taskProperties.stackBuff = (() @trusted => aligned_alloc(os.StackType_t.sizeof, m_sz))();
+        if(!taskProperties.stackBuff)
+            onOutOfMemoryError();
+
+        m_main.bstack = (() @trusted => taskProperties.stackBuff + m_sz - 1)();
+    }
+
+    private void printTcbCreated(string file, size_t line) @trusted nothrow
+    {
+        debug(PRINTF)
         {
-            free(m_main.bstack);
-            free(taskProperties);
+            import core.stdc.stdio: printf;
+
+            printf("TCB %p created from file %s line %d\n", &taskProperties.tcb, cast(char*) file, line);
         }
     }
 
@@ -297,37 +485,21 @@ class Thread : ThreadBase
         scope(exit) slock.unlock_nothrow();
 
         {
-            import core.stdc.stdlib: realloc;
-            import external.rt.sections: aligned_alloc;
-
             ++nAboutToStart;
             pAboutToStart = cast(ThreadBase*)realloc(pAboutToStart, Thread.sizeof * nAboutToStart);
             pAboutToStart[nAboutToStart - 1] = this;
 
-            if(m_sz == 0)
-                m_sz = 512 * size_t.sizeof; // assumed default stack size
-
-            assert(m_sz <= ushort.max * size_t.sizeof, "FreeRTOS stack size limit");
-            assert(m_sz % os.StackType_t.sizeof == 0, "Stack size must be multiple of word");
-
             auto wordsStackSize = m_sz / os.StackType_t.sizeof;
-
-            //FIXME: add error checking
-            auto taskProps = cast(TaskProperties*) aligned_alloc(size_t.sizeof, TaskProperties.sizeof);
-            assert(taskProps);
-            taskProps.thread = this;
-
-            m_main.bstack = aligned_alloc(os.StackType_t.sizeof, m_sz);
-            assert(m_main.bstack);
+            assert(wordsStackSize >= os.configMINIMAL_STACK_SIZE);
 
             m_addr = os.xTaskCreateStatic(
                 &thread_entryPoint,
-                cast(const(char*)) "D thread",
+                cast(const(char*)) "D thread", //FIXME: fill name from m_name
                 wordsStackSize,
-                cast(void*) taskProps, // pvParameters*
+                cast(void*) this, // pvParameters*
                 5, // uxPriority
-                cast(size_t*) m_main.bstack,
-                &taskProps.tcb
+                cast(os.StackType_t*) taskProperties.stackBuff,
+                &taskProperties.tcb
             );
 
             return this;
@@ -355,7 +527,11 @@ class Thread : ThreadBase
 
     override final Throwable join( bool rethrow = true )
     {
-        joinEvent.wait();
+        assert(taskProperties.stackBuff !is null, "Can't join main thread");
+
+        //FIXME: remove loop. Currently wait() call isn't works (FreeRTOS-related problem?)
+        while(!taskProperties.joinEvent.wait(1.seconds)){}
+        //~ taskProperties.joinEvent.wait();
 
         m_addr = m_addr.init;
 
@@ -369,11 +545,6 @@ class Thread : ThreadBase
         return null;
     }
 
-    final void joinAll( bool rethrow = true )
-    {
-        assert(false, "Not implemented");
-    }
-
     static void sleep(Duration val) @nogc nothrow
     {
         import external.core.time;
@@ -384,11 +555,6 @@ class Thread : ThreadBase
     static void yield() @nogc nothrow
     {
         _taskYield();
-    }
-
-    static int opApply(scope int delegate(ref Thread) dg)
-    {
-        assert(false, "Not implemented");
     }
 }
 
@@ -420,4 +586,19 @@ private void _taskYield() @nogc nothrow
 private Thread toThread(ThreadBase t) @trusted nothrow @nogc pure
 {
     return cast(Thread) cast(void*) t;
+}
+
+// Picolibc malloc threads support:
+private:
+
+shared SpinLock memLock = SpinLock(SpinLock.Contention.lengthy);
+
+extern(C) void __malloc_lock()
+{
+    memLock.lock();
+}
+
+extern(C) void __malloc_unlock()
+{
+    memLock.unlock();
 }

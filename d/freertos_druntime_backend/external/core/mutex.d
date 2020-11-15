@@ -12,7 +12,7 @@ class Mutex : Object.Monitor
 
     private SemaphoreHandle_t mtx = void;
 
-    this() @nogc
+    this() @nogc nothrow
     {
         mtx = _xSemaphoreCreateRecursiveMutex();
 
@@ -34,7 +34,7 @@ class Mutex : Object.Monitor
     if (is(Q == Mutex) || is(Q == shared Mutex))
     {
         // Infinity wait
-        if(xSemaphoreTakeRecursive(mtx.unshare, portMAX_DELAY) != pdTRUE)
+        if(xSemaphoreTakeMutexRecursive(mtx.unshare, portMAX_DELAY) != pdTRUE)
         {
             SyncError syncErr = cast(SyncError) cast(void*) typeid(SyncError).initializer;
             syncErr.msg = "Unable to lock mutex.";
@@ -45,7 +45,7 @@ class Mutex : Object.Monitor
     final void unlock_nothrow(this Q)() nothrow @trusted @nogc
     if (is(Q == Mutex) || is(Q == shared Mutex))
     {
-        if(xSemaphoreGiveRecursive(mtx.unshare) != pdTRUE)
+        if(xSemaphoreGiveMutexRecursive(mtx.unshare) != pdTRUE)
         {
             SyncError syncErr = cast(SyncError) cast(void*) typeid(SyncError).initializer;
             syncErr.msg = "Unable to unlock mutex.";
