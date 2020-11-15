@@ -93,7 +93,8 @@ ThreadID createLowLevelThread(
 ) nothrow @nogc
 in(stacksize % os.StackType_t.sizeof == 0)
 {
-    import core.sys.posix.stdlib: malloc;
+    import core.stdc.stdlib: malloc;
+    import core.stdc.string: memset;
 
     auto context = cast(LLTaskProperties*) malloc(LLTaskProperties.sizeof);
     if(!context) return ThreadID.init;
@@ -121,6 +122,7 @@ in(stacksize % os.StackType_t.sizeof == 0)
     auto tcb = cast(os.StaticTask_t*) malloc(os.StaticTask_t.sizeof);
 
     auto currThread = &ll_pThreads[ll_nThreads - 1];
+    memset(currThread, 0x00, ll_ThreadData.sizeof);
     currThread.initialize();
 
     currThread.tid = os.xTaskCreateStatic(
