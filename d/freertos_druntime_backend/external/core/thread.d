@@ -27,6 +27,7 @@ in(arg)
 
     scope(exit)
     {
+        obj.isRunning = false;
         obj.taskProperties.joinEvent.set();
         os.vTaskDelete(null);
     }
@@ -380,6 +381,7 @@ Thread external_attachThread(ThreadBase thisThread) @nogc
     assert(thisContext.bstack);
     thisContext.tstack = thisContext.bstack;
 
+    t.isRunning = true;
     t.m_isDaemon = true;
     t.tlsGCdataInit();
     Thread.setThis(t);
@@ -395,6 +397,7 @@ Thread external_attachThread(ThreadBase thisThread) @nogc
 class Thread : ThreadBase
 {
     private TaskProperties taskProperties;
+    private shared bool m_isRunning;
 
     /// Initializes a thread object which has no associated executable function.
     /// This is used for the main thread initialized in thread_init().
@@ -491,6 +494,9 @@ class Thread : ThreadBase
             auto wordsStackSize = m_sz / os.StackType_t.sizeof;
             assert(wordsStackSize >= os.configMINIMAL_STACK_SIZE);
 
+            isRunning = true;
+            scope(failure) isRunning = false;
+
             m_addr = os.xTaskCreateStatic(
                 &thread_entryPoint,
                 cast(const(char*)) "D thread", //FIXME: fill name from m_name
@@ -510,10 +516,19 @@ class Thread : ThreadBase
         return cast(Thread) ThreadBase.getThis;
     }
 
+    import core.atomic: atomicStore, atomicLoad, MemoryOrder;
+
+    private void isRunning(bool status) @property nothrow @nogc
+    {
+        atomicStore!(MemoryOrder.raw)(m_isRunning, status);
+    }
+
     override final @property bool isRunning() nothrow @nogc
     {
-        //FIXME: Not implemented
-        return true;
+        if (!super.isRunning())
+            return false;
+
+        return atomicLoad(m_isRunning);
     }
 
     //
