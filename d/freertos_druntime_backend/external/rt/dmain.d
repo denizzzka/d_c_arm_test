@@ -21,6 +21,7 @@ template _d_cmain()
     extern(C):
 
     void systick_interrupt_disable(); // provided by libopencm3
+    void scb_set_priority_grouping(uint prigroup); // provided by libopencm3
 
     int _Dmain(char[][] args);
 
@@ -54,12 +55,14 @@ template _d_cmain()
     {
         pragma(LDC_profile_instr, false);
 
+        import external.core.thread: DefaultTaskPriority;
+
         auto creation_res = xTaskCreate(
             &_d_run_main,
             cast(const(char*)) "_d_run_main",
             mainTaskProperties.taskStackSize, // usStackDepth
             cast(void*) &mainTaskProperties, // pvParameters*
-            5, // uxPriority
+            DefaultTaskPriority,
             null // task handler
         );
 
@@ -69,9 +72,15 @@ template _d_cmain()
         // Init needed FreeRTOS interrupts handlers
         import external.rt.dmain;
 
+        assert(&interruptsVector.sv_call == cast (void*) 0x002c);
+        assert(&interruptsVector.pend_sv == cast (void*) 0x0038);
+
         interruptsVector.sv_call = &vPortSVCHandler;
         interruptsVector.pend_sv = &xPortPendSVHandler;
         interruptsVector.systick = &xPortSysTickHandler;
+
+        //~ immutable uint SCB_AIRCR_PRIGROUP_GROUP16_NOSUB = 0x3 << 8 + 0xf;
+        //~ scb_set_priority_grouping(SCB_AIRCR_PRIGROUP_GROUP16_NOSUB);
 
         vTaskStartScheduler(); // infinity loop
 
