@@ -10,6 +10,7 @@ import core.thread.types: ThreadID;
 import core.thread.context: StackContext;
 static import os = freertos;
 
+enum DefaultTaskPriority = 3;
 enum DefaultStackSize = 2048 * os.StackType_t.sizeof;
 
 private struct TaskProperties
@@ -130,7 +131,7 @@ in(stacksize % os.StackType_t.sizeof == 0)
         params.name,
         wordsStackSize,
         cast(void*) context, // pvParameters*
-        5, // uxPriority
+        DefaultTaskPriority,
         stackBuff,
         tcb
     );
@@ -177,9 +178,7 @@ void joinLowLevelThread(in ThreadID tid) nothrow @nogc
     if(t is null) // thread already exited
         return;
 
-    //FIXME: remove loop. Currently wait() call isn't works (FreeRTOS-related problem?)
-    while(!t.joinEvent.wait(1.seconds)){}
-    //~ t.joinEvent.wait();
+    t.joinEvent.wait();
 
     t.deletionUnlock(); // then thread can be safely deleted
 }
@@ -497,7 +496,7 @@ class Thread : ThreadBase
                 cast(const(char*)) "D thread", //FIXME: fill name from m_name
                 wordsStackSize,
                 cast(void*) this, // pvParameters*
-                5, // uxPriority
+                DefaultTaskPriority,
                 cast(os.StackType_t*) taskProperties.stackBuff,
                 &taskProperties.tcb
             );
