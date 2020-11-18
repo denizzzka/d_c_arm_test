@@ -77,29 +77,70 @@ struct Event
     void wait()
     in(group)
     {
-        auto r = os.xEventGroupWaitBits(
-           group,
-           BITS_MASK,
-           clearOnExit,
-           os.pdFALSE, // xWaitForAllBits
-           os.portMAX_DELAY // xTicksToWait
-        );
+        uint r;
 
-        assert(r & BITS_MASK, "Timeout can't expire in this function");
+        // xEventGroupWaitBits can return immediately on some cases:
+        // https://www.freertos.org/FreeRTOS_Support_Forum_Archive/February_2018/freertos_xEventGroupWaitBits_unexpected_behavior_cd13225cj.html
+        do
+        {
+            r = os.xEventGroupWaitBits(
+               group,
+               BITS_MASK,
+               clearOnExit,
+               os.pdFALSE, // xWaitForAllBits
+               os.portMAX_DELAY // xTicksToWait
+            );
+        }
+        while(!r);
+
+        assert(r & BITS_MASK);
     }
 
     bool wait(Duration tmout)
     in(!tmout.isNegative)
     in(group)
     {
-        auto r = os.xEventGroupWaitBits(
-           group,
-           BITS_MASK,
-           clearOnExit,
-           os.pdFALSE, // xWaitForAllBits
-           tmout.toTicks // xTicksToWait
-        );
+        import external.core.time: currTicks;
 
-        return r & BITS_MASK;
+        /*
+        If the task that is waiting for event bits is also being suspended and 
+        resumed then you could check the time before calling 
+        xEventGroupWaitBits(), and then if the function returns without any bits 
+        being set, check the time again to know if the function returned because 
+        of a timeout.  If the requested block time has not expired, and no bits 
+        are set, then you could assume the function returned because the task 
+        got suspended and then resumed again.
+
+        Posted by rtel on February 8, 2018
+        */
+
+        const timeoutTicks = tmout.toTicks();
+        assert(timeoutTicks < uint.max);
+
+        long startTime = currTicks();
+        const endTime = startTime + timeoutTicks;
+
+        do
+        {
+            long dt = endTime - startTime;
+
+            assert(dt > 0);
+
+            auto r = os.xEventGroupWaitBits(
+               group,
+               BITS_MASK,
+               clearOnExit,
+               os.pdFALSE, // xWaitForAllBits
+               cast(uint) dt // xTicksToWait
+            );
+
+            if(r & BITS_MASK)
+                return true;
+
+            startTime = currTicks();
+        }
+        while(startTime < endTime);
+
+        return false;
     }
 }
