@@ -91,7 +91,6 @@ druntime_lib = library(
         'ExternStackShell',
         'AsmExternal', #used by fiber module
         'CoreUnittest',
-        'ThreadsDisabled',
         'OnlyLowMemUnittest', #disables memory-greedy unittests
         'SupportSanitizers', #FIXME: remove, for debugging purposes only
     ],
@@ -100,9 +99,6 @@ druntime_lib = library(
         'MEMSTOMP',
         'PTRCHECK',
         'PTRCHECK2',
-        #'PRINTF',
-        #'MARK_PRINTF',
-        #'COLLECT_PRINTF',
     ],
 )
 
