@@ -7,7 +7,7 @@ subprojects_dir = root_dir + '/subprojects/'
 
 libopencm3_binding = dpp.process(
     files(
-        'source/bindings/gpio.dpp',
+        'source/bindings/libopencm3.dpp',
     ),
     extra_args: [
         '--include-path=' + subprojects_dir / 'libopencm3/include/',
@@ -26,8 +26,9 @@ freertos_binding = dpp.process(
     ]
 )
 
+#FIXME: _unused custom target temporary added, https://github.com/mesonbuild/meson/issues/6695#issuecomment-729734736
 cp = find_program('cp')
-freertos_d = custom_target(
+freertos_d_unused = custom_target(
     'Temporary FreeRTOS bindings generator',
     input: freertos_binding,
     output: 'freertos.d',
@@ -51,6 +52,7 @@ freertos_druntime_backend = [
     'freertos_druntime_backend/external/core/condition.d',
     'freertos_druntime_backend/external/core/event.d',
     'freertos_druntime_backend/external/core/fiber.d',
+    'freertos_druntime_backend/external/core/gc.d',
     'freertos_druntime_backend/external/core/memory.d',
     'freertos_druntime_backend/external/core/mutex.d',
     'freertos_druntime_backend/external/core/semaphore.d',
@@ -90,15 +92,15 @@ druntime_lib = library(
         'CRuntime_Abstract',
         'ExternStackShell',
         'AsmExternal', #used by fiber module
-        'CoreUnittest',
+        #'CoreUnittest',
         'OnlyLowMemUnittest', #disables memory-greedy unittests
-        'SupportSanitizers', #FIXME: remove, for debugging purposes only
+        #'SupportSanitizers', #FIXME: remove, for debugging purposes only
     ],
     d_debug: [
-        'SENTINEL',
-        'MEMSTOMP',
-        'PTRCHECK',
-        'PTRCHECK2',
+        #'SENTINEL',
+        #'MEMSTOMP',
+        #'PTRCHECK',
+        #'PTRCHECK2',
     ],
 )
 
