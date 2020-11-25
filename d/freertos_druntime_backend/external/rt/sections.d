@@ -111,7 +111,20 @@ void finiTLSRanges(void[] rng) nothrow @nogc
     free(rng.ptr);
 }
 
-extern(C) void* __aeabi_read_tp() nothrow @nogc
+import ldc.attributes;
+
+extern(C) void* __aeabi_read_tp() nothrow @nogc @assumeUsed
 {
     return freertos.pvTaskGetThreadLocalStoragePointer(null, 0);
+}
+
+void ctorsDtorsWarning()
+{
+    static assert("Deprecation 16211");
+/*
+    fprintf(stderr, "Deprecation 16211 warning:\n"
+        ~ "A cycle has been detected in your program that was undetected prior to DMD\n"
+        ~ "2.072. This program will continue, but will not operate when using DMD 2.074\n"
+        ~ "to compile. Use runtime option --DRT-oncycle=print to see the cycle details.\n");
+ */
 }
