@@ -56,7 +56,6 @@ libunwind_dep = declare_dependency(
         '-D_LIBUNWIND_HAS_NO_THREADS',
         #'-D_POSIX_THREADS', #used in picolibc headers
         #'-D_POSIX_READER_WRITER_LOCKS', #used in picolibc headers
-        #'-DNDEBUG',
+        '-DNDEBUG',
     ],
-    #dependencies: libc_dep,
 )
