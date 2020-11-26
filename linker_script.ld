@@ -2,9 +2,9 @@ EXTERN(vector_table)
 ENTRY(reset_handler)
 MEMORY
 {
- flash (rx) : ORIGIN = 0x00000000, LENGTH = 256K
- rom (rx)   : ORIGIN = 0x21000000, LENGTH = 1M
- ram (rwx)  : ORIGIN = 0x21800000, LENGTH = 4M
+/* flash (rx) : ORIGIN = 0x00000000, LENGTH = 256K */
+ rom (rx)   : ORIGIN = 0x8000000, LENGTH = 256K
+ ram (rwx)  : ORIGIN = 0x20000000, LENGTH = 20K
 }
 SECTIONS
 {
@@ -21,7 +21,7 @@ SECTIONS
 
  .vectors : {
   *(.vectors)
- } >flash
+ } >rom
  .text : {
   *(.text*)
   . = ALIGN(4);
