@@ -12,28 +12,59 @@ void blink_gpio_setup()
 {
     rcc_periph_clock_enable(RCC_GPIOB);
 
-    gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO1);
+    #ifdef STM32F1
+        gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO1);
+    #else
+        gpio_mode_setup(GPIOC, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO13);
+    #endif
 }
 
 void spi_setup()
 {
     // Configure GPIOs:
-    gpio_set_mode(
-        GPIOB,
-        GPIO_MODE_OUTPUT_2_MHZ, // can be 10 MHz
-        GPIO_CNF_OUTPUT_ALTFN_PUSHPULL,
-        GPIO12 | // CS
-        GPIO13 | // CLK
-        GPIO15   // Output (MOSI)
-    );
+    #ifdef STM32F1
+        gpio_set_mode(
+            GPIOB,
+            GPIO_MODE_OUTPUT_2_MHZ, // can be 10 MHz
+            GPIO_CNF_OUTPUT_ALTFN_PUSHPULL,
+            GPIO12 | // CS
+            GPIO13 | // CLK
+            GPIO15   // Output (MOSI)
+        );
 
-    // Input (MISO) config:
-    gpio_set_mode(
-        GPIOB,
-        GPIO_MODE_INPUT,
-        GPIO_CNF_INPUT_FLOAT,
-        GPIO14
-    );
+        // Input (MISO) config:
+        gpio_set_mode(
+            GPIOB,
+            GPIO_MODE_INPUT,
+            GPIO_CNF_INPUT_FLOAT,
+            GPIO14
+        );
+    #else
+        gpio_mode_setup(
+            GPIOB,
+            GPIO_MODE_AF,
+            GPIO_PUPD_PULLDOWN,
+            GPIO13 | // CLK
+            GPIO14 | // Input (MISO)
+            GPIO15   // Output (MOSI)
+        );
+
+        gpio_set_af(
+            GPIOB,
+            GPIO_AF5,
+            GPIO13 | // CLK
+            GPIO14 | // Input (MISO)
+            GPIO15   // Output (MOSI)
+        );
+
+        gpio_set_output_options(
+            GPIOB,
+            GPIO_OTYPE_PP,
+            GPIO_OSPEED_2MHZ,
+            GPIO13 | // CLK
+            GPIO15   // Output (MOSI)
+        );
+    #endif
 
     /* Reset SPI, SPI_CR1 register cleared, SPI is disabled */
     spi_reset(SPI2);
@@ -65,6 +96,10 @@ void spi_setup()
     spi_set_master_mode(SPI2);
     spi_set_unidirectional_mode(SPI2);
 
+    // Chip select:
+    #ifndef STM32F1
+        gpio_mode_setup(GPIOB, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO12);
+    #endif
     gpio_clear(GPIOB, GPIO12); // one CS line is always LOW in this project
 
     /* Enable SPI periph. */
