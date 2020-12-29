@@ -45,7 +45,20 @@ if cc_name == 'gcc' or cc_name == 'clang'
                 CPU_specific += files('portable/GCC/ARM_CM3/port.c')
                 CPU_specific_includes = include_directories('portable/GCC/ARM_CM3/')
             endif
+        elif target_machine.cpu() == 'cortex-m4'
+            if mpu_enabled
+                CPU_specific += files('portable/GCC/ARM_CM4_MPU/port.c')
+                CPU_specific_includes = include_directories('portable/GCC/ARM_CM4_MPU')
+            else
+                # M4 uses same portable as M3:
+                CPU_specific += files('portable/GCC/ARM_CM3/port.c')
+                CPU_specific_includes = include_directories('portable/GCC/ARM_CM3')
+            endif
+        else
+            assert(false, 'Unsupported CPU')
         endif
+    else
+        assert(false, 'Unsupported CPU family')
     endif
 endif
 
