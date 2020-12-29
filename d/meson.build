@@ -11,7 +11,8 @@ libopencm3_binding = dpp.process(
     ),
     extra_args: [
         '--include-path=' + subprojects_dir / 'libopencm3/include/',
-        '--define=STM32F1'
+        #'--define=STM32F1',
+        '--define=STM32F4',
     ]
 )
 
