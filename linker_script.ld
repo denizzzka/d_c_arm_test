@@ -3,22 +3,11 @@ ENTRY(reset_handler)
 MEMORY
 {
 /* flash (rx) : ORIGIN = 0x00000000, LENGTH = 256K */
- rom (rx)   : ORIGIN = 0x8000000, LENGTH = 256K
- ram (rwx)  : ORIGIN = 0x20000000, LENGTH = 20K
+ rom (rx)   : ORIGIN = 0x08000000, LENGTH = 512K
+ ram (rwx)  : ORIGIN = 0x20000000, LENGTH = 128K
 }
 SECTIONS
 {
-  /* fake output .got section */
-  /* Dynamic relocations are unsupported. This section is only used to detect
-     relocatable code in the input files and raise an error if relocatable code
-     is found */
-  .got :
-  {
-    _sgot = .;
-    KEEP(*(.got .got.*));
-    _egot = .;
-  } >ram AT>rom
-
  .vectors : {
   *(.vectors)
  } >rom
@@ -98,6 +87,17 @@ SECTIONS
  } >ram
  . = ALIGN(4);
  end = .;
+
+  /* fake output .got section */
+  /* Dynamic relocations are unsupported. This section is only used to detect
+     relocatable code in the input files and raise an error if relocatable code
+     is found */
+  .got :
+  {
+    _sgot = .;
+    KEEP(*(.got .got.*));
+    _egot = .;
+  } >ram
 }
 PROVIDE(_stack = ORIGIN(ram) + LENGTH(ram));
 PROVIDE( __heap_start = end );
