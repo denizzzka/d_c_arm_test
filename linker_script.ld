@@ -8,6 +8,17 @@ MEMORY
 }
 SECTIONS
 {
+  /* fake output .got section */
+  /* Dynamic relocations are unsupported. This section is only used to detect
+     relocatable code in the input files and raise an error if relocatable code
+     is found */
+  .got :
+  {
+    _sgot = .;
+    KEEP(*(.got .got.*));
+    _egot = .;
+  } >ram
+
  .vectors : {
   *(.vectors)
  } >rom
@@ -87,18 +98,8 @@ SECTIONS
  } >ram
  . = ALIGN(4);
  end = .;
-
-  /* fake output .got section */
-  /* Dynamic relocations are unsupported. This section is only used to detect
-     relocatable code in the input files and raise an error if relocatable code
-     is found */
-  .got :
-  {
-    _sgot = .;
-    KEEP(*(.got .got.*));
-    _egot = .;
-  } >ram
 }
+
 PROVIDE(_stack = ORIGIN(ram) + LENGTH(ram));
 PROVIDE( __heap_start = end );
 PROVIDE( __heap_end = ORIGIN(ram) + LENGTH(ram) - 0x800 );
