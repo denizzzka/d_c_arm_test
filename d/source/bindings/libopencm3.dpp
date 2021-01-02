@@ -8,6 +8,12 @@ import external.libc.config;
 @nogc:
 nothrow:
 
+#define SPI_IFACE SPI2
+#define CS GPIO12
+#define CLK GPIO13
+#define DIN GPIO14
+#define DOUT GPIO15
+
 void blink_gpio_setup_temporary_disabled()
 {
     rcc_periph_clock_enable(RCC_GPIOB);
@@ -29,9 +35,9 @@ void spi_setup()
             GPIOB,
             GPIO_MODE_OUTPUT_2_MHZ, // can be 10 MHz
             GPIO_CNF_OUTPUT_ALTFN_PUSHPULL,
-            GPIO12 | // CS
-            GPIO13 | // CLK
-            GPIO15   // Output (MOSI)
+            CS |
+            CLK |
+            DOUT  // Output (MOSI)
         );
 
         // Input (MISO) config:
@@ -39,39 +45,39 @@ void spi_setup()
             GPIOB,
             GPIO_MODE_INPUT,
             GPIO_CNF_INPUT_FLOAT,
-            GPIO14
+            DIN
         );
     #else
         gpio_mode_setup(
             GPIOB,
             GPIO_MODE_AF,
             GPIO_PUPD_PULLDOWN,
-            GPIO13 | // CLK
-            GPIO14 | // Input (MISO)
-            GPIO15   // Output (MOSI)
+            CLK |
+            DIN | // Input (MISO)
+            DOUT  // Output (MOSI)
         );
 
         gpio_set_af(
             GPIOB,
             GPIO_AF5,
-            GPIO13 | // CLK
-            GPIO14 | // Input (MISO)
-            GPIO15   // Output (MOSI)
+            CLK |
+            DIN | // Input (MISO)
+            DOUT  // Output (MOSI)
         );
 
         gpio_set_output_options(
             GPIOB,
             GPIO_OTYPE_PP,
             GPIO_OSPEED_2MHZ,
-            GPIO13 | // CLK
-            GPIO15   // Output (MOSI)
+            CLK |
+            DOUT  // Output (MOSI)
         );
 
         rcc_periph_clock_enable(RCC_SPI2);
     #endif
 
     /* Reset SPI, SPI_CR1 register cleared, SPI is disabled */
-    spi_reset(SPI2);
+    spi_reset(SPI_IFACE);
 
     /* Set up SPI in Master mode with:
     * Clock baud rate: 1/64 of peripheral clock frequency
@@ -81,11 +87,11 @@ void spi_setup()
     * Frame format: MSB First
     */
     spi_init_master(
-        SPI2,
+        SPI_IFACE,
         SPI_CR1_BAUDRATE_FPCLK_DIV_64,
         SPI_CR1_CPOL_CLK_TO_1_WHEN_IDLE,
         SPI_CR1_CPHA_CLK_TRANSITION_2,
-        SPI_CR1_DFF_8BIT,
+        SPI_CR1_DFF_16BIT,
         SPI_CR1_MSBFIRST
     );
 
@@ -97,20 +103,23 @@ void spi_setup()
     * ourselves this bit needs to be at least set to 1, otherwise the spi
     * peripheral will not send any data out.
     */
-    spi_set_master_mode(SPI2);
-    spi_set_unidirectional_mode(SPI2);
+    spi_set_master_mode(SPI_IFACE);
+    spi_set_unidirectional_mode(SPI_IFACE);
+
+    spi_enable_ss_output(SPI_IFACE);
+
+    /* Enable SPI periph. */
+    spi_enable(SPI_IFACE);
 
     // Chip select:
     #ifndef STM32F1
-        gpio_mode_setup(GPIOB, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO12);
+        gpio_mode_setup(GPIOB, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, CS);
     #endif
-    gpio_clear(GPIOB, GPIO12); // one CS line is always LOW in this project
-
-    /* Enable SPI periph. */
-    spi_enable(SPI2);
 }
 
 void sendDataToSegmentDisplay(ushort data)
 {
-	spi_send(SPI2, data);
+    gpio_clear(GPIOB, CS);
+    spi_xfer(SPI_IFACE, data);
+    gpio_set(GPIOB, CS);
 }

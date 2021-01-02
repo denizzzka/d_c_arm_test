@@ -35,11 +35,11 @@ void initDisplay()
 {
 	spi_setup();
 
-	// display all digits
+	// enable displaying of all digits
 	sendToSegmentDisplay(SegmentCmd.ScanLimit, 0b111);
 
-	// set maximum intensity
-	sendToSegmentDisplay(SegmentCmd.Intensity, 0b1111);
+	// adjust maximum intensity
+	sendToSegmentDisplay(SegmentCmd.Intensity, 0b10);
 }
 
 private void sendToSegmentDisplay(SegmentCmd code, ubyte data)
