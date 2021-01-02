@@ -3,17 +3,6 @@ import freertos;
 
 int main()
 {
-	//~ blink_gpio_setup();
-
-	//~ xTaskCreate(
-		//~ &blinkTask,
-		//~ cast(const(char*)) "LED Blink",
-		//~ 32, // usStackDepth
-		//~ null, // *pvParameters
-		//~ 1, // uxPriority
-		//~ null // task handler
-	//~ );
-
 	initDisplay();
 
 	while(true)
@@ -64,5 +53,5 @@ shared static this()
 {
 	import external.rt.dmain: mainTaskProperties;
 
-	mainTaskProperties.taskStackSizeWords = 128;
+	mainTaskProperties.taskStackSizeWords = 512;
 }

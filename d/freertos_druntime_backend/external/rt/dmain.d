@@ -79,10 +79,6 @@ template _d_cmain()
         assert(&interruptsVector.sv_call == cast (void*) 0x002c);
         assert(&interruptsVector.pend_sv == cast (void*) 0x0038);
 
-        interruptsVector.sv_call = &vPortSVCHandler;
-        interruptsVector.pend_sv = &xPortPendSVHandler;
-        interruptsVector.systick = &xPortSysTickHandler;
-
         //~ immutable uint SCB_AIRCR_PRIGROUP_GROUP16_NOSUB = 0x3 << 8 + 0xf;
         //~ scb_set_priority_grouping(SCB_AIRCR_PRIGROUP_GROUP16_NOSUB);
 
@@ -94,18 +90,18 @@ template _d_cmain()
 
 private extern(C) void vApplicationGetIdleTaskMemory(os.StaticTask_t** tcb, os.StackType_t** stackBuffer, uint* stackSize)
 {
-  __gshared os.StaticTask_t idle_TCB;
-  __gshared os.StackType_t[os.configMINIMAL_STACK_SIZE] idle_Stack;
+  __gshared static os.StaticTask_t idle_TCB;
+  __gshared static os.StackType_t[os.configMINIMAL_STACK_SIZE] idle_Stack;
 
   *tcb = &idle_TCB;
-  *stackBuffer = idle_Stack.ptr;
+  *stackBuffer = &idle_Stack[0];
   *stackSize = os.configMINIMAL_STACK_SIZE;
 }
 
 private extern(C) void vApplicationGetTimerTaskMemory (os.StaticTask_t** timerTaskTCBBuffer, os.StackType_t** timerTaskStackBuffer, uint* timerTaskStackSize)
 {
-  __gshared os.StaticTask_t timer_TCB;
-  __gshared os.StackType_t[os.configMINIMAL_STACK_SIZE] timer_Stack;
+  __gshared static os.StaticTask_t timer_TCB;
+  __gshared static os.StackType_t[os.configMINIMAL_STACK_SIZE] timer_Stack;
 
   *timerTaskTCBBuffer   = &timer_TCB;
   *timerTaskStackBuffer = timer_Stack.ptr;
@@ -140,11 +136,6 @@ extern(C) void vApplicationTickHook(os.TaskHandle_t xTask, char* pcTaskName)
         //~ malloc_stats();
     //~ }
 }
-
-import ldc.attributes;
-extern(C) void vPortSVCHandler() @naked; // provided by FreeRTOS
-extern(C) void xPortPendSVHandler() @naked; // provided by FreeRTOS
-extern(C) void xPortSysTickHandler(); // provided by FreeRTOS
 
 /// ARM Cortex-M3 interrupts vector
 extern(C) __gshared InterruptsVector* interruptsVector = null;
