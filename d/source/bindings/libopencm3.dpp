@@ -8,7 +8,7 @@ import external.libc.config;
 @nogc:
 nothrow:
 
-void blink_gpio_setup()
+void blink_gpio_setup_temporary_disabled()
 {
     rcc_periph_clock_enable(RCC_GPIOB);
 
@@ -21,6 +21,8 @@ void blink_gpio_setup()
 
 void spi_setup()
 {
+    rcc_periph_clock_enable(RCC_GPIOB);
+
     // Configure GPIOs:
     #ifdef STM32F1
         gpio_set_mode(
@@ -64,6 +66,8 @@ void spi_setup()
             GPIO13 | // CLK
             GPIO15   // Output (MOSI)
         );
+
+        rcc_periph_clock_enable(RCC_SPI2);
     #endif
 
     /* Reset SPI, SPI_CR1 register cleared, SPI is disabled */
