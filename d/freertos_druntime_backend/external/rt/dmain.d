@@ -98,15 +98,15 @@ private extern(C) void vApplicationGetIdleTaskMemory(os.StaticTask_t** tcb, os.S
   *stackSize = os.configMINIMAL_STACK_SIZE;
 }
 
-private extern(C) void vApplicationGetTimerTaskMemory (os.StaticTask_t** timerTaskTCBBuffer, os.StackType_t** timerTaskStackBuffer, uint* timerTaskStackSize)
-{
-  __gshared static os.StaticTask_t timer_TCB;
-  __gshared static os.StackType_t[os.configMINIMAL_STACK_SIZE] timer_Stack;
+//~ private extern(C) void vApplicationGetTimerTaskMemory (os.StaticTask_t** timerTaskTCBBuffer, os.StackType_t** timerTaskStackBuffer, uint* timerTaskStackSize)
+//~ {
+  //~ __gshared static os.StaticTask_t timer_TCB;
+  //~ __gshared static os.StackType_t[os.configMINIMAL_STACK_SIZE] timer_Stack;
 
-  *timerTaskTCBBuffer   = &timer_TCB;
-  *timerTaskStackBuffer = timer_Stack.ptr;
-  *timerTaskStackSize   = os.configMINIMAL_STACK_SIZE;
-}
+  //~ *timerTaskTCBBuffer   = &timer_TCB;
+  //~ *timerTaskStackBuffer = timer_Stack.ptr;
+  //~ *timerTaskStackSize   = os.configMINIMAL_STACK_SIZE;
+//~ }
 
 extern(C) void vApplicationStackOverflowHook(os.TaskHandle_t xTask, char* pcTaskName)
 {
