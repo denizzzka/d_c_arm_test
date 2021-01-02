@@ -7,9 +7,13 @@ nothrow:
 
 struct MainTaskProperties
 {
-    enum taskStackSizeBytes = ushort.max * 4;
-    enum taskStackSize = taskStackSizeBytes / 4; // words, not bytes!
+    ushort taskStackSizeWords; // words, not bytes!
     void* stackBottom; // filled out after task starts
+
+    void setTaskStackSizeBytes(size_t s = ushort.max * 4)
+    {
+        taskStackSizeWords = cast(ushort) (s / 4);
+    }
 }
 
 __gshared MainTaskProperties mainTaskProperties;
@@ -60,7 +64,7 @@ template _d_cmain()
         auto creation_res = xTaskCreate(
             &_d_run_main,
             cast(const(char*)) "_d_run_main",
-            mainTaskProperties.taskStackSize, // usStackDepth
+            mainTaskProperties.taskStackSizeWords, // usStackDepth
             cast(void*) &mainTaskProperties, // pvParameters*
             DefaultTaskPriority,
             null // task handler

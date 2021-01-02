@@ -59,3 +59,10 @@ private void sendToSegmentDisplay(SegmentCmd code, ubyte data)
 
 	sendDataToSegmentDisplay(arg);
 }
+
+shared static this()
+{
+	import external.rt.dmain: mainTaskProperties;
+
+	mainTaskProperties.taskStackSizeWords = 128;
+}
