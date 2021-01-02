@@ -16,7 +16,7 @@ struct MainTaskProperties
     }
 }
 
-__gshared MainTaskProperties mainTaskProperties;
+__gshared static MainTaskProperties mainTaskProperties;
 
 template _d_cmain()
 {
@@ -110,6 +110,10 @@ private extern(C) void vApplicationGetIdleTaskMemory(os.StaticTask_t** tcb, os.S
 
 extern(C) void vApplicationStackOverflowHook(os.TaskHandle_t xTask, char* pcTaskName)
 {
+    import core.stdc.stdio;
+
+    printf("Stack overflow at task \"%s\" (0x%X)\n", pcTaskName, xTask);
+
     while(true)
     {}
 }

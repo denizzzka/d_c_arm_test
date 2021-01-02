@@ -49,9 +49,15 @@ private void sendToSegmentDisplay(SegmentCmd code, ubyte data)
 	sendDataToSegmentDisplay(arg);
 }
 
-shared static this()
+// Init FreeRTOS main task stack size:
+import ldc.attributes;
+
+@section(".init_array")
+immutable initMainStackSize_ptr = &initMainStackSize;
+
+void initMainStackSize()
 {
 	import external.rt.dmain: mainTaskProperties;
 
-	mainTaskProperties.taskStackSizeWords = 512;
+	mainTaskProperties.taskStackSizeWords = 25 * 1024 / 4;
 }
