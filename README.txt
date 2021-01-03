@@ -15,7 +15,7 @@ BUILD STEPS:
 
 cd into this repository and:
 
-$ meson setup --cross-file arm_cortex_m3_cross.ini build
+$ meson setup --cross-file arm_cortex_m4_cross.ini -Doptimization=s -Ddebug=true builddir
 $ cd build
 $ ninja
 
