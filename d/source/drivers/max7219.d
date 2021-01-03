@@ -33,7 +33,7 @@ class MAX7219Display
         sendToWholeSegmentDisplay(SegmentCmd.ScanLimit, 0b111);
 
         // adjust maximum intensity
-        sendToWholeSegmentDisplay(SegmentCmd.Intensity, 0b11);
+        setIntensity(0b11);
     }
 
     void testBlink()
@@ -59,6 +59,11 @@ class MAX7219Display
             sendDataToSegmentDisplay(arg);
 
         endRefresh();
+    }
+
+    void setIntensity(byte intensity)
+    {
+        sendToWholeSegmentDisplay(SegmentCmd.Intensity, intensity);
     }
 
     void refreshImageFromBuffer()

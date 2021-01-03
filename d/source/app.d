@@ -18,22 +18,29 @@ int main()
 
     byte curr;
     byte increment = 1;
+    byte intensity = 0b11;
+    byte intensity_increment = 1;
 
     while(true)
     {
         if(curr >= display.buf.length - str.length) increment = -1;
         if(curr <= 0) increment = 1;
 
+        if(intensity >= 0b1111) intensity_increment = -1;
+        if(intensity <= 0) intensity_increment = 1;
+
         // "Move" text
         display.buf[0 .. $] = 0;
         display.buf[curr .. curr + str.length] = str[0 .. $];
 
         // prints buffer
+        display.setIntensity(intensity);
         display.refreshImageFromBuffer();
 
         vTaskDelay(100);
 
         curr += increment;
+        intensity += intensity_increment;
     }
 }
 
