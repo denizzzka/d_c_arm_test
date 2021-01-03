@@ -119,7 +119,15 @@ void spi_setup()
 
 void sendDataToSegmentDisplay(ushort data)
 {
-    gpio_clear(GPIOB, CS);
     spi_xfer(SPI_IFACE, data);
+}
+
+void beginRefresh()
+{
+    gpio_clear(GPIOB, CS);
+}
+
+void endRefresh()
+{
     gpio_set(GPIOB, CS);
 }
