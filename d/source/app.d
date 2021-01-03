@@ -5,8 +5,6 @@ int main()
 {
     import drivers.max7219;
 
-    vTaskDelay(500); // prevents glitch at cold start
-
     auto display = new MAX7219Display(2);
 
     display.testBlink();
