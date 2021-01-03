@@ -108,28 +108,7 @@ extern(C) void vApplicationStackOverflowHook(os.TaskHandle_t xTask, char* pcTask
     {}
 }
 
-//~ extern(C) void malloc_stats();
-
-extern(C) void vApplicationTickHook(os.TaskHandle_t xTask, char* pcTaskName)
-{
-    //~ import core.stdc.stdio;
-
-    //~ __gshared int cnt;
-    //~ __gshared int seconds;
-
-    //~ cnt++;
-    //~ if(cnt == 1000)
-    //~ {
-        //~ if(!seconds)
-            //~ printf("\n");
-
-        //~ cnt = 0;
-        //~ seconds++;
-
-        //~ printf(">>> Uptime:\t%d sec\n", seconds);
-        //~ malloc_stats();
-    //~ }
-}
+extern(C) void malloc_stats();
 
 /// ARM Cortex-M3 interrupts vector
 extern(C) __gshared InterruptsVector* interruptsVector = null;
