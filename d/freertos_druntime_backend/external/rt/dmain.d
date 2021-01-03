@@ -110,6 +110,11 @@ extern(C) void vApplicationStackOverflowHook(os.TaskHandle_t xTask, char* pcTask
 
 extern(C) void malloc_stats();
 
+extern(C) void vApplicationTickHook(os.TaskHandle_t xTask, char* pcTaskName)
+{
+    //TODO: remove this
+}
+
 /// ARM Cortex-M3 interrupts vector
 extern(C) __gshared InterruptsVector* interruptsVector = null;
 
