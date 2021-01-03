@@ -45,8 +45,8 @@
 /* Debugging */
 #define configCHECK_FOR_STACK_OVERFLOW           2
 #define configTASK_RETURN_ADDRESS                0 // place 0 task return address on stack to help FreeRTOS-aware debugger (GDB unwind thread stack)
-//~ #define configUSE_TRACE_FACILITY                 1 // vTaskList
-//~ #define configUSE_STATS_FORMATTING_FUNCTIONS     1 // vTaskList
+#define configUSE_TRACE_FACILITY                 1 // vTaskList
+#define configUSE_STATS_FORMATTING_FUNCTIONS     1 // vTaskList
 
 /* Co-routine definitions. */
 #define configUSE_CO_ROUTINES                    0
@@ -61,7 +61,7 @@ to exclude the API function. */
 #define INCLUDE_vTaskSuspend                1
 #define INCLUDE_vTaskDelayUntil             0
 #define INCLUDE_vTaskDelay                  1
-#define INCLUDE_xTaskGetSchedulerState      0
+#define INCLUDE_xTaskGetSchedulerState      1
 
 /* Cortex-M specific definitions. */
 #ifdef __NVIC_PRIO_BITS
