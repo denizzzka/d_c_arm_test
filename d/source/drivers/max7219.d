@@ -5,18 +5,15 @@ import libopencm3;
 class MAX7219Display
 {
     enum eachICdisplaySize = 8;
-    private int allDisplaysSize; //TODO: rename
     ubyte[] buf; // TODO: receive from outside?
     private ubyte*[] startPoints;
-
-    auto segmentsTotal() const { return allDisplaysSize; }
 
     this(int _displayIcsNum)
     {
         startPoints.length = _displayIcsNum;
-        allDisplaysSize = eachICdisplaySize * startPoints.length;
+        const segmentsTotal = eachICdisplaySize * startPoints.length;
 
-        buf = new ubyte[allDisplaysSize];
+        buf = new ubyte[segmentsTotal];
 
         foreach(i, ref ptr; startPoints)
             ptr = &buf[eachICdisplaySize * i];

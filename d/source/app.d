@@ -21,7 +21,7 @@ int main()
 
     while(true)
     {
-        if(curr >= display.segmentsTotal - str.length) increment = -1;
+        if(curr >= display.buf.length - str.length) increment = -1;
         if(curr <= 0) increment = 1;
 
         // "Move" text
