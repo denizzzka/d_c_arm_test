@@ -329,8 +329,7 @@ private extern (D) bool suspend( Thread t ) nothrow
     return true;
 }
 
-//FIXME: name must be "resume", extern(D)
-private extern(C) void _D8external4core6thread6resumeFNbNiCQzQw10threadbase10ThreadBaseZv(ThreadBase _t) nothrow
+private extern(D) void resume(ThreadBase _t) nothrow @nogc
 {
     Thread t = _t.toThread;
 
