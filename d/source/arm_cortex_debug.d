@@ -82,11 +82,11 @@ import std.bitmanip;
 struct HFSR
 {
     mixin(bitfields!(
-        bool, "reserved", 1,
-        bool, "VECTTBL",  1,
-        uint, "reserved", 28,
-        bool, "FORCED",   1,
-        bool, "DEBUGEVT", 1,
+        bool, "reserved0",  1,
+        bool, "VECTTBL",    1,
+        uint, "reserved1",  28,
+        bool, "FORCED",     1,
+        bool, "DEBUGEVT",   1,
     ));
 }
 
@@ -94,13 +94,13 @@ struct CFSR
 {
     mixin(bitfields!(
         // MMFSR
-        bool, "MMFSR_IACCVIOL", 1,
-        bool, "MMFSR_DACCVIOL", 1,
-        bool, "MMFSR_reserved", 1,
-        bool, "MMFSR_MUNSTKERR", 1,
-        bool, "MMFSR_MSTKERR", 1,
-        ushort, "MMFSR_reserved", 2,
-        bool, "MMFSR_MMARVALID", 1,
+        bool, "MMFSR_IACCVIOL",     1,
+        bool, "MMFSR_DACCVIOL",     1,
+        bool, "MMFSR_reserved0",    1,
+        bool, "MMFSR_MUNSTKERR",    1,
+        bool, "MMFSR_MSTKERR",      1,
+        ushort, "MMFSR_reserved1",  2,
+        bool, "MMFSR_MMARVALID",    1,
 
         // BFSR
         bool, "BFSR_IBUSERR", 1,
