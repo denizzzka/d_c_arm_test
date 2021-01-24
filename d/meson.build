@@ -40,6 +40,7 @@ freertos_d_unused = custom_target(
 freertos_d_dep = declare_dependency(
     sources: [
         #freertos_binding,
+        #libopencm3_binding,
         'freertos_dpp_bindings/freertos.d', #TODO: remove this file, https://github.com/mesonbuild/meson/issues/7140
     ],
     include_directories: include_directories(
