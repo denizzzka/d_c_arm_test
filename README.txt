@@ -23,6 +23,13 @@ This steps will produce file firmware.elf: "ELF 32-bit LSB executable,
 ARM, EABI5 version 1 (SYSV), statically linked, with debug_info,
 not stripped".
 
+BUILD using docker
+
+cd into this repository and:
+
+$ docker build -t d_c_arm_test .
+$ docker create -ti --name dummy d_c_arm_test bash && docker cp dummy:/tmp/project/build/firmware.elf firmware.elf && docker rm -f dummy
+
 TODO:
 
 - Please see Github "Issues" section
