@@ -39,10 +39,9 @@ freertos_d_unused = custom_target(
 
 freertos_d_dep = declare_dependency(
     sources: [
-        #freertos_binding,
-        'freertos_dpp_bindings/freertos.d', #TODO: remove this file, https://github.com/mesonbuild/meson/issues/7140
+        freertos_binding,
     ],
-    include_directories: include_directories(
+    include_directories: include_directories( #FIXME: remove this, https://github.com/mesonbuild/meson/issues/6695#issuecomment-729734736
         'freertos_dpp_bindings',
         'freertos_druntime_backend',
     )
@@ -118,7 +117,6 @@ d_dep = declare_dependency(
     ],
     dependencies: [
         freertos_d_dep,
-        #druntime_dep, #TODO: redundant
     ],
     link_with: [
         druntime_lib,
