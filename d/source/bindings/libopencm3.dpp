@@ -30,51 +30,32 @@ void spi_setup()
     rcc_periph_clock_enable(RCC_GPIOB);
 
     // Configure GPIOs:
-    #ifdef STM32F1
-        gpio_set_mode(
-            GPIOB,
-            GPIO_MODE_OUTPUT_2_MHZ, // can be 10 MHz
-            GPIO_CNF_OUTPUT_ALTFN_PUSHPULL,
-            CS |
-            CLK |
-            DOUT  // Output (MOSI)
-        );
+    gpio_mode_setup(
+        GPIOB,
+        GPIO_MODE_AF,
+        GPIO_PUPD_NONE, // 10K resistor added into PCB
+        CLK |
+        DIN | // Input (MISO)
+        DOUT  // Output (MOSI)
+    );
 
-        // Input (MISO) config:
-        gpio_set_mode(
-            GPIOB,
-            GPIO_MODE_INPUT,
-            GPIO_CNF_INPUT_FLOAT,
-            DIN
-        );
-    #else
-        gpio_mode_setup(
-            GPIOB,
-            GPIO_MODE_AF,
-            GPIO_PUPD_PULLDOWN,
-            CLK |
-            DIN | // Input (MISO)
-            DOUT  // Output (MOSI)
-        );
+    gpio_set_af(
+        GPIOB,
+        GPIO_AF5,
+        CLK |
+        DIN | // Input (MISO)
+        DOUT  // Output (MOSI)
+    );
 
-        gpio_set_af(
-            GPIOB,
-            GPIO_AF5,
-            CLK |
-            DIN | // Input (MISO)
-            DOUT  // Output (MOSI)
-        );
+    gpio_set_output_options(
+        GPIOB,
+        GPIO_OTYPE_OD,
+        GPIO_OSPEED_2MHZ,
+        CLK |
+        DOUT  // Output (MOSI)
+    );
 
-        gpio_set_output_options(
-            GPIOB,
-            GPIO_OTYPE_PP,
-            GPIO_OSPEED_2MHZ,
-            CLK |
-            DOUT  // Output (MOSI)
-        );
-
-        rcc_periph_clock_enable(RCC_SPI2);
-    #endif
+    rcc_periph_clock_enable(RCC_SPI2);
 
     /* Reset SPI, SPI_CR1 register cleared, SPI is disabled */
     spi_reset(SPI_IFACE);
