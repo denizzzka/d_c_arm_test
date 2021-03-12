@@ -107,6 +107,7 @@ druntime_lib = library(
 d_dep = declare_dependency(
     sources: [
         'source/app.d',
+        'source/martian.d',
         'source/arm_cortex_debug.d',
         'source/drivers/max7219.d',
         libopencm3_binding,

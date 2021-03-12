@@ -5,40 +5,30 @@ int main()
 {
     import drivers.max7219;
 
-    auto display = new MAX7219Display(2);
+    auto display = new MAX7219Display(4);
 
     display.testBlink();
 
-    ubyte[] str;
+    import martian: IELFont;
 
-    with(Segment7Font)
-    str = [d,L,A,n,G,dash,_2,_0,_2,_1]; //dLAnG-2021
+    IELFont[8 * 2] nums_rows;
 
-    byte curr;
-    byte increment = 1;
-    byte intensity = 0b11;
-    byte intensity_increment = 1;
+    with(IELFont)
+    nums_rows = [
+        _0, _1, _2, _3, _4, _5, _6, _7,
+        _8, _9, _0, _1, _2, _3, _4, _5,
+    ];
+
+    display.buf[0 .. display.buf.length] = cast(ubyte[]) nums_rows[0 .. $];
+
+    //~ display.buf[0 .. $] = 0;
+    //~ display.buf[curr .. curr + str.length] = str[0 .. $];
 
     while(true)
     {
-        if(curr >= display.buf.length - str.length) increment = -1;
-        if(curr <= 0) increment = 1;
-
-        if(intensity >= 0b1111) intensity_increment = -1;
-        if(intensity <= 0) intensity_increment = 1;
-
-        // "Move" text
-        display.buf[0 .. $] = 0;
-        display.buf[curr .. curr + str.length] = str[0 .. $];
-
-        // prints buffer
-        display.setIntensity(intensity);
         display.refreshImageFromBuffer();
 
-        vTaskDelay(100);
-
-        curr += increment;
-        intensity += intensity_increment;
+        vTaskDelay(200);
     }
 }
 
