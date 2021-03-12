@@ -11,24 +11,30 @@ int main()
 
     import martian: IELFont;
 
-    IELFont[8 * 2] nums_rows;
+    IELFont[] chars;
 
     with(IELFont)
-    nums_rows = [
-        _0, _1, _2, _3, _4, _5, _6, _7,
-        _8, _9, _0, _1, _2, _3, _4, _5,
+    chars = [
+        _0, _1, _2, _3, _4, _5, _6, _7, _8, _9,
+        А, Б, В, Г, Д, Е, Ж, З, И, Й, К, Л, М, Н, О, П,
+        Р, С, Т, У, Ф, Х, Ц, Ч, Ш, Щ, Ы, Ь, Э, Ю, Я,
     ];
-
-    display.buf[0 .. display.buf.length] = cast(ubyte[]) nums_rows[0 .. $];
 
     //~ display.buf[0 .. $] = 0;
     //~ display.buf[curr .. curr + str.length] = str[0 .. $];
+    int curr;
+    int incr = 8*2;
 
     while(true)
     {
+        display.buf[0 .. display.buf.length] = cast(ubyte[]) chars[curr .. curr + incr];
         display.refreshImageFromBuffer();
 
-        vTaskDelay(200);
+        vTaskDelay(2000);
+
+        curr += incr;
+        if(curr >= chars.length)
+            curr = 0;
     }
 }
 
