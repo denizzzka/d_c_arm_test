@@ -25,6 +25,8 @@ plus sections or as first left "period" dot
 */
 
 enum IELFont : ushort {
+// (Little endian)
+
 // Cyrillic:
 //          cat0     cat1
 //        pabcdefg pabcdefg
@@ -77,4 +79,7 @@ enum IELFont : ushort {
     _7 = 0b01100000_01000100,
     _8 = 0b01101100_01010101,
     _9 = 0b01101100_01110001,
+
+    decimal = 0b10000000_00000000,
+    space = 0b0,
 }

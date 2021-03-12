@@ -31,9 +31,6 @@ class MAX7219Display
 
         // enable displaying of all digits
         sendToWholeSegmentDisplay(SegmentCmd.ScanLimit, 0b111);
-
-        // adjust maximum intensity
-        setIntensity(0b11);
     }
 
     void testBlink()
