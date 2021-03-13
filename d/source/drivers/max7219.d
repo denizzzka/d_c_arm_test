@@ -69,7 +69,7 @@ class MAX7219Display
         {
             beginRefresh();
 
-            foreach_reverse(screen_ptr; startPoints)
+            foreach(screen_ptr; startPoints)
             {
                 ubyte c = screen_ptr[pos];
                 sendToSegmentDisplay(cast(SegmentCmd) (eachICdisplaySize - pos), c);

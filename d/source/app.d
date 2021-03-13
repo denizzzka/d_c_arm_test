@@ -18,9 +18,7 @@ ref ubyte[8*2] martian2bytes(ref return ubyte[8*2] ret, IELFont[8] str, Sign sig
 
     foreach(i, c; str)
     {
-        // First displaying symbols started from half of buffer (PCB bug)
-        auto curr = i + ((i < 4) ? 4 : -4);
-        curr += curr; // convert position to  offset
+        const curr = i+i;
 
         ret[curr .. curr + 2] = nativeToLittleEndian(c);
         ret[curr] &= ~0b10000000; // clean special segment
@@ -47,25 +45,25 @@ ref ubyte[8*2] martian2bytes(ref return ubyte[8*2] ret, IELFont[8] str, Sign sig
         }
 
         if(sign == Sign.Minus)
-            ret[8+4] |= 0b10000000;
+            ret[4] |= 0b10000000;
 
         if(sign == Sign.Plus)
         {
-            ret[8+4] |= 0b10000000;
-            ret[8+2] |= 0b10000000;
+            ret[4] |= 0b10000000;
+            ret[2] |= 0b10000000;
         }
 
         // Left ":" symbol
         if(delimMask & 0b100)
-            ret[8+6] |= 0b10000000;
+            ret[6] |= 0b10000000;
 
         // Center ":" symbol
         if(delimMask & 0b010)
-            ret[4] |= 0b10000000;
+            ret[8+4] |= 0b10000000;
 
         // Right ":" symbol
         if(delimMask & 0b001)
-            ret[6] |= 0b10000000;
+            ret[8+6] |= 0b10000000;
     }
 
     return ret;
@@ -113,9 +111,9 @@ int main()
 
     while(true)
     {
-        martian2bytes(display.buf[ 0 .. 16], chars[curr .. curr + incr][0..8], displaySign ? Sign.Plus : Sign.None, 0b111);
+        martian2bytes(display.buf[ 0 .. 16], chars[curr .. curr + incr][0..8], displaySign ? Sign.Minus : Sign.None, 0b010);
         curr += incr;
-        martian2bytes(display.buf[16 .. 32], chars[curr .. curr + incr][0..8], displaySign ? Sign.Minus : Sign.None, 0b010);
+        martian2bytes(display.buf[16 .. 32], chars[curr .. curr + incr][0..8], displaySign ? Sign.Plus : Sign.None, 0b101);
         curr += incr;
 
         displaySign = !displaySign;
