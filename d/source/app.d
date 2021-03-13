@@ -68,6 +68,17 @@ ref ubyte[8*2] martian2bytes(ref return ubyte[8*2] ret, MartianChar[8] str, Sign
     return ret;
 }
 
+MartianChar[] string2martian(in wchar[] str)
+{
+    MartianChar[] ret;
+    ret.length = str.length;
+
+    foreach(i, c; str)
+        ret[i] = c.capitalizedSymbol2martian;
+
+    return ret;
+}
+
 class MartianYautjaDisplay
 {
     import drivers.max7219;
@@ -83,12 +94,15 @@ class MartianYautjaDisplay
         hwDisp.setIntensity(0b1111);
     }
 
-    void setRow(bool isUpperRow, wchar[8] str, Sign sign = Sign.None, ubyte delimMask = 0b000)
+    void setRow(bool isUpperRow, in wchar[8] str, Sign sign = Sign.None, ubyte delimMask = 0b000)
     {
-        MartianChar[str.length] chars;
-        foreach(i, c; str)
-            chars[i] = c.capitalizedSymbol2martian;
+        auto chars = string2martian(str);
 
+        setRow(isUpperRow, chars[0 .. 8], sign, delimMask);
+    }
+
+    void setRow(bool isUpperRow, in MartianChar[8] chars, Sign sign = Sign.None, ubyte delimMask = 0b000)
+    {
         ubyte[] bufSlice = isUpperRow ? (hwDisp.buf[16 .. 32]) : (hwDisp.buf[0 .. 16]);
 
         // decodes chars with left decimal points for some letters and sets sign
@@ -101,31 +115,64 @@ class MartianYautjaDisplay
     }
 }
 
+struct FloatingText
+{
+    const MartianChar[] text;
+    int speed = 1;
+    private int pos;
+
+    this(wstring s)
+    {
+        text = string2martian(s);
+    }
+
+    enum DispSize = 8;
+
+    const(MartianChar[DispSize]) getDisplayBuf() const
+    {
+        return text[pos .. pos + DispSize][0 .. DispSize];
+    }
+
+    void step()
+    {
+        pos += speed;
+
+        if(pos >= text.length - DispSize)
+            speed = -abs(speed);
+        else if(pos <= 0)
+            speed = abs(speed);
+    }
+}
+
+private int abs(int x) pure
+{
+    if(x < 0)
+        return -x;
+    else
+        return x;
+}
+
 int main()
 {
     auto display = new MartianYautjaDisplay;
 
-    immutable wstring str = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZАБВГДЕЁЖЗИКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
+    auto floatingText = FloatingText("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZАБВГДЕЁЖЗИКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ");
+    wchar[8] str = "123456  ";
 
-    int curr;
-    int incr = 1;
     bool displaySign;
 
     while(true)
     {
-        display.setRow(true,  str[curr .. curr + incr][0..8], displaySign ? Sign.Minus : Sign.None, 0b010);
-        curr += incr;
-        display.setRow(false, str[curr .. curr + incr][0..8], displaySign ? Sign.Plus  : Sign.None, 0b101);
-        curr += incr;
+        display.setRow(true, floatingText.getDisplayBuf);
+        display.setRow(false, str, displaySign ? Sign.Plus  : Sign.None, 0b110);
 
         displaySign = !displaySign;
 
         display.refresh();
 
-        vTaskDelay(500);
+        floatingText.step();
 
-        if(curr >= str.length)
-            curr = 0;
+        vTaskDelay(100);
     }
 }
 
