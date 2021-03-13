@@ -2,10 +2,17 @@ import libopencm3;
 import freertos;
 import martian: IELFont;
 
+enum Sign
+{
+    None,
+    Minus,
+    Plus,
+}
+
 /// Converts one martian string to buffer
 /// (Display contains two martian strings)
 // TODO: reuse return buffer
-ref ubyte[8*2] martian2bytes(ref return ubyte[8*2] ret, IELFont[8] str, bool setMinus = false)
+ref ubyte[8*2] martian2bytes(ref return ubyte[8*2] ret, IELFont[8] str, Sign sign = Sign.None, ubyte delimMask = 0b000)
 {
     import std.bitmanip: nativeToLittleEndian;
 
@@ -39,8 +46,26 @@ ref ubyte[8*2] martian2bytes(ref return ubyte[8*2] ret, IELFont[8] str, bool set
             }
         }
 
-        if(setMinus)
+        if(sign == Sign.Minus)
             ret[8+4] |= 0b10000000;
+
+        if(sign == Sign.Plus)
+        {
+            ret[8+4] |= 0b10000000;
+            ret[8+2] |= 0b10000000;
+        }
+
+        // Left ":" symbol
+        if(delimMask & 0b100)
+            ret[8+6] |= 0b10000000;
+
+        // Center ":" symbol
+        if(delimMask & 0b010)
+            ret[4] |= 0b10000000;
+
+        // Right ":" symbol
+        if(delimMask & 0b001)
+            ret[6] |= 0b10000000;
     }
 
     return ret;
@@ -60,14 +85,22 @@ int main()
 
     with(IELFont)
     chars = [
-        Д, space, Д, space, Д, space, Д, space,
-        space, Д, space, Д, space, Д, space, Д,
+        В,Л,А,Ж,Н,О,space,space,
+        _2,_4,space,П,Р,О,Ц,space,
+        П,И,Ш,И,Т,Е,space,space,
+        В,С,Т,Р,О,Е,Н,space,
+        Н,Ы,Е,space,П,Р,О,Г,
+        Р,А,М,М,Ы,space,Н,А,
+        Н,А,space,Я,З,Ы,К,Е,
+        Д,И,space,space,space,space,space,space,
+        //~ Д, space, Д, space, Д, space, Д, space,
+        //~ space, Д, space, Д, space, Д, space, Д,
 
-        space, Д, space, Д, space, Д, space, Д,
-        Д, space, Д, space, Д, space, Д, space,
+        //~ space, Д, space, Д, space, Д, space, Д,
+        //~ Д, space, Д, space, Д, space, Д, space,
 
-        Д, space, Д, space, Д, space, Д, space,
-        space, Д, space, Д, space, Д, space, Д,
+        //~ Д, space, Д, space, Д, space, Д, space,
+        //~ space, Д, space, Д, space, Д, space, Д,
 
         _0, _1, _2, _3, _4, _5, _6, _7, _8, _9,
         А, Б, В, Г, Д, Е, Ж, З, И, Й, К, Л, М, Н, О, П,
@@ -76,16 +109,16 @@ int main()
 
     int curr;
     int incr = 8;
-    bool displayMinus;
+    bool displaySign;
 
     while(true)
     {
-        martian2bytes(display.buf[ 0 .. 16], chars[curr .. curr + incr][0..8], displayMinus);
+        martian2bytes(display.buf[ 0 .. 16], chars[curr .. curr + incr][0..8], displaySign ? Sign.Plus : Sign.None, 0b111);
         curr += incr;
-        martian2bytes(display.buf[16 .. 32], chars[curr .. curr + incr][0..8], displayMinus);
+        martian2bytes(display.buf[16 .. 32], chars[curr .. curr + incr][0..8], displaySign ? Sign.Minus : Sign.None, 0b010);
         curr += incr;
 
-        displayMinus = !displayMinus;
+        displaySign = !displaySign;
 
         display.refreshImageFromBuffer();
 
