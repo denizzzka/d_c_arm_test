@@ -68,40 +68,63 @@ ref ubyte[8*2] martian2bytes(ref return ubyte[8*2] ret, MartianChar[8] str, Sign
     return ret;
 }
 
-int main()
+class MartianYautjaDisplay
 {
     import drivers.max7219;
 
-    auto display = new MAX7219Display(4);
+    private MAX7219Display hwDisp;
 
-    display.setIntensity(0b10);
-    display.testBlink();
-    display.setIntensity(0b1111);
+    this()
+    {
+        hwDisp = new MAX7219Display(4);
+
+        hwDisp.setIntensity(0b10);
+        hwDisp.testBlink();
+        hwDisp.setIntensity(0b1111);
+    }
+
+    void setRow(bool isUpperRow, wchar[8] str, Sign sign = Sign.None, ubyte delimMask = 0b000)
+    {
+        MartianChar[str.length] chars;
+        foreach(i, c; str)
+            chars[i] = c.capitalizedSymbol2martian;
+
+        ubyte[] bufSlice = isUpperRow ? (hwDisp.buf[16 .. 32]) : (hwDisp.buf[0 .. 16]);
+
+        // decodes chars with left decimal points for some letters and sets sign
+        martian2bytes(bufSlice[0 .. 16], chars, sign, delimMask);
+    }
+
+    void refresh()
+    {
+        hwDisp.refreshImageFromBuffer();
+    }
+}
+
+int main()
+{
+    auto display = new MartianYautjaDisplay;
 
     immutable wstring str = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZАБВГДЕЁЖЗИКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
 
-    MartianChar[str.length] chars;
-    foreach(i, c; str)
-        chars[i] = c.capitalizedSymbol2martian;
-
     int curr;
-    int incr = 8;
+    int incr = 1;
     bool displaySign;
 
     while(true)
     {
-        martian2bytes(display.buf[ 0 .. 16], chars[curr .. curr + incr][0..8], displaySign ? Sign.Minus : Sign.None, 0b010);
+        display.setRow(true,  str[curr .. curr + incr][0..8], displaySign ? Sign.Minus : Sign.None, 0b010);
         curr += incr;
-        martian2bytes(display.buf[16 .. 32], chars[curr .. curr + incr][0..8], displaySign ? Sign.Plus : Sign.None, 0b101);
+        display.setRow(false, str[curr .. curr + incr][0..8], displaySign ? Sign.Plus  : Sign.None, 0b101);
         curr += incr;
 
         displaySign = !displaySign;
 
-        display.refreshImageFromBuffer();
+        display.refresh();
 
-        vTaskDelay(2000);
+        vTaskDelay(500);
 
-        if(curr >= chars.length)
+        if(curr >= str.length)
             curr = 0;
     }
 }
