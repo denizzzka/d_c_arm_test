@@ -11,7 +11,6 @@ enum Sign
 
 /// Converts one martian string to buffer
 /// (Display contains two martian strings)
-// TODO: reuse return buffer
 ref ubyte[8*2] martian2bytes(ref return ubyte[8*2] ret, MartianChar[8] str, Sign sign = Sign.None, ubyte delimMask = 0b000)
 {
     import std.bitmanip: nativeToLittleEndian;
