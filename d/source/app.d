@@ -1,6 +1,6 @@
 import libopencm3;
 import freertos;
-import martian: IELFont;
+import martian: MartianChar, capitalizedSymbol2martian;
 
 enum Sign
 {
@@ -12,7 +12,7 @@ enum Sign
 /// Converts one martian string to buffer
 /// (Display contains two martian strings)
 // TODO: reuse return buffer
-ref ubyte[8*2] martian2bytes(ref return ubyte[8*2] ret, IELFont[8] str, Sign sign = Sign.None, ubyte delimMask = 0b000)
+ref ubyte[8*2] martian2bytes(ref return ubyte[8*2] ret, MartianChar[8] str, Sign sign = Sign.None, ubyte delimMask = 0b000)
 {
     import std.bitmanip: nativeToLittleEndian;
 
@@ -79,31 +79,11 @@ int main()
     display.testBlink();
     display.setIntensity(0b1111);
 
-    IELFont[] chars;
+    immutable wstring str = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZАБВГДЕЁЖЗИКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
 
-    with(IELFont)
-    chars = [
-        В,Л,А,Ж,Н,О,space,space,
-        _2,_4,space,П,Р,О,Ц,space,
-        П,И,Ш,И,Т,Е,space,space,
-        В,С,Т,Р,О,Е,Н,space,
-        Н,Ы,Е,space,П,Р,О,Г,
-        Р,А,М,М,Ы,space,Н,А,
-        Н,А,space,Я,З,Ы,К,Е,
-        Д,И,space,space,space,space,space,space,
-        //~ Д, space, Д, space, Д, space, Д, space,
-        //~ space, Д, space, Д, space, Д, space, Д,
-
-        //~ space, Д, space, Д, space, Д, space, Д,
-        //~ Д, space, Д, space, Д, space, Д, space,
-
-        //~ Д, space, Д, space, Д, space, Д, space,
-        //~ space, Д, space, Д, space, Д, space, Д,
-
-        _0, _1, _2, _3, _4, _5, _6, _7, _8, _9,
-        А, Б, В, Г, Д, Е, Ж, З, И, Й, К, Л, М, Н, О, П,
-        Р, С, Т, У, Ф, Х, Ц, Ч, Ш, Щ, Ы, Ь, Э, Ю, Я,
-    ];
+    MartianChar[str.length] chars;
+    foreach(i, c; str)
+        chars[i] = c.capitalizedSymbol2martian;
 
     int curr;
     int incr = 8;
