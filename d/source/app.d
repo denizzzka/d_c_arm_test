@@ -94,13 +94,6 @@ class MartianYautjaDisplay
         hwDisp.setIntensity(0b1111);
     }
 
-    void setRow(bool isUpperRow, in wchar[8] str, Sign sign = Sign.None, ubyte delimMask = 0b000)
-    {
-        auto chars = string2martian(str);
-
-        setRow(isUpperRow, chars[0 .. 8], sign, delimMask);
-    }
-
     void setRow(bool isUpperRow, in MartianChar[8] chars, Sign sign = Sign.None, ubyte delimMask = 0b000)
     {
         ubyte[] bufSlice = isUpperRow ? (hwDisp.buf[16 .. 32]) : (hwDisp.buf[0 .. 16]);
@@ -157,14 +150,16 @@ int main()
     auto display = new MartianYautjaDisplay;
 
     auto floatingText = FloatingText("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZАБВГДЕЁЖЗИКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ");
-    wchar[8] str = "123456  ";
+    MartianChar[8] text = string2martian(" ВРЕМЯ  ");
+    MartianChar[8] time = string2martian("  123456");
 
     bool displaySign;
 
     while(true)
     {
-        display.setRow(true, floatingText.getDisplayBuf);
-        display.setRow(false, str, displaySign ? Sign.Plus  : Sign.None, 0b110);
+        //~ display.setRow(true, floatingText.getDisplayBuf);
+        display.setRow(true, text, displaySign ? Sign.Plus  : Sign.Minus, 0b001);
+        display.setRow(false, time, Sign.None, 0b011);
 
         displaySign = !displaySign;
 
@@ -172,15 +167,13 @@ int main()
 
         floatingText.step();
 
-        vTaskDelay(100);
+        auto unused_remove_it = string2martian("1234567890123456789012345678901234567890123456789012345678901234567890");
+
+        import core.memory: GC;
+        GC.collect();
+
+        vTaskDelay(10);
     }
-}
-
-extern(C) void blinkTask(void *pvParametres) @nogc nothrow
-{
-    gpio_toggle(GPIO_PORT_B_BASE, GPIO1);
-
-    vTaskDelay(500);
 }
 
 // Init FreeRTOS main task stack size:
@@ -193,5 +186,5 @@ void initMainStackSize()
 {
     import external.rt.dmain: mainTaskProperties;
 
-    mainTaskProperties.taskStackSizeWords = 25 * 1024 / 4;
+    mainTaskProperties.taskStackSizeWords = 10 * 1024 / 4;
 }
