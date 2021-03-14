@@ -145,34 +145,179 @@ private int abs(int x) pure
         return x;
 }
 
+struct Content
+{
+    MartianChar[8] str;
+    Sign sign;
+    ubyte delimMask;
+}
+
+abstract class ContentBase
+{
+    private static MartianYautjaDisplay display;
+    private static ContentBase[] list;
+    private static size_t currContentIdx;
+
+    this()
+    {
+        list ~= this;
+    }
+
+    protected abstract const(Content) getUpperRow();
+    protected abstract const(Content) getBottomRow();
+
+    static void renderAndSendUpdateToDisplay()
+    {
+        auto curr = list[currContentIdx];
+
+        const up = curr.getUpperRow();
+        const bottom = curr.getBottomRow();
+
+        display.setRow(true, up.str, up.sign, up.delimMask);
+        display.setRow(false, bottom.str, bottom.sign, bottom.delimMask);
+
+        display.refresh();
+    }
+
+    protected abstract void step(float dt);
+
+    static void performStep(float dt)
+    {
+        foreach(item; list)
+            item.step(dt);
+    }
+
+    static void switchContent()
+    {
+        currContentIdx++;
+
+        if(currContentIdx >= list.length)
+            currContentIdx = 0;
+    }
+}
+
+static this()
+{
+    ContentBase.display = new MartianYautjaDisplay;
+}
+
+class Clock : ContentBase
+{
+    private Content upCont;
+    private Content downCont;
+
+    this()
+    {
+        upCont.str = string2martian(" ВРЕМЯ  ");
+        upCont.delimMask = 0b001;
+    }
+
+    override const(Content) getUpperRow()
+    {
+        return upCont;
+    }
+
+    override const(Content) getBottomRow()
+    {
+        downCont.str = string2martian("  214356");
+
+        return downCont;
+    }
+
+    override void step(float dt)
+    {
+        static float seconds = 0;
+
+        seconds += dt;
+
+        if(seconds >= 0.5)
+            downCont.delimMask = 0b011;
+        else
+            downCont.delimMask = 0;
+
+        if(seconds >= 1)
+            seconds = 0;
+    }
+}
+
+class Weather : ContentBase
+{
+    private Content upCont;
+    private Content downCont;
+
+    this()
+    {
+        upCont.str = string2martian("  ПОГОДА");
+    }
+
+    override const(Content) getUpperRow()
+    {
+        return upCont;
+    }
+
+    override const(Content) getBottomRow()
+    {
+        return downCont;
+    }
+
+    override void step(float dt)
+    {
+        static float seconds = 0;
+
+        seconds += dt;
+
+        if(seconds >= 2)
+        {
+            downCont.sign = Sign.Plus;
+            downCont.str = string2martian("27 ДНЁМ ");
+        }
+        else
+        {
+            downCont.sign = Sign.Minus;
+            downCont.str = string2martian("16 НОЧЬЮ");
+        }
+
+        if(seconds >= 4)
+            seconds = 0;
+    }
+}
+
 int main()
 {
-    auto display = new MartianYautjaDisplay;
+    //~ auto floatingText = FloatingText("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZАБВГДЕЁЖЗИКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ");
+        //~ floatingText.step();
 
-    auto floatingText = FloatingText("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZАБВГДЕЁЖЗИКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ");
-    MartianChar[8] text = string2martian(" ВРЕМЯ  ");
-    MartianChar[8] time = string2martian("  123456");
+    new Clock;
+    new Weather;
 
-    bool displaySign;
+    float switchDelay = 0;
+
+    import core.time;
+    TickDuration prevTick = TickDuration.currSystemTick();
 
     while(true)
     {
-        //~ display.setRow(true, floatingText.getDisplayBuf);
-        display.setRow(true, text, displaySign ? Sign.Plus  : Sign.Minus, 0b001);
-        display.setRow(false, time, Sign.None, 0b011);
+        auto currTick = TickDuration.currSystemTick();
+        float dt = 1.0f * (currTick - prevTick).msecs() / 1000;
 
-        displaySign = !displaySign;
+        ContentBase.performStep(dt);
 
-        display.refresh();
+        prevTick = currTick;
 
-        floatingText.step();
+        switchDelay += dt;
 
-        auto unused_remove_it = string2martian("1234567890123456789012345678901234567890123456789012345678901234567890");
+        if(switchDelay >= 5)
+        {
+            switchDelay = 0;
+            ContentBase.switchContent();
+        }
+
+        ContentBase.renderAndSendUpdateToDisplay();
 
         import core.memory: GC;
         GC.collect();
 
-        vTaskDelay(10);
+        vTaskDelay(20);
     }
 }
 
