@@ -111,9 +111,28 @@ void finiTLSRanges(void[] rng) nothrow @nogc
     free(rng.ptr);
 }
 
-import ldc.attributes;
+extern(C) extern void* __aeabi_read_tp() nothrow @nogc
+{
+    version(ARM)
+        import ldc.llvmasm;
+    else
+        static assert(false, "not implemented");
 
-extern(C) void* __aeabi_read_tp() nothrow @nogc @assumeUsed
+    // TODO: For unknown reason __aeabi_read_tp() is not preserves registers by itself. Why?
+    //
+    // Preserve registers due to
+    // Thread-local storage (new in v2.01)
+    // https://developer.arm.com/documentation/ihi0043/latest/
+    __asm(`push {r1, r2, r3}`, ``);
+
+    auto ret = __aeabi_read_tp_secondary();
+
+    __asm(`pop {r1, r2, r3}`, ``);
+
+    return ret;
+}
+
+private void* __aeabi_read_tp_secondary() nothrow @nogc
 {
     return freertos.pvTaskGetThreadLocalStoragePointer(null, 0);
 }
