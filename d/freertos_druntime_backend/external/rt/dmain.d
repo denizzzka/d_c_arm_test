@@ -102,7 +102,7 @@ extern(C) void vApplicationStackOverflowHook(os.TaskHandle_t xTask, char* pcTask
 {
     import core.stdc.stdio;
 
-    printf("Stack overflow at task \"%s\" (0x%X)\n", pcTaskName, xTask);
+    printf("Stack overflow at task \"%s\" (%p)\n", pcTaskName, cast(void*) xTask);
 
     while(true)
     {}
