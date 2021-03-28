@@ -19,4 +19,4 @@ jobs:
 
             - name: Show compiled ELF file
               run: |
-                docker run --rm -it d_c_arm_test:latest ls -alh /tmp/project/build/firmware\.elf
+                docker run --rm d_c_arm_test:latest ls -alh /tmp/project/build/firmware\.elf
