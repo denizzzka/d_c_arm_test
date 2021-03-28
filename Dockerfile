@@ -16,11 +16,14 @@ RUN sed -i 's/else static assert(0, "Unknown OS.");/else OS os = OS.otherNonPosi
 RUN cd /tmp && git clone https://github.com/denizzzka/druntime \
     && cd /usr/lib/ldc/x86_64-linux-gnu/include/d/ && rm -r core \
 	&& ln -s /tmp/druntime/src/core/ core
-	
+
 # Compile
 ENV DFLAGS="-L=-L/usr/lib/llvm-11/lib/"
 COPY . /tmp/project
-RUN cd /tmp/project \
-    && meson setup --cross-file arm_cortex_m4_cross.ini -Doptimization=s -Ddebug=true /tmp/project/build \
-    && cd /tmp/project/build \
-    && ninja
+
+WORKDIR /tmp/project
+RUN meson setup --cross-file arm_cortex_m4_cross.ini -Doptimization=s -Ddebug=true /tmp/project/build
+
+WORKDIR /tmp/project/build
+# Calling ninja twice to workaround a bug https://github.com/denizzzka/d_c_arm_test/issues/2
+RUN ninja || ninja
