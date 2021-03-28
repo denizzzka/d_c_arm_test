@@ -6,7 +6,7 @@ jobs:
         name: Perform build
         strategy:
             matrix:
-                dc: [dmd, ldc]
+                dc: [ldc]
 
         runs-on: ubuntu-latest
         steps:
