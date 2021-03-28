@@ -22,5 +22,10 @@ ENV DFLAGS="-L=-L/usr/lib/llvm-11/lib/"
 COPY . /tmp/project
 RUN cd /tmp/project \
     && meson setup --cross-file arm_cortex_m4_cross.ini -Doptimization=s -Ddebug=true /tmp/project/build
-# Run ninja twice - workaround for https://github.com/denizzzka/d_c_arm_test/issues/2
-RUN cd /tmp/project/build && (ninja || ninja)
+
+# Run ninja 3 times - workaround for https://github.com/denizzzka/d_c_arm_test/issues/2
+#                                and https://github.com/mesonbuild/meson/issues/6677
+RUN cd /tmp/project/build && (ninja || true)
+RUN cd /tmp/project/build && (ninja || true)
+RUN while [ ! -f /tmp/project/build/firmware.elf.p/libopencm3.d ]; do sleep 1; done
+RUN cd /tmp/project/build && ninja
