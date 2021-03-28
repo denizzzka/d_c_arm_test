@@ -1,5 +1,5 @@
 name: Build
-on: [pull_request, push]
+on: [pull_request]
 
 jobs:
     test:
@@ -12,7 +12,7 @@ jobs:
         steps:
             - uses: actions/checkout@v2
 
-            - name: Build container and show compiler version
+            - name: Build container
               run: |
                 # build container
                 docker build . -t d_c_arm_test
