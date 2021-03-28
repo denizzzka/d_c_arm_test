@@ -25,7 +25,7 @@ RUN cd /tmp/project \
 
 # Run ninja 3 times - workaround for https://github.com/denizzzka/d_c_arm_test/issues/2
 #                                and https://github.com/mesonbuild/meson/issues/6677
-RUN cd /tmp/project/build && (ninja >/dev/null || true)
-RUN cd /tmp/project/build && (ninja >/dev/null || true)
+RUN cd /tmp/project/build && (ninja || true)
+RUN cd /tmp/project/build && (ninja || true)
 RUN sleep 1
 RUN cd /tmp/project/build && ninja
