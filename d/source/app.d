@@ -240,6 +240,42 @@ class Clock : ContentBase
     }
 }
 
+
+class Stopwatch : ContentBase
+{
+    private Content upCont;
+    private Content downCont;
+
+    this()
+    {
+        upCont.str = string2martian("ОТСЧЁТ  ");
+        upCont.delimMask = 0b001;
+
+        downCont.delimMask = 0b111;
+    }
+
+    override const(Content) getUpperRow()
+    {
+        return upCont;
+    }
+
+    override const(Content) getBottomRow()
+    {
+        return downCont;
+    }
+
+    override void step(float dt)
+    {
+        static float counter = 0;
+
+        counter += dt;
+
+        //~ import std.conv: to; //FIXME: enable Phobos library
+
+        //~ downCont.str = string2martian(counter.to!wstring);
+    }
+}
+
 class Weather : ContentBase
 {
     private Content upCont;
@@ -288,6 +324,7 @@ int main()
         //~ floatingText.step();
 
     new Clock;
+    new Stopwatch;
     new Weather;
 
     float switchDelay = 0;
