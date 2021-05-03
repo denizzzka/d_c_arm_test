@@ -19,8 +19,14 @@ endif
 add_global_arguments(
     language: 'c'
 )
+
+#FIXME: replace by imports
+ldc_default_libs_links = meson.source_root() / 'subprojects' / 'druntime' / 'src'
+
 add_global_arguments(
     lto_d,
+    '--conf=' + meson.current_source_dir()/'baremetal_ldc2.conf', #Required for override of system Phobos instance. Phobos binary usually isn't provided for target platform, but Phobos is need to initialize Meson
+    '-I' + ldc_default_libs_links,
     #'--boundscheck=off', #saves 1.4KB
     '--d-version=DruntimeAbstractRt', #TODO: https://github.com/mesonbuild/meson/issues/7168
     '--d-version=CRuntime_Abstract', #TODO: https://github.com/mesonbuild/meson/issues/7168
