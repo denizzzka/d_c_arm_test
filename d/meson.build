@@ -37,14 +37,19 @@ freertos_d_unused = custom_target(
     build_by_default: true,
 )
 
+phobos_includes = subproject('phobos').get_variable('include_directories')
+
 freertos_d_dep = declare_dependency(
     sources: [
         freertos_binding,
     ],
-    include_directories: include_directories( #FIXME: remove this, https://github.com/mesonbuild/meson/issues/6695#issuecomment-729734736
-        'freertos_dpp_bindings',
-        'freertos_druntime_backend',
-    )
+    include_directories: [
+        include_directories( #FIXME: remove this, https://github.com/mesonbuild/meson/issues/6695#issuecomment-729734736
+            'freertos_dpp_bindings',
+            'freertos_druntime_backend',
+        ),
+        phobos_includes,
+    ],
 )
 
 freertos_druntime_backend = [
