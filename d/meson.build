@@ -109,6 +109,8 @@ druntime_lib = library(
     ],
 )
 
+phobos_dep = subproject('phobos').get_variable('phobos_dep')
+
 d_dep = declare_dependency(
     sources: [
         'source/app.d',
@@ -122,6 +124,7 @@ d_dep = declare_dependency(
     ],
     dependencies: [
         freertos_d_dep,
+        phobos_dep,
     ],
     link_with: [
         druntime_lib,
