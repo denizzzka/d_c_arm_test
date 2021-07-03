@@ -5,8 +5,8 @@ orbs:
 
 jobs:
   build_elf_binary:
-    docker:
-      - image: ubuntu:20.04
+    machine:
+      image: ubuntu-2004:202104-01
 
     steps:
       - checkout
