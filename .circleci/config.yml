@@ -3,12 +3,10 @@ version: 2.1
 orbs:
   docker: circleci/docker@1.6.0
 
-workflows:
-  version: 2
-  jobs:
-    build_elf_binary:
-      docker:
-        - image: ubuntu:20.04
+jobs:
+  build_elf_binary:
+    docker:
+      - image: ubuntu:20.04
 
     steps:
       - checkout
@@ -17,3 +15,9 @@ workflows:
       - run: 'docker cp dummy:/tmp/project/build/firmware.elf firmware.elf'
       - store_artifacts:
         path: firmware.elf
+
+workflows:
+  version: 2
+  all:
+    jobs:
+      - build_elf_binary
