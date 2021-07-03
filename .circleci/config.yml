@@ -4,6 +4,7 @@ orbs:
   docker: circleci/docker@1.6.0
 
 workflows:
+  version: 2
   jobs:
     build_elf_binary:
       docker:
