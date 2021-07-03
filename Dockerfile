@@ -13,5 +13,6 @@ ENV DFLAGS="-L=-L/usr/lib/llvm-11/lib/"
 COPY . /tmp/project
 RUN cd /tmp/project \
     && meson setup --cross-file arm_cortex_m4_cross.ini -Doptimization=s -Ddebug=true /tmp/project/build
-# Run ninja twice - workaround for https://github.com/denizzzka/d_c_arm_test/issues/2
-RUN cd /tmp/project/build && (ninja || ninja)
+
+# One threaded build - workaround for https://github.com/denizzzka/d_c_arm_test/issues/2
+RUN cd /tmp/project/build && ninja -j1
