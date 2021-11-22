@@ -8,35 +8,9 @@ alias c_long fpos_t;
 ///
 struct FILE;
 
-private __gshared extern(C) extern FILE*[3] __iob;
-
 __gshared FILE* stdin;
 __gshared FILE* stdout;
 __gshared FILE* stderr;
-
-import ldc.attributes;
-
-@section(".init_array")
-immutable initStdioDescriptors_ptr = &initStdioDescriptors;
-
-void initStdioDescriptors()
-{
-    stdin  = __iob[0];
-    stdout = __iob[1];
-    stderr = __iob[2];
-
-    assert(stdout !is null);
-}
-
-enum
-{
-    ///
-    _IOFBF = 0,
-    ///
-    _IOLBF = 1,
-    ///
-    _IONBF = 2,
-}
 
 enum
 {
