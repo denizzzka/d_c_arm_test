@@ -52,7 +52,7 @@ picolibc_sub = subproject(
         'newlib-io-c99-formats=true',
         'newlib-long-time_t=true',
         'newlib-multithread=true',
-        'newlib-tinystdio=true',
+        'tinystdio=true',
         'thread-local-storage=false',
     ]
 )
