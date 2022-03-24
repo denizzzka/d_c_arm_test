@@ -92,15 +92,6 @@ druntime_lib = library(
         freertos_d_dep,
         picolibc_dep,
     ],
-    d_module_versions: [
-        'DruntimeAbstractRt',
-        'CRuntime_Abstract',
-        'ExternStackShell',
-        'AsmExternal', #used by fiber module
-        #'CoreUnittest',
-        'OnlyLowMemUnittest', #disables memory-greedy unittests
-        #'SupportSanitizers', #FIXME: remove, for debugging purposes only
-    ],
     d_debug: [
         #'SENTINEL',
         #'MEMSTOMP',
@@ -121,6 +112,8 @@ d_dep = declare_dependency(
         'source/bindings',
     ],
     dependencies: [
+        #FIXME: duplicates link_with content because dependencies also contains includes with correct d-versions
+        druntime_dep,
         freertos_d_dep,
     ],
     link_with: [

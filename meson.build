@@ -28,10 +28,9 @@ add_global_arguments(
     '--conf=' + meson.current_source_dir()/'baremetal_ldc2.conf', #Required for override of system Phobos instance. Phobos binary usually isn't provided for target platform, but Phobos is need to initialize Meson
     '-I' + ldc_default_libs_links,
     #'--boundscheck=off', #saves 1.4KB
-    '--d-version=DruntimeAbstractRt', #TODO: https://github.com/mesonbuild/meson/issues/7168
-    '--d-version=CRuntime_Abstract', #TODO: https://github.com/mesonbuild/meson/issues/7168
-    '--d-version=AsmExternal', #TODO: ditto
-    '--d-version=GENERIC_IO', #TODO: ditto, used by Phobos
+    #TODO: remove these "--d-version" - used only for Phobos headers compilation:
+    '--d-version=DruntimeAbstractRt',
+    '--d-version=GENERIC_IO',
     language: 'd'
 )
 add_global_link_arguments(

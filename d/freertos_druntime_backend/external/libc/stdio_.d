@@ -6,6 +6,19 @@ import external.libc.config;
 alias c_long fpos_t;
 
 ///
+alias _iobuf = FILE;
+
+enum
+{
+    ///
+    _IOFBF = 0,
+    ///
+    _IOLBF = 1,
+    ///
+    _IONBF = 2,
+}
+
+///
 struct FILE;
 
 __gshared FILE* stdin;
