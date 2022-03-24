@@ -74,10 +74,14 @@ freertos_druntime_backend = [
     'freertos_druntime_backend/external/rt/sections.d',
 ]
 
-
-druntime_dep = subproject(
+druntime_sub = subproject(
     'druntime',
-).get_variable('druntime_dep')
+    default_options: [
+        'use_external_backend=true',
+    ]
+)
+
+druntime_dep = druntime_sub.get_variable('druntime_dep')
 
 druntime_lib = library(
     'druntime',
