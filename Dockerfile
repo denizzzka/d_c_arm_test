@@ -14,5 +14,5 @@ COPY . /tmp/project
 RUN cd /tmp/project \
     && meson setup --cross-file arm_cortex_m4_cross.ini -Doptimization=s -Ddebug=true /tmp/project/build
 
-# One threaded build - workaround for https://github.com/denizzzka/d_c_arm_test/issues/2
-RUN cd /tmp/project/build && ninja -j7 || ninja -j7 || ninja -j7 || ninja -j7
+# Few attempts, see: https://github.com/denizzzka/d_c_arm_test/issues/2
+RUN /bin/bash -c 'cd /tmp/project/build; ninja -j7 || ninja -j7 || ninja -j7 || ninja -j7'
