@@ -1,7 +1,7 @@
-FROM debian:bullseye
+FROM debian:sid
 
 RUN apt-get update && apt-get upgrade -y \
-    && apt-get install --no-install-recommends -y build-essential clang libclang-11-dev gcc-arm-none-eabi \
+    && apt-get install -t sid --no-install-recommends -y build-essential clang libclang-11-dev gcc-arm-none-eabi \
        dub ldc git lld llvm ninja-build python3 python3-pip python3-setuptools python3-wheel
 
 # Install meson
@@ -15,4 +15,4 @@ RUN cd /tmp/project \
     && meson setup --cross-file arm_cortex_m4_cross.ini -Doptimization=s -Ddebug=true /tmp/project/build
 
 # Few attempts, see: https://github.com/denizzzka/d_c_arm_test/issues/2
-RUN cd /tmp/project/build && ninja -j5 || ninja -j5 || ninja -j5 || ninja -j5 || ninja -j5 || ninja -j5 || ninja -j5
+RUN cd /tmp/project/build && ninja -j5 || ninja -j5 || ninja -j5 || ninja -j5
