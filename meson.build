@@ -1,6 +1,6 @@
 project(
     'C + D + FreeRTOS test project',
-    ['d'],
+    ['d', 'c', 'cpp'],
     version: 'v0.0.1',
     default_options: [
         'default_library=static', #move out it
@@ -15,10 +15,6 @@ if get_option('dlang_lto')
 else
     lto_d = ''
 endif
-
-add_global_arguments(
-    language: 'c'
-)
 
 #FIXME: replace by imports
 ldc_default_libs_links = meson.source_root() / 'subprojects' / 'druntime' / 'src'
