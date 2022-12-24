@@ -137,7 +137,7 @@ private void* __aeabi_read_tp_secondary() nothrow @nogc
     return freertos.pvTaskGetThreadLocalStoragePointer(null, 0);
 }
 
-void ctorsDtorsWarning()
+void ctorsDtorsWarning() nothrow
 {
     static assert("Deprecation 16211");
 /*

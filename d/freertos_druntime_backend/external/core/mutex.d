@@ -25,7 +25,7 @@ class Mutex : Object.Monitor
         assert(false);
     }
 
-    ~this() @nogc
+    ~this() @nogc nothrow
     {
         _vSemaphoreDelete(mtx);
     }
