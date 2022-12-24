@@ -2,6 +2,9 @@ name: Build
 on: [push, pull_request]
 
 jobs:
+    setup:
+        outputs:
+            compilers: ${{ steps.load-config.outputs.compilers }}
     test:
         name: Perform build
         strategy:
