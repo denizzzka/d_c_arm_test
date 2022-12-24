@@ -1,4 +1,4 @@
 [wrap-git]
-url = https://github.com/denizzzka/druntime.git
+url = https://github.com/denizzzka/ldc-external_druntime_backend.git
 depth = 1
-revision = non_posix
+revision = external_druntime_backend_support
