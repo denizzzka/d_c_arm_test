@@ -59,10 +59,16 @@ libopencm3_dep = libopencm3_sub.get_variable('libopencm3_dep')
 
 libunwind_dep = subproject('libunwind').get_variable('libunwind_dep')
 
+freertos_sub_default_options = 'config_h_dir=.'
+freertos_sub = subproject(
+    'freertos',
+    default_options: [freertos_sub_default_options],
+)
+
 freertos_lib = library(
     'freertos',
     dependencies: [
-      subproject('freertos').get_variable('freertos_dep'),
+      freertos_sub.get_variable('freertos_dep'),
       picolibc_dep,
     ],
 )
