@@ -42,6 +42,11 @@
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION  1
 #define configNUM_THREAD_LOCAL_STORAGE_POINTERS  1
 
+/* Only for RISC-V: */
+/* Global realtime clock address and compare register address, zero for disable */
+#define configMTIME_BASE_ADDRESS                 ( 0 )
+#define configMTIMECMP_BASE_ADDRESS              ( 0 )
+
 /* Debugging */
 #define configCHECK_FOR_STACK_OVERFLOW           2
 #define configTASK_RETURN_ADDRESS                0 // place 0 task return address on stack to help FreeRTOS-aware debugger (GDB unwind thread stack)
