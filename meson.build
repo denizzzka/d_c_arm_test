@@ -54,8 +54,12 @@ picolibc_sub = subproject(
 picolibc_dep = picolibc_sub.get_variable('picolibc_dep')
 semihost_lib = picolibc_sub.get_variable('lib_semihost')
 
-libopencm3_sub = subproject('libopencm3')
-libopencm3_dep = libopencm3_sub.get_variable('libopencm3_dep')
+if host_machine.cpu_family() == 'arm'
+    libopencm3_sub = subproject('libopencm3')
+    libopencm3_dep = libopencm3_sub.get_variable('libopencm3_dep')
+elif host_machine.cpu_family() == 'riscv32'
+    libopencm3_dep = dependency('', required : false)
+endif
 
 libunwind_dep = subproject('libunwind').get_variable('libunwind_dep')
 
