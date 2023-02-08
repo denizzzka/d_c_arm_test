@@ -60,7 +60,7 @@ void finiTLSRanges(void[] rng) nothrow @nogc
 
     debug(PRINTF) printf("finiTLSRanges called\n");
 
-    assert(__aeabi_read_tp() !is null);
+    assert(read_tp_secondary() !is null);
 
     free(rng.ptr);
 }
@@ -82,6 +82,6 @@ void ctorsDtorsWarning() nothrow
 }
 
 version(ARM)
-    public import external.rt.sections_arm;
+    public import external.rt.sections_arm: initTLSRanges;
 else
     static assert("Platform not supported");
