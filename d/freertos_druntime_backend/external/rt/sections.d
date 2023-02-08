@@ -54,52 +54,6 @@ void fillGlobalSectionGroup(ref SectionGroup gsg) nothrow @nogc
     debug(PRINTF) printf(__FUNCTION__~" done\n");
 }
 
-import external.libc.stdlib: aligned_alloc;
-import core.memory: GC;
-
-private enum TCB_size = 8; // ARM EABI specific
-
-/***
- * Called once per thread; returns array of thread local storage ranges
- */
-void[] initTLSRanges() nothrow @nogc
-{
-    debug(PRINTF) printf("external initTLSRanges called\n");
-
-    debug
-    {
-        assert(__aeabi_read_tp() is null, "TLS already initialized?");
-    }
-
-    auto p = getTLSParams();
-
-    // TLS
-    import core.stdc.string: memcpy, memset;
-
-    void* tls = aligned_alloc(8, p.full_tls_size);
-    assert(tls, "cannot allocate TLS block");
-
-    // Copying TLS data
-    memcpy(tls, p.tdata_start, p.tdata_size);
-
-    // Init local bss by zeroes
-    memset(tls + p.tdata_size, 0x00, p.tbss_size);
-
-    freertos.vTaskSetThreadLocalStoragePointer(null, 0, tls - TCB_size /* ARM EABI specific offset */);
-
-    debug
-    {
-        void* tls_arm = __aeabi_read_tp();
-        assert(tls - tls_arm == TCB_size);
-    }
-
-    // Register in GC
-    //TODO: move this info into our own SectionGroup implementation?
-    GC.addRange(tls, p.full_tls_size);
-
-    return tls[0 .. p.full_tls_size];
-}
-
 void finiTLSRanges(void[] rng) nothrow @nogc
 {
     import core.stdc.stdlib: free;
@@ -111,28 +65,7 @@ void finiTLSRanges(void[] rng) nothrow @nogc
     free(rng.ptr);
 }
 
-extern(C) extern void* __aeabi_read_tp() nothrow @nogc
-{
-    version(ARM)
-        import ldc.llvmasm;
-    else
-        static assert(false, "not implemented");
-
-    // TODO: For unknown reason __aeabi_read_tp() is not preserves registers by itself. Why?
-    //
-    // Preserve registers due to
-    // Thread-local storage (new in v2.01)
-    // https://developer.arm.com/documentation/ihi0043/latest/
-    __asm(`push {r1, r2, r3}`, ``);
-
-    auto ret = __aeabi_read_tp_secondary();
-
-    __asm(`pop {r1, r2, r3}`, ``);
-
-    return ret;
-}
-
-private void* __aeabi_read_tp_secondary() nothrow @nogc
+package void* read_tp_secondary() nothrow @nogc
 {
     return freertos.pvTaskGetThreadLocalStoragePointer(null, 0);
 }
@@ -147,3 +80,8 @@ void ctorsDtorsWarning() nothrow
         ~ "to compile. Use runtime option --DRT-oncycle=print to see the cycle details.\n");
  */
 }
+
+version(ARM)
+    public import external.rt.sections_arm;
+else
+    static assert("Platform not supported");

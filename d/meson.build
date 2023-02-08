@@ -72,6 +72,7 @@ freertos_druntime_backend = [
     'freertos_druntime_backend/external/rt/dmain.d',
     'freertos_druntime_backend/external/rt/monitor_.d',
     'freertos_druntime_backend/external/rt/sections.d',
+    'freertos_druntime_backend/external/rt/sections_arm.d',
 ]
 
 druntime_sub = subproject(
