@@ -83,5 +83,7 @@ void ctorsDtorsWarning() nothrow
 
 version(ARM)
     public import external.rt.sections_arm: initTLSRanges;
+version(RISCV32)
+    public import external.rt.sections_riscv32: initTLSRanges;
 else
     static assert("Platform not supported");
