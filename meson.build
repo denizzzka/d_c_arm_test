@@ -102,7 +102,8 @@ firmware = executable(
     link_depends: files(linker_script_name),
     link_args: [
         '-static',
-        '-Xlinker', '--script=../' + linker_script_name,
+        '-L../',
+        '-Xlinker', '--script=' + linker_script_name,
         '-L'+path_to_math_lib, '-lgcc',
     ]
 )

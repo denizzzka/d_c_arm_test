@@ -11,6 +11,9 @@ MEMORY
  ram (rw): org = 0x3FC80000, len = 0x50000
  rtc_ram (rx): org = 0x50000000, len = 0x2000
 }
+
+INCLUDE esp32c3_romfuncs.ld
+
 SECTIONS
 {
   /* fake output .got section */
