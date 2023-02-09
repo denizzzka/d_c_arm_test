@@ -2,4 +2,4 @@
 url = https://github.com/FreeRTOS/FreeRTOS-Kernel.git
 depth = 1
 patch_directory = freertos_changes
-revision = V10.5.1
+revision = 91c20f5f425b18b641765217586a82a62e1aa45a
