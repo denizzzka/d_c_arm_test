@@ -98,12 +98,16 @@ SECTIONS
  } >ram
  . = ALIGN(4);
  end = .;
+
+ .stack :
+ {
+   __stack_bottom = .;
+   __stack_top = ORIGIN(ram) + LENGTH(ram);
+   __freertos_irq_stack_top = __stack_top;
+   __stack_size_min = 0x4000;
+   ASSERT(__stack_bottom + __stack_size_min < __stack_top, "Error: no space for stack");
+ }
 }
 
-PROVIDE(_stack = ORIGIN(ram) + LENGTH(ram));
 PROVIDE( __heap_start = end );
 PROVIDE( __heap_end = ORIGIN(ram) + LENGTH(ram) - 0x800 );
-
-#ASSERT(_sgot == _egot, "
-#.got section detected in the input files. Dynamic relocations are not
-#supported. Please modify your build to compile code _without_ PIC.");
