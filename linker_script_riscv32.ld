@@ -2,9 +2,14 @@ EXTERN(vector_table)
 ENTRY(reset_handler)
 MEMORY
 {
-/* flash (rx) : ORIGIN = 0x00000000, LENGTH = 256K */
- rom (rx)   : ORIGIN = 0x08000000, LENGTH = 512K
- ram (rwx)  : ORIGIN = 0x20000000, LENGTH = 128K
+/* Specific for esp32c3 */
+ #FIXME: remove:
+ rom (rx)   : org = 0x3C000000, len = 0x400000
+
+ irom (x): org = 0x42000000, len = 0x400000
+ drom (r): org = 0x3C000000, len = 0x400000
+ ram (rw): org = 0x3FC80000, len = 0x50000
+ rtc_ram (rx): org = 0x50000000, len = 0x2000
 }
 SECTIONS
 {
