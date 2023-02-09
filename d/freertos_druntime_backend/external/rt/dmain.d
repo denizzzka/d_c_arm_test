@@ -24,8 +24,13 @@ template _d_cmain()
     @nogc:
     extern(C):
 
-    void systick_interrupt_disable(); // provided by libopencm3
-    void scb_set_priority_grouping(uint prigroup); // provided by libopencm3
+    version(ARM)
+        void systick_interrupt_disable(); // provided by libopencm3
+    else version(RISCV32)
+        void systick_interrupt_disable()
+        {
+            // FIXME: find way to do same on RISC-V
+        }
 
     int _Dmain(char[][] args);
 
@@ -38,7 +43,6 @@ template _d_cmain()
 
     void _d_run_main(void* mtp)
     {
-        //~ systick_interrupt_disable(); // FIXME remove
         import core.stdc.stdlib: _Exit;
         import external.core.thread: getStackTop;
 
