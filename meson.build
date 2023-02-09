@@ -81,8 +81,10 @@ subdir('d')
 
 if host_machine.cpu_family() == 'arm'
     path_to_math_lib = '/usr/lib/gcc/arm-none-eabi/8.3.1/thumb/v7-m/nofp/'
+    linker_script_name = 'linker_script_arm.ld'
 elif host_machine.cpu_family() == 'riscv32'
     path_to_math_lib = '/usr/lib/gcc/riscv64-unknown-elf/12.1.0/rv32imac/ilp32/'
+    linker_script_name = 'linker_script_riscv32.ld'
 endif
 
 firmware = executable(
@@ -97,10 +99,10 @@ firmware = executable(
         semihost_lib,
     ],
     link_language: 'c',
-    link_depends: files('linker_script.ld'),
+    link_depends: files(linker_script_name),
     link_args: [
         '-static',
-        '-Xlinker', '--script=../linker_script.ld', #FIXME: hardcoded path
+        '-Xlinker', '--script=../' + linker_script_name,
         '-L'+path_to_math_lib, '-lgcc',
     ]
 )
