@@ -35,35 +35,13 @@ freertos_d_dep = declare_dependency(
     include_directories: [
         include_directories( #FIXME: remove this, https://github.com/mesonbuild/meson/issues/6695#issuecomment-729734736
             'freertos_dpp_bindings',
-            'freertos_druntime_backend',
+            'druntime_freertos_backend',
         ),
         phobos_includes,
     ],
 )
 
-freertos_druntime_backend = [
-    'freertos_druntime_backend/external/core/abort.d',
-    'freertos_druntime_backend/external/core/condition.d',
-    'freertos_druntime_backend/external/core/event.d',
-    'freertos_druntime_backend/external/core/fiber.d',
-    'freertos_druntime_backend/external/core/gc.d',
-    'freertos_druntime_backend/external/core/memory.d',
-    'freertos_druntime_backend/external/core/mutex.d',
-    'freertos_druntime_backend/external/core/semaphore.d',
-    'freertos_druntime_backend/external/core/thread.d',
-    'freertos_druntime_backend/external/core/time.d',
-    'freertos_druntime_backend/external/core/types.d',
-    'freertos_druntime_backend/external/libc/errno.d',
-    'freertos_druntime_backend/external/libc/stdio_.d',
-    'freertos_druntime_backend/external/libc/stdlib.d',
-    'freertos_druntime_backend/external/libc/wchar_.d',
-    'freertos_druntime_backend/external/rt/config.d',
-    'freertos_druntime_backend/external/rt/dmain.d',
-    'freertos_druntime_backend/external/rt/monitor_.d',
-    'freertos_druntime_backend/external/rt/sections.d',
-    'freertos_druntime_backend/external/rt/sections_arm.d',
-    'freertos_druntime_backend/external/rt/sections_riscv32.d',
-]
+subdir('druntime_freertos_backend')
 
 druntime_sub = subproject(
     'druntime',
@@ -80,7 +58,7 @@ druntime_lib = library(
         freertos_druntime_backend,
     ],
     include_directories: include_directories(
-        './freertos_druntime_backend/',
+        'druntime_freertos_backend',
     ),
     dependencies: [
         druntime_dep,
