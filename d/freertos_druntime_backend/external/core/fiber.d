@@ -39,4 +39,9 @@ else version (RISCV32)
 
         assert(false, "FIXME: implement");
     }
+
+    extern (C) void fiber_switchContext( void** oldp, void* newp ) nothrow @nogc
+    {
+        assert(false, "FIXME: fiber_switchContext not implemented");
+    }
 }
