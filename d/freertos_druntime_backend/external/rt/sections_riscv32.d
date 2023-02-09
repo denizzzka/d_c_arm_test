@@ -2,6 +2,10 @@ module external.rt.sections_riscv32;
 
 version(RISCV32):
 
+extern(C) extern void syscalls_init() nothrow @nogc
+{
+}
+
 static import freertos;
 import external.rt.sections: read_tp_secondary;
 import external.libc.stdlib: aligned_alloc;

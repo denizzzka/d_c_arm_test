@@ -1,5 +1,5 @@
 EXTERN(vector_table)
-ENTRY(reset_handler)
+ENTRY(_start)
 MEMORY
 {
 /* Specific for esp32c3 */
@@ -97,7 +97,10 @@ SECTIONS
   . = ALIGN(4);
   _edata = .;
  } >ram AT >rom
- _data_loadaddr = LOADADDR(.data);
+ #_data_loadaddr = LOADADDR(.data);
+ _data_lma = ORIGIN(drom) + LOADADDR(.data);
+ _data_start = _data;
+ _data_size = _edata - _data_start;
  .bss : {
   *(.bss*)
   *(COMMON)
@@ -106,6 +109,7 @@ SECTIONS
  } >ram
  . = ALIGN(4);
  end = .;
+ _end = end;
 
  .stack :
  {

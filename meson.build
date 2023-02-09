@@ -56,9 +56,10 @@ semihost_lib = picolibc_sub.get_variable('lib_semihost')
 
 if host_machine.cpu_family() == 'arm'
     libopencm3_sub = subproject('libopencm3')
-    libopencm3_dep = libopencm3_sub.get_variable('libopencm3_dep')
+    hardware_interface_dep = libopencm3_sub.get_variable('libopencm3_dep')
 elif host_machine.cpu_family() == 'riscv32'
-    libopencm3_dep = dependency('', required : false)
+    subdir('hardware_interface/esp32c3')
+    hardware_interface_dep = esp32c3_hal_dep
 endif
 
 libunwind_dep = subproject('libunwind').get_variable('libunwind_dep')
@@ -91,7 +92,7 @@ firmware = executable(
     'firmware.elf',
     dependencies: [
         d_dep,
-        libopencm3_dep,
+        hardware_interface_dep,
         picolibc_dep,
         libunwind_dep,
     ],
