@@ -1,4 +1,3 @@
-import libopencm3;
 import freertos;
 
 int main()
@@ -42,8 +41,11 @@ int main()
     }
 }
 
+version(ARM)
 extern(C) void blinkTask(void *pvParametres) @nogc nothrow
 {
+    import libopencm3;
+
     gpio_toggle(GPIO_PORT_B_BASE, GPIO1);
 
     vTaskDelay(500);

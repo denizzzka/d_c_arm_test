@@ -5,17 +5,6 @@ dpp = subproject('dpp').get_variable('dpp_preprocessor')
 root_dir = meson.source_root()
 subprojects_dir = root_dir + '/subprojects/'
 
-libopencm3_binding = dpp.process(
-    files(
-        'source/bindings/libopencm3.dpp',
-    ),
-    extra_args: [
-        '--include-path=' + subprojects_dir / 'libopencm3/include/',
-        #'--define=STM32F1',
-        '--define=STM32F4',
-    ]
-)
-
 freertos_binding = dpp.process(
     files(
         'freertos_dpp_bindings/freertos.dpp',
@@ -106,13 +95,29 @@ druntime_lib = library(
     ],
 )
 
+d_dep_sources = [
+    'source/app.d',
+    'source/arm_cortex_debug.d',
+    'source/drivers/max7219.d',
+]
+
+if host_machine.cpu_family() == 'arm'
+    libopencm3_binding = dpp.process(
+        files(
+            'source/bindings/libopencm3.dpp',
+        ),
+        extra_args: [
+            '--include-path=' + subprojects_dir / 'libopencm3/include/',
+            #'--define=STM32F1',
+            '--define=STM32F4',
+        ]
+    )
+
+    d_dep_sources += libopencm3_binding
+endif
+
 d_dep = declare_dependency(
-    sources: [
-        'source/app.d',
-        'source/arm_cortex_debug.d',
-        'source/drivers/max7219.d',
-        libopencm3_binding,
-    ],
+    sources: d_dep_sources,
     include_directories: [
         'source',
         'source/bindings',
