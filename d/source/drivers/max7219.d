@@ -1,6 +1,15 @@
 module drivers.max7219;
 
-import libopencm3;
+version(ARM) import libopencm3;
+else
+{
+    //FIXME: remove this stubs
+
+    void spi_setup() {}
+    void beginRefresh() {}
+    void endRefresh() {}
+    void sendDataToSegmentDisplay(ushort data) {}
+}
 
 class MAX7219Display
 {

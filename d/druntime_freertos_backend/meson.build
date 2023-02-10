@@ -18,4 +18,6 @@ freertos_druntime_backend = files(
     'external/rt/dmain.d',
     'external/rt/monitor_.d',
     'external/rt/sections.d',
+    'external/rt/sections_arm.d',
+    'external/rt/sections_riscv32.d',
 )

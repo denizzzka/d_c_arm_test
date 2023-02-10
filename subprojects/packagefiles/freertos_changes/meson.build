@@ -9,7 +9,6 @@ includes = include_directories(
 )
 
 sources = files(
-  'croutine.c',
   'event_groups.c',
   'list.c',
   'queue.c',
@@ -55,7 +54,22 @@ if cc_name == 'gcc' or cc_name == 'clang'
                 CPU_specific_includes = include_directories('portable/GCC/ARM_CM3')
             endif
         else
-            assert(false, 'Unsupported CPU')
+            assert(false, 'Unsupported ARM CPU type')
+        endif
+    elif target_machine.cpu_family() == 'riscv32' or target_machine.cpu_family() == 'riscv64'
+        if target_machine.cpu() == 'rv32imc'
+            if mpu_enabled
+                assert(false, 'MPU unsupported')
+            else
+                CPU_specific += files('portable/GCC/RISC-V/portASM.S')
+                CPU_specific += files('portable/GCC/RISC-V/port.c')
+                CPU_specific_includes = include_directories(
+                    'portable/GCC/RISC-V/',
+                    'portable/GCC/RISC-V/chip_specific_extensions/RISCV_no_extensions/',
+                )
+            endif
+        else
+            assert(false, 'Unsupported RISC-V CPU type')
         endif
     else
         assert(false, 'Unsupported CPU family')
