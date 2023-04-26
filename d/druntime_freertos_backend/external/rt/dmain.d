@@ -29,7 +29,7 @@ template _d_cmain()
     else version(RISCV32)
         void systick_interrupt_disable()
         {
-            // FIXME: find way to do same on RISC-V
+            assert(false, "FIXME: find way to do same on RISC-V");
         }
 
     int _Dmain(char[][] args);
