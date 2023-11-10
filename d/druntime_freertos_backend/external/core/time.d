@@ -8,6 +8,7 @@ enum ClockType
     //~ precise = 3,
     second = 6, //TODO: used only for druntime core unittest, do something with this
 }
++/
 
 import core.time;
 
@@ -16,7 +17,6 @@ static @property TickDuration currSystemTick() @trusted nothrow @nogc
 {
     return TickDuration(currTicks);
 }
-+/
 
 static import os = freertos;
 
@@ -24,7 +24,7 @@ extern(C) export long currTicks() @trusted nothrow @nogc
 {
     return os.xTaskGetTickCount();
 }
-/+
+
 //TODO: templatize this calculations to avoid wasting CPU time
 uint toTicks(Duration d) @safe nothrow @nogc pure
 in(_ticksPerSec >= 1000)
@@ -43,11 +43,12 @@ unittest
 
 enum _ticksPerSec = os.configTICK_RATE_HZ;
 
-void initTicksPerSecond(ref long[] tps) @nogc nothrow
+extern(C) export void initTicksPerSecond(ref long[] tps) @nogc nothrow
 {
     tps[0] = _ticksPerSec; // ClockType.normal
 }
 
+/+
 // Linked by picolibc
 struct timeval {
     long    tv_sec;     /* seconds */
