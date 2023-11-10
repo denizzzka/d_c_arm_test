@@ -355,7 +355,8 @@ public void* getStackTop() nothrow @nogc
     return llvm_frameaddress(0);
 }
 
-void* getStackBottom() nothrow @nogc
+pragma(mangle, mangleFunc!(void* function() nothrow @nogc)("core.thread.osthread.getStackBottom"))
+export void* getStackBottom() nothrow @nogc
 {
     assert(Thread.getThis().m_main.bstack !is null);
 
