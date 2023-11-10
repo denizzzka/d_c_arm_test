@@ -172,7 +172,7 @@ private extern(C) void lowlevelThread_entryPoint(void* ctx) nothrow
     os.vTaskDelete(null);
 }
 
-extern(C) export void joinLowLevelThread(in ThreadID tid) nothrow @nogc
+extern(C) export void joinLowLevelThread(ThreadID tid) nothrow @nogc
 {
     ll_ThreadData* t = lockAndGetLowLevelThread(tid);
 
