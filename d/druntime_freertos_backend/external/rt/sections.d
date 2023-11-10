@@ -1,6 +1,7 @@
 module external.rt.sections;
 
 static import freertos;
+import core.demangle: mangleFunc;
 
 /+
 import rt.sections_ldc : SectionGroup;
@@ -55,8 +56,10 @@ void fillGlobalSectionGroup(ref SectionGroup gsg) nothrow @nogc
 
     debug(PRINTF) printf(__FUNCTION__~" done\n");
 }
++/
 
-void finiTLSRanges(void[] rng) nothrow @nogc
+pragma(mangle, mangleFunc!(void function(void[]) nothrow @nogc)("rt.sections_ldc.finiTLSRanges"))
+export void finiTLSRanges(void[] rng) nothrow @nogc
 {
     import core.stdc.stdlib: free;
 
@@ -66,7 +69,6 @@ void finiTLSRanges(void[] rng) nothrow @nogc
 
     free(rng.ptr);
 }
-+/
 
 package void* read_tp_secondary() nothrow @nogc
 {
