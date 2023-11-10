@@ -10,10 +10,12 @@ enum ClockType
 }
 +/
 
+import core.demangle : mangleFunc;
 import core.time;
 
-//FIXME: TickDuration is deprecated!
-static @property TickDuration currSystemTick() @trusted nothrow @nogc
+//FIXME: remove, TickDuration is deprecated!
+pragma(mangle, mangleFunc!(TickDuration function() @trusted @property nothrow @nogc)("core.time.TickDuration.currSystemTick"))
+export static @property TickDuration currSystemTick() @trusted nothrow @nogc
 {
     return TickDuration(currTicks);
 }
