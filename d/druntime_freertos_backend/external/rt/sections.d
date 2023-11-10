@@ -2,9 +2,9 @@ module external.rt.sections;
 
 static import freertos;
 import core.demangle: mangleFunc;
+import rt.sections_ldc : SectionGroup;
 
 /+
-import rt.sections_ldc : SectionGroup;
 debug(PRINTF) import core.stdc.stdio : printf;
 
 // These values described in linker script
@@ -43,9 +43,12 @@ TLSParams getTLSParams() nothrow @nogc
         full_tls_size
     );
 }
++/
 
-void fillGlobalSectionGroup(ref SectionGroup gsg) nothrow @nogc
+extern(C) export void fillGlobalSectionGroup(ref SectionGroup gsg) nothrow @nogc
 {
+    import rt.sections_freestanding;
+
     debug(PRINTF) printf(__FUNCTION__~" called\n");
 
     // Writeable (non-TLS) data sections covered by GC
@@ -56,7 +59,6 @@ void fillGlobalSectionGroup(ref SectionGroup gsg) nothrow @nogc
 
     debug(PRINTF) printf(__FUNCTION__~" done\n");
 }
-+/
 
 pragma(mangle, mangleFunc!(void function(void[]) nothrow @nogc)("rt.sections_ldc.finiTLSRanges"))
 export void finiTLSRanges(void[] rng) nothrow @nogc
