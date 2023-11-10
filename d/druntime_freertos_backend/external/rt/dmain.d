@@ -17,8 +17,8 @@ struct MainTaskProperties
 }
 
 __gshared static MainTaskProperties mainTaskProperties;
-/+
-template _d_cmain()
+
+version(all)
 {
     nothrow:
     @nogc:
@@ -38,8 +38,6 @@ template _d_cmain()
     private alias int function(char[][] args) MainFunc;
 
     int _d_run_main2(char[][] args, object.size_t totalArgsLength, MainFunc mainFunc);
-
-    import external.rt.dmain: MainTaskProperties, mainTaskProperties;
 
     void _d_run_main(void* mtp)
     {
@@ -65,7 +63,7 @@ template _d_cmain()
 
         import external.core.thread: DefaultTaskPriority;
 
-        auto creation_res = xTaskCreate(
+        auto creation_res = os.xTaskCreate(
             &_d_run_main,
             cast(const(char*)) "_d_run_main",
             mainTaskProperties.taskStackSizeWords, // usStackDepth
@@ -74,7 +72,7 @@ template _d_cmain()
             null // task handler
         );
 
-        if(creation_res != pdTRUE /* FIXME: pdPASS */)
+        if(creation_res != os.pdTRUE /* FIXME: pdPASS */)
             return 2; // task creation error
 
         // Init needed FreeRTOS interrupts handlers
@@ -86,12 +84,12 @@ template _d_cmain()
         //~ immutable uint SCB_AIRCR_PRIGROUP_GROUP16_NOSUB = 0x3 << 8 + 0xf;
         //~ scb_set_priority_grouping(SCB_AIRCR_PRIGROUP_GROUP16_NOSUB);
 
-        vTaskStartScheduler(); // infinity loop
+        os.vTaskStartScheduler(); // infinity loop
 
         return 6; // Out of memory
     }
 }
-+/
+
 private extern(C) void vApplicationGetIdleTaskMemory(os.StaticTask_t** tcb, os.StackType_t** stackBuffer, uint* stackSize)
 {
   __gshared static os.StaticTask_t idle_TCB;
