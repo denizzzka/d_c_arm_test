@@ -1,6 +1,13 @@
 module external.core.gc;
 
-//TODO: need to fill core.gc.config.config __gshared struct before start
+import core.gc.config : CFG = Config;
+
+extern(C) export bool initConfigOptions(ref CFG cfg, string cfgname)
+{
+    cfg = Config;
+
+    return false;
+}
 
 import core.internal.parseoptions;
 
