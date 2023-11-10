@@ -368,8 +368,8 @@ bool findLowLevelThread(ThreadID tid) nothrow @nogc
     assert(false, "Not implemented");
 }
 
-//TODO: this is only for internal use, rename it to more appropriate?
-Thread external_attachThread(ThreadBase thisThread) @nogc
+pragma(mangle, mangleFunc!(ThreadBase function(ThreadBase))("core.thread.osthread.attachThread"))
+export ThreadBase external_attachThread(ThreadBase thisThread)
 {
     Thread t = thisThread.toThread;
 
