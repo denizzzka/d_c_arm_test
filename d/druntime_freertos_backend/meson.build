@@ -1,5 +1,5 @@
 freertos_druntime_backend = files(
-#~     'external/core/abort.d',
+    'external/core/abort.d',
 #~     'external/core/condition.d',
 #~     'external/core/event.d',
 #~     'external/core/fiber.d',
