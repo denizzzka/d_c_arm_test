@@ -84,11 +84,4 @@ void ctorsDtorsWarning() nothrow
         ~ "to compile. Use runtime option --DRT-oncycle=print to see the cycle details.\n");
  */
 }
-
-version(ARM)
-    public import external.rt.sections_arm: initTLSRanges;
-version(RISCV32)
-    public import external.rt.sections_riscv32: initTLSRanges;
-else
-    static assert("Platform not supported");
 +/

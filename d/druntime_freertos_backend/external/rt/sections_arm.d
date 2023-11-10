@@ -2,9 +2,8 @@ module external.rt.sections_arm;
 
 version(ARM):
 
-/+
 static import freertos;
-import external.libc.stdlib: aligned_alloc;
+import core.demangle : mangleFunc;
 import core.memory: GC;
 
 private enum TCB_size = 8; // ARM EABI specific
@@ -12,7 +11,8 @@ private enum TCB_size = 8; // ARM EABI specific
 /***
  * Called once per thread; returns array of thread local storage ranges
  */
-void[] initTLSRanges() nothrow @nogc
+pragma(mangle, mangleFunc!(void[] function() nothrow @nogc)("rt.sections_ldc.initTLSRanges"))
+export void[] initTLSRanges() nothrow @nogc
 {
     debug(PRINTF) printf("external initTLSRanges called\n");
 
@@ -21,12 +21,13 @@ void[] initTLSRanges() nothrow @nogc
         assert(__aeabi_read_tp() is null, "TLS already initialized?");
     }
 
-    import external.rt.sections: getTLSParams;
+    import rt.sections_freestanding: getTLSParams;
 
     auto p = getTLSParams();
 
     // TLS
     import core.stdc.string: memcpy, memset;
+    import core.stdc.stdlib: aligned_alloc;
 
     void* tls = aligned_alloc(8, p.full_tls_size);
     assert(tls, "cannot allocate TLS block");
@@ -51,7 +52,6 @@ void[] initTLSRanges() nothrow @nogc
 
     return tls[0 .. p.full_tls_size];
 }
-+/
 
 extern(C) extern void* __aeabi_read_tp() nothrow @nogc
 {
