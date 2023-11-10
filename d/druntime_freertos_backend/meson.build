@@ -8,7 +8,7 @@ freertos_druntime_backend = files(
 #~     'external/core/mutex.d',
 #~     'external/core/semaphore.d',
     'external/core/thread.d',
-#~     'external/core/time.d',
+    'external/core/time.d',
     'external/core/types.d',
     'external/libc/errno.d',
 #~     'external/libc/stdio_.d',

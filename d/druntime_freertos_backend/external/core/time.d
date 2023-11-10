@@ -1,5 +1,6 @@
 module external.core.time;
 
+/+
 enum ClockType
 {
     normal = 0,
@@ -15,14 +16,15 @@ static @property TickDuration currSystemTick() @trusted nothrow @nogc
 {
     return TickDuration(currTicks);
 }
++/
 
 static import os = freertos;
 
-long currTicks() @trusted nothrow @nogc
+extern(C) export long currTicks() @trusted nothrow @nogc
 {
     return os.xTaskGetTickCount();
 }
-
+/+
 //TODO: templatize this calculations to avoid wasting CPU time
 uint toTicks(Duration d) @safe nothrow @nogc pure
 in(_ticksPerSec >= 1000)
@@ -60,3 +62,4 @@ extern(C) int gettimeofday(timeval* tv, void*) // timezone_t* is normally void*
 
     return 0;
 }
++/
