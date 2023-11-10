@@ -4,7 +4,7 @@ freertos_druntime_backend = files(
     'external/core/event.d',
 #~     'external/core/fiber.d',
     'external/core/gc.d',
-#~     'external/core/memory.d',
+    'external/core/memory.d',
     'external/core/mutex.d',
 #~     'external/core/semaphore.d',
     'external/core/thread.d',
