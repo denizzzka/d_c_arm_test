@@ -14,7 +14,7 @@ freertos_druntime_backend = files(
 #~     'external/libc/stdio_.d',
 #~     'external/libc/stdlib.d',
 #~     'external/libc/wchar_.d',
-#~     'external/rt/config.d',
+    'external/rt/config.d',
     'external/rt/dmain.d',
 #~     'external/rt/monitor_.d',
 #~     'external/rt/sections.d',
