@@ -1,5 +1,7 @@
 module external.core.gc;
 
+//TODO: need to fill core.gc.config.config __gshared struct before start
+
 import core.internal.parseoptions;
 
 struct Config

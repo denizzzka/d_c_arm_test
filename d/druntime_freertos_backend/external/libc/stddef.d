@@ -1,6 +1,6 @@
 module external.libc.stddef;
 
-alias wchar_t = dchar;
+//~ alias wchar_t = dchar;
 
 // fenv.d content:
 struct fenv_t

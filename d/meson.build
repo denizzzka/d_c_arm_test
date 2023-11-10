@@ -52,6 +52,17 @@ druntime_sub = subproject(
 
 druntime_dep = druntime_sub.get_variable('druntime_dep')
 
+# Bare means without libc (picolibc) and without interop with OS
+# Thus, this binary, in theory, can be distributed for various systems without any changes
+druntime_bare_lib = library(
+    'bare druntime',
+    sources: freertos_druntime_backend, #TODO: remove, need only for Thread and some another small stuff
+    dependencies: [
+        druntime_dep,
+        freertos_d_dep, #TODO: remove, need only for import TaskHandle_t
+    ],
+)
+
 druntime_lib = library(
     'druntime',
     sources: [
@@ -65,6 +76,7 @@ druntime_lib = library(
         freertos_d_dep,
         picolibc_dep,
     ],
+    link_with: druntime_bare_lib,
     d_debug: [
         #'SENTINEL',
         #'MEMSTOMP',

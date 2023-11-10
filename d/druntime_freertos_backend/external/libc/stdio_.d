@@ -19,11 +19,11 @@ enum
 }
 
 ///
-struct FILE;
+//~ struct FILE;
 
-__gshared FILE* stdin;
-__gshared FILE* stdout;
-__gshared FILE* stderr;
+//~ __gshared FILE* stdin;
+//~ __gshared FILE* stdout;
+//~ __gshared FILE* stderr;
 
 enum
 {
@@ -41,4 +41,4 @@ enum
     L_tmpnam     = 20
 }
 
-extern(C) int snprintf(scope char* s, size_t n, scope const char* format, ...) nothrow @nogc;
+//~ extern(C) int snprintf(scope char* s, size_t n, scope const char* format, ...) nothrow @nogc;
