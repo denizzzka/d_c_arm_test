@@ -43,7 +43,7 @@ unittest
     assert(1.seconds.toTicks == _ticksPerSec);
 }
 
-enum _ticksPerSec = os.configTICK_RATE_HZ;
+extern(C) export immutable int _ticksPerSec = os.configTICK_RATE_HZ;
 
 extern(C) export void initTicksPerSecond(ref long[] tps) @nogc nothrow
 {
