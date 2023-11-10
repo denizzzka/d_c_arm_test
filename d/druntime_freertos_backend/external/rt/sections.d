@@ -1,6 +1,8 @@
 module external.rt.sections;
 
 static import freertos;
+
+/+
 import rt.sections_ldc : SectionGroup;
 debug(PRINTF) import core.stdc.stdio : printf;
 
@@ -64,12 +66,14 @@ void finiTLSRanges(void[] rng) nothrow @nogc
 
     free(rng.ptr);
 }
++/
 
 package void* read_tp_secondary() nothrow @nogc
 {
     return freertos.pvTaskGetThreadLocalStoragePointer(null, 0);
 }
 
+/+
 void ctorsDtorsWarning() nothrow
 {
     static assert("Deprecation 16211");
@@ -87,3 +91,4 @@ version(RISCV32)
     public import external.rt.sections_riscv32: initTLSRanges;
 else
     static assert("Platform not supported");
++/

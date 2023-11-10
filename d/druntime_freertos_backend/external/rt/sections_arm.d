@@ -2,6 +2,7 @@ module external.rt.sections_arm;
 
 version(ARM):
 
+/+
 static import freertos;
 import external.libc.stdlib: aligned_alloc;
 import core.memory: GC;
@@ -50,6 +51,7 @@ void[] initTLSRanges() nothrow @nogc
 
     return tls[0 .. p.full_tls_size];
 }
++/
 
 extern(C) extern void* __aeabi_read_tp() nothrow @nogc
 {
