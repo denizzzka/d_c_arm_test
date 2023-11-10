@@ -61,10 +61,7 @@ in(arg)
         append( t );
 }
 
-struct LowLevelThreadSystemParams
-{
-    const(char*) name = "D low-level";
-}
+import core.demangle : mangleFunc;
 
 alias LLThreadDg = void delegate() nothrow;
 
@@ -88,10 +85,11 @@ private struct LLTaskProperties
  * Returns: the platform specific thread ID of the new thread. If an error occurs, `ThreadID.init`
  *  is returned.
  */
-ThreadID createLowLevelThread(
-    LLThreadDg dg, uint stacksize = 0,
-    LLThreadDg cbDllUnload = null, //TODO: propose to remove this arg in upstream?
-    LowLevelThreadSystemParams params = LowLevelThreadSystemParams.init
+pragma(mangle, mangleFunc!(ThreadID function(LLThreadDg dg, uint stacksize, LLThreadDg cbDllUnload) nothrow @nogc)("core.thread.osthread.createLowLevelThread"))
+extern(D) export ThreadID createLowLevelThread(
+    LLThreadDg dg,
+    uint stacksize = 0,
+    LLThreadDg cbDllUnload = null
 ) nothrow @nogc
 in(stacksize % os.StackType_t.sizeof == 0)
 {
@@ -127,9 +125,11 @@ in(stacksize % os.StackType_t.sizeof == 0)
     memset(currThread, 0x00, ll_ThreadData.sizeof);
     currThread.initialize();
 
+    immutable (char*) name = "D low-level";
+
     currThread.tid = os.xTaskCreateStatic(
         &lowlevelThread_entryPoint,
-        params.name,
+        name,
         wordsStackSize,
         cast(void*) context, // pvParameters*
         DefaultTaskPriority,
