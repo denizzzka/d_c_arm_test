@@ -6,8 +6,8 @@ import core.demangle: mangleFunc;
 
 @nogc:
 
-pragma(mangle, mangleFunc!(void* function() nothrow @nogc)("core.internal.mutex_freestanding.createRecursiveMutex"))
-void* createRecursiveMutex() @nogc nothrow
+pragma(mangle, mangleFunc!(shared(void)* function() nothrow @nogc)("core.internal.mutex_freestanding.createRecursiveMutex"))
+shared(void)* createRecursiveMutex() @nogc nothrow
 {
     import core.internal.abort;
 
@@ -16,23 +16,23 @@ void* createRecursiveMutex() @nogc nothrow
     if(mtx is null)
         abort("Error: memory required to hold mutex could not be allocated.");
 
-    return mtx;
+    return cast(shared) mtx;
 }
 
-pragma(mangle, mangleFunc!(void function(void*) nothrow @nogc)("core.internal.mutex_freestanding.deleteRecursiveMutex"))
+pragma(mangle, mangleFunc!(void function(shared void*) nothrow @nogc)("core.internal.mutex_freestanding.deleteRecursiveMutex"))
 void deleteRecursiveMutex(void* mtx) @nogc nothrow
 {
     _vSemaphoreDelete(mtx.unshare);
 }
 
-pragma(mangle, mangleFunc!(bool function(void*) nothrow @nogc)("core.internal.mutex_freestanding.takeMutexRecursive"))
-bool takeMutexRecursive(void* mtx) @nogc nothrow
+pragma(mangle, mangleFunc!(bool function(shared void*) nothrow @nogc)("core.internal.mutex_freestanding.takeMutexRecursive"))
+bool takeMutexRecursive(shared void* mtx) @nogc nothrow
 {
     return xSemaphoreTakeMutexRecursive(mtx.unshare, portMAX_DELAY) != pdTRUE;
 }
 
-pragma(mangle, mangleFunc!(bool function(void*) nothrow @nogc)("core.internal.mutex_freestanding.giveMutexRecursive"))
-bool giveMutexRecursive(void* mtx) @nogc nothrow
+pragma(mangle, mangleFunc!(bool function(shared void*) nothrow @nogc)("core.internal.mutex_freestanding.giveMutexRecursive"))
+bool giveMutexRecursive(shared void* mtx) @nogc nothrow
 {
     return xSemaphoreGiveMutexRecursive(mtx.unshare) != pdTRUE;
 }
