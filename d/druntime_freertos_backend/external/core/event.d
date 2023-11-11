@@ -29,7 +29,7 @@ struct Event
         clearOnExit = manualReset ? os.pdFALSE : os.pdTRUE;
 
         if(initialState)
-            set();
+            setIfInitialized();
     }
 
     // copying not allowed, can produce resource leaks
