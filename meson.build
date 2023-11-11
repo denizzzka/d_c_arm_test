@@ -83,7 +83,7 @@ build_dir_root = meson.current_build_dir()
 subdir('d')
 
 if host_machine.cpu_family() == 'arm'
-    path_to_math_lib = '/usr/lib/gcc/arm-none-eabi/8.3.1/thumb/v7-m/nofp/'
+    path_to_math_lib = '/usr/lib/gcc/arm-none-eabi/12.3.1/thumb/v7-m/nofp/'
     linker_script_name = 'linker_script_arm.ld'
 elif host_machine.cpu_family() == 'riscv32'
     path_to_math_lib = '/usr/lib/gcc/riscv64-unknown-elf/12.1.0/rv32imac/ilp32/'
