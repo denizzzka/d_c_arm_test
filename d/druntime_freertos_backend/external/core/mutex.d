@@ -18,6 +18,13 @@ void* createRecursiveMutex() @nogc nothrow
 
     return mtx;
 }
+
+pragma(mangle, mangleFunc!(void function(void*) nothrow @nogc)("core.internal.mutex_freestanding.deleteRecursiveMutex"))
+void deleteRecursiveMutex(void* mtx) @nogc nothrow
+{
+    _vSemaphoreDelete(cast(QueueDefinition*) mtx);
+}
+
 /+
     this() @nogc shared
     {
