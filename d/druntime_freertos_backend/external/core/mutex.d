@@ -22,68 +22,22 @@ void* createRecursiveMutex() @nogc nothrow
 pragma(mangle, mangleFunc!(void function(void*) nothrow @nogc)("core.internal.mutex_freestanding.deleteRecursiveMutex"))
 void deleteRecursiveMutex(void* mtx) @nogc nothrow
 {
-    _vSemaphoreDelete(cast(QueueDefinition*) mtx);
+    _vSemaphoreDelete(mtx.unshare);
 }
 
-/+
-    this() @nogc shared
-    {
-        assert(false);
-    }
+pragma(mangle, mangleFunc!(bool function(void*) nothrow @nogc)("core.internal.mutex_freestanding.takeMutexRecursive"))
+bool takeMutexRecursive(void* mtx) @nogc nothrow
+{
+    return xSemaphoreTakeMutexRecursive(mtx.unshare, portMAX_DELAY) != pdTRUE;
+}
 
-    ~this() @nogc nothrow
-    {
-        _vSemaphoreDelete(mtx);
-    }
-
-    final void lock_nothrow(this Q)() nothrow @trusted @nogc
-    if (is(Q == Mutex) || is(Q == shared Mutex))
-    {
-        // Infinity wait
-        if(xSemaphoreTakeMutexRecursive(mtx.unshare, portMAX_DELAY) != pdTRUE)
-        {
-            SyncError syncErr = cast(SyncError) cast(void*) typeid(SyncError).initializer;
-            syncErr.msg = "Unable to lock mutex.";
-            throw syncErr;
-        }
-    }
-
-    final void unlock_nothrow(this Q)() nothrow @trusted @nogc
-    if (is(Q == Mutex) || is(Q == shared Mutex))
-    {
-        if(xSemaphoreGiveMutexRecursive(mtx.unshare) != pdTRUE)
-        {
-            SyncError syncErr = cast(SyncError) cast(void*) typeid(SyncError).initializer;
-            syncErr.msg = "Unable to unlock mutex.";
-            throw syncErr;
-        }
-    }
-
-    @trusted void lock()
-    {
-        lock_nothrow();
-    }
-
-    /// ditto
-    @trusted void lock() shared
-    {
-        lock_nothrow();
-    }
-
-    @trusted void unlock()
-    {
-        unlock_nothrow();
-    }
-
-    /// ditto
-    @trusted void unlock() shared
-    {
-        unlock_nothrow();
-    }
+pragma(mangle, mangleFunc!(bool function(void*) nothrow @nogc)("core.internal.mutex_freestanding.giveMutexRecursive"))
+bool giveMutexRecursive(void* mtx) @nogc nothrow
+{
+    return xSemaphoreGiveMutexRecursive(mtx.unshare) != pdTRUE;
 }
 
 private QueueDefinition* unshare(T)(T mtx) pure nothrow
 {
     return cast(QueueDefinition*) mtx;
 }
-+/
