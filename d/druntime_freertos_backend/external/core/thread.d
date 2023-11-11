@@ -329,7 +329,8 @@ private extern (D) bool suspend( Thread t ) nothrow
     return true;
 }
 
-private extern(D) void resume(ThreadBase _t) nothrow @nogc
+pragma(mangle, mangleFunc!(void function(ThreadBase) nothrow @nogc)("core.thread.osthread.resume"))
+extern(D) export void resume(ThreadBase _t) nothrow @nogc
 {
     Thread t = _t.toThread;
 
