@@ -2,8 +2,17 @@ module external.core.fiber;
 
 import core.thread.context: StackContext;
 version (LDC) import ldc.attributes;
+import core.demangle: mangleFunc;
 
 extern(C) void fiber_entryPoint() nothrow;
+
+pragma(mangle, mangleFunc!(void function(StackContext*) nothrow @nogc)("core.thread.fiber.initFreestandingStack"))
+export void initFreestandingStack(StackContext* m_ctxt) nothrow @nogc
+{
+    import core.thread.types: isStackGrowingDown;
+
+    initStack!isStackGrowingDown(m_ctxt);
+}
 
 version (ARM)
 {

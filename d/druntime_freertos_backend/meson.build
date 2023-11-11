@@ -2,7 +2,7 @@ freertos_druntime_backend = files(
     'external/core/abort.d',
 #~     'external/core/condition.d',
     'external/core/event.d',
-#~     'external/core/fiber.d',
+    'external/core/fiber.d',
     'external/core/gc.d',
     'external/core/memory.d',
     'external/core/mutex.d',
