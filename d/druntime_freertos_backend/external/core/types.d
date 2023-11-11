@@ -1,7 +1,6 @@
 module external.core.types;
 
 import freertos: TaskHandle_t;
-import external.core.mutex: Mutex;
 
 alias ThreadID = TaskHandle_t;
 

@@ -2,24 +2,23 @@ module external.core.mutex;
 
 import object;
 import freertos;
+import core.demangle: mangleFunc;
 
 @nogc:
 
-class Mutex : Object.Monitor
+pragma(mangle, mangleFunc!(void* function() nothrow @nogc)("core.internal.mutex_freestanding.createRecursiveMutex"))
+void* createRecursiveMutex() @nogc nothrow
 {
-    import core.sync.exception;
     import core.internal.abort;
 
-    private SemaphoreHandle_t mtx = void;
+    void* mtx = _xSemaphoreCreateRecursiveMutex();
 
-    this() @nogc nothrow
-    {
-        mtx = _xSemaphoreCreateRecursiveMutex();
+    if(mtx is null)
+        abort("Error: memory required to hold mutex could not be allocated.");
 
-        if(mtx is null)
-            abort("Error: memory required to hold mutex could not be allocated.");
-    }
-
+    return mtx;
+}
+/+
     this() @nogc shared
     {
         assert(false);
@@ -80,3 +79,4 @@ private QueueDefinition* unshare(T)(T mtx) pure nothrow
 {
     return cast(QueueDefinition*) mtx;
 }
++/
