@@ -78,6 +78,8 @@ freertos_lib = library(
     ],
 )
 
+build_dir_root = meson.current_build_dir()
+
 subdir('d')
 
 if host_machine.cpu_family() == 'arm'
