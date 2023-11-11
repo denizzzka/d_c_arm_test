@@ -28,7 +28,7 @@ in(arg)
     scope(exit)
     {
         obj.isRunning = false;
-        obj.taskProperties.joinEvent.set();
+        obj.taskProperties.joinEvent.setIfInitialized();
         os.vTaskDelete(null);
     }
 
@@ -157,7 +157,7 @@ private extern(C) void lowlevelThread_entryPoint(void* ctx) nothrow
     ll_ThreadData* td = getLLThreadNotThreadSafe(tid);
     assert(td);
 
-    td.joinEvent.set();
+    td.joinEvent.setIfInitialized();
 
     lowlevelLock.unlock_nothrow();
 

@@ -54,19 +54,13 @@ struct Event
             return false;
         else
         {
-            set();
+            os.xEventGroupSetBits(group, BITS_MASK);
 
             return true;
         }
     }
 
     private enum uint BITS_MASK = 0x01; // using one first bit
-
-    void set()
-    in(group)
-    {
-        os.xEventGroupSetBits(group, BITS_MASK);
-    }
 
     void reset()
     in(group)
