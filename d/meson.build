@@ -5,11 +5,16 @@ dpp = subproject('dpp').get_variable('dpp_preprocessor')
 root_dir = meson.source_root()
 subprojects_dir = root_dir + '/subprojects/'
 
+libstd_include_path = subprojects_dir / 'picolibc' / 'newlib' / 'libc' / 'include'
+picolibc_h_include_path = build_dir_root / 'subprojects' / 'picolibc'
+
 freertos_binding = dpp.process(
     files(
         'freertos_dpp_bindings/freertos.dpp',
     ),
     extra_args: [
+        '--include-path=' + libstd_include_path,
+        '--include-path=' + picolibc_h_include_path,
         '--include-path=' + subprojects_dir / 'freertos' / 'include',
         '--include-path=' + subprojects_dir / 'freertos' / 'portable/GCC/ARM_CM3', #TODO: get this from freertos_dep?
         '--include-path=' + root_dir, #for FreeRTOSConfig.h
@@ -85,6 +90,8 @@ if host_machine.cpu_family() == 'arm'
             'source/bindings/libopencm3.dpp',
         ),
         extra_args: [
+            '--include-path=' + libstd_include_path,
+            '--include-path=' + picolibc_h_include_path,
             '--include-path=' + subprojects_dir / 'libopencm3/include/',
             #'--define=STM32F1',
             '--define=STM32F4',
