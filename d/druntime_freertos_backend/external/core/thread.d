@@ -289,6 +289,11 @@ private TaskHandle_t mAddr(Thread t)
     return cast(TaskHandle_t) t.m_addr;
 }
 
+private void mAddr(Thread t, TaskHandle_t val)
+{
+    t.m_addr = cast(void*) val;
+}
+
 /// Suspend the specified thread and load stack and register information
 private extern (D) bool suspend( Thread t ) nothrow
 {
@@ -391,8 +396,6 @@ export ThreadBase external_attachThread(ThreadBase thisThread)
     return t;
 }
 
-nothrow @nogc @safe:
-
 //~ class Thread : ThreadBase
 //~ {
     //~ private TaskProperties taskProperties;
@@ -414,33 +417,9 @@ nothrow @nogc @safe:
 
         t.m_main.bstack = (() @trusted => t.taskProperties.stackBuff + t._m_sz - 1)();
     }
-/+
-    private void printTcbCreated(string file, size_t line) @trusted nothrow
-    {
-        debug(PRINTF)
-        {
-            import core.stdc.stdio: printf;
 
-            printf("TCB %p created from file %s line %d\n", &taskProperties.tcb, cast(char*) file, line);
-        }
-    }
-
-    private void initDataStorage() nothrow
-    {
-        assert(m_curr is &m_main);
-
-        assert(m_main.bstack);
-        m_main.tstack = m_main.bstack;
-
-        tlsGCdataInit();
-    }
-
-    override final void run()
-    {
-        super.run();
-    }
-
-    final Thread start() nothrow
+    pragma(mangle, mangleFunc!(Thread function(Thread) nothrow @nogc)("core.internal.thread_freestanding.thread_start"))
+    Thread thread_start(Thread t) nothrow @trusted @nogc
     {
         auto wasThreaded  = multiThreadedFlag;
         multiThreadedFlag = true;
@@ -450,34 +429,35 @@ nothrow @nogc @safe:
                 multiThreadedFlag = false;
         }
 
-        slock.lock_nothrow();
-        scope(exit) slock.unlock_nothrow();
+        t.slock.lock_nothrow();
+        scope(exit) t.slock.unlock_nothrow();
 
         {
-            ++nAboutToStart;
-            pAboutToStart = cast(ThreadBase*)realloc(pAboutToStart, Thread.sizeof * nAboutToStart);
-            pAboutToStart[nAboutToStart - 1] = this;
+            ++t._nAboutToStart;
+            t._pAboutToStart = cast(ThreadBase*) realloc(t._pAboutToStart, Thread.sizeof * t._nAboutToStart);
+            t._pAboutToStart[t._nAboutToStart - 1] = t;
 
-            auto wordsStackSize = m_sz / os.StackType_t.sizeof;
+            auto wordsStackSize = t._m_sz / os.StackType_t.sizeof;
             assert(wordsStackSize >= os.configMINIMAL_STACK_SIZE);
 
-            isRunning = true;
-            scope(failure) isRunning = false;
+            t.isRunning = true;
+            scope(failure) t.isRunning = false;
 
-            m_addr = os.xTaskCreateStatic(
+            t.mAddr = os.xTaskCreateStatic(
                 &thread_entryPoint,
                 cast(const(char*)) "D thread", //FIXME: fill name from m_name
                 wordsStackSize,
-                cast(void*) this, // pvParameters*
+                cast(void*) t, // pvParameters*
                 DefaultTaskPriority,
-                cast(os.StackType_t*) taskProperties.stackBuff,
-                &taskProperties.tcb
+                cast(os.StackType_t*) t.taskProperties.stackBuff,
+                cast(os.StaticTask_t*) &t.taskProperties.task_control_block
             );
 
-            return this;
+            return t;
         }
     }
 
+/+
     static Thread getThis() @safe nothrow @nogc
     {
         return cast(Thread) ThreadBase.getThis;
