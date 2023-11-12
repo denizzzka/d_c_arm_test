@@ -1,5 +1,6 @@
 module external.core.types;
 
+version(none):
 import freertos: TaskHandle_t;
 
 alias ThreadID = TaskHandle_t;

@@ -6,9 +6,10 @@ import core.stdc.stdlib: aligned_alloc, realloc, free;
 import core.time;
 import core.thread.osthread;
 import core.thread.threadbase;
-import core.thread.types: ThreadID;
+import core.thread.types: ThreadID, ll_ThreadData;
 import core.thread.context: StackContext;
 static import os = freertos;
+import freertos: TaskHandle_t;
 
 enum DefaultTaskPriority = 3;
 enum DefaultStackSize = 2048 * os.StackType_t.sizeof;
@@ -20,6 +21,12 @@ private struct TaskProperties
     void* stackBuff;
 }
 
+//FIXME: broken!!! t.taskProperties must be allocated before use and deallocated after use
+private ref TaskProperties taskPropertiesStruct(Thread t) nothrow
+{
+    return *(cast(TaskProperties*) t.taskProperties);
+}
+
 extern(C) void thread_entryPoint(void* arg) nothrow
 in(arg)
 {
@@ -28,7 +35,7 @@ in(arg)
     scope(exit)
     {
         obj.isRunning = false;
-        obj.taskProperties.joinEvent.setIfInitialized();
+        obj.taskPropertiesStruct.joinEvent.setIfInitialized();
         os.vTaskDelete(null);
     }
 
@@ -100,8 +107,6 @@ in(stacksize % os.StackType_t.sizeof == 0)
     if(!context) return ThreadID.init;
 
     *context = LLTaskProperties(dg);
-
-    import core.thread.types: ll_ThreadData;
 
     lowlevelLock.lock_nothrow();
     scope(exit) lowlevelLock.unlock_nothrow();
@@ -183,8 +188,6 @@ extern(C) export void joinLowLevelThread(ThreadID tid) nothrow @nogc
 
     t.deletionUnlock(); // then thread can be safely deleted
 }
-
-import external.core.types: ll_ThreadData;
 
 private ll_ThreadData* lockAndGetLowLevelThread(in ThreadID tid) nothrow @nogc
 {
@@ -293,6 +296,11 @@ extern (C) void thread_suspendAll() nothrow
     }
 }
 
+private TaskHandle_t mAddr(Thread t)
+{
+    return cast(TaskHandle_t) t.m_addr;
+}
+
 /// Suspend the specified thread and load stack and register information
 private extern (D) bool suspend( Thread t ) nothrow
 {
@@ -319,7 +327,7 @@ private extern (D) bool suspend( Thread t ) nothrow
 
     if (t.m_addr != os.xTaskGetCurrentTaskHandle())
     {
-        os.vTaskSuspend(t.m_addr);
+        os.vTaskSuspend(t.mAddr);
     }
     else if (!t.m_lock)
     {
@@ -336,7 +344,7 @@ extern(D) export void resume(ThreadBase _t) nothrow @nogc
 
     if(t.m_addr != os.xTaskGetCurrentTaskHandle())
     {
-        os.vTaskResume(t.m_addr);
+        os.vTaskResume(t.mAddr);
     }
     else if ( !t.m_lock )
     {
@@ -395,18 +403,11 @@ export ThreadBase external_attachThread(ThreadBase thisThread)
     return t;
 }
 
-class Thread : ThreadBase
-{
-    private TaskProperties taskProperties;
-    private shared bool m_isRunning;
-
-    /// Initializes a thread object which has no associated executable function.
-    /// This is used for the main thread initialized in thread_init().
-    private this(size_t sz = 0) @safe pure nothrow @nogc
-    {
-    }
-
-    this(void function() fn, size_t sz = 0, /* string file = __FILE__, size_t line = __LINE__ */) @safe nothrow
+//~ class Thread : ThreadBase
+//~ {
+    //~ private TaskProperties taskProperties;
+/+
+    void thread_ctor(void function() fn, size_t sz = 0, /* string file = __FILE__, size_t line = __LINE__ */) @safe nothrow
     in(fn !is null)
     {
         super(fn, sz);
@@ -569,7 +570,8 @@ class Thread : ThreadBase
     {
         _taskYield();
     }
-}
++/
+//~ }
 
 private void _taskYield() @nogc nothrow
 {
