@@ -1,5 +1,6 @@
 module external.core.thread;
 
+import core.demangle: mangleFunc;
 import core.internal.spinlock;
 import core.sync.event: Event;
 import core.stdc.stdlib: aligned_alloc, realloc, free;
@@ -22,7 +23,7 @@ private struct TaskProperties
 }
 
 //FIXME: broken!!! t.taskProperties must be allocated before use and deallocated after use
-private ref TaskProperties taskPropertiesStruct(Thread t) nothrow
+private ref TaskProperties taskPropertiesStruct(Thread t) nothrow @trusted @nogc
 {
     return *(cast(TaskProperties*) t.taskProperties);
 }
@@ -403,19 +404,22 @@ export ThreadBase external_attachThread(ThreadBase thisThread)
     return t;
 }
 
+nothrow @nogc @safe:
+
 //~ class Thread : ThreadBase
 //~ {
     //~ private TaskProperties taskProperties;
-/+
-    void thread_ctor(void function() fn, size_t sz = 0, /* string file = __FILE__, size_t line = __LINE__ */) @safe nothrow
-    in(fn !is null)
+
+    pragma(mangle, mangleFunc!(void function(Thread) nothrow @nogc @safe)("core.internal.thread_freestanding.thread_ctor_impl"))
+    void thread_ctor_impl(Thread _this) @trusted
     {
-        super(fn, sz);
-        initTaskProperties();
-        taskProperties.joinEvent = Event(true, false);
-        //printTcbCreated(file, line);
+        _this.initTaskProperties(true, false);
+        //FIXME: event initialization:
+        //~ _this.taskPropertiesStruct.joinEvent = Event(true, false);
+        //_this.printTcbCreated(file, line);
     }
 
+/+
     this(void delegate() dg, size_t sz = 0, /* string file = __FILE__, size_t line = __LINE__ */) @safe nothrow
     in(dg !is null)
     {
@@ -432,24 +436,24 @@ export ThreadBase external_attachThread(ThreadBase thisThread)
 
         destructBeforeDtor();
     }
-
-    private void initTaskProperties() @safe nothrow
++/
+    private void initTaskProperties(Thread t, bool manualReset, bool initialState) @safe nothrow
     {
         import core.exception: onOutOfMemoryError;
 
-        if(m_sz == 0)
-            m_sz = DefaultStackSize;
+        if(t._m_sz == 0)
+            t._m_sz = DefaultStackSize;
 
-        assert(m_sz <= ushort.max * size_t.sizeof, "FreeRTOS stack size limit");
-        assert(m_sz % os.StackType_t.sizeof == 0, "Stack size must be multiple of word");
+        assert(t._m_sz <= ushort.max * size_t.sizeof, "FreeRTOS stack size limit");
+        assert(t._m_sz % os.StackType_t.sizeof == 0, "Stack size must be multiple of word");
 
-        taskProperties.stackBuff = (() @trusted => aligned_alloc(os.StackType_t.sizeof, m_sz))();
-        if(!taskProperties.stackBuff)
+        t.taskPropertiesStruct.stackBuff = (() @trusted => aligned_alloc(os.StackType_t.sizeof, t._m_sz))();
+        if(!t.taskPropertiesStruct.stackBuff)
             onOutOfMemoryError();
 
-        m_main.bstack = (() @trusted => taskProperties.stackBuff + m_sz - 1)();
+        t.m_main.bstack = (() @trusted => t.taskPropertiesStruct.stackBuff + t._m_sz - 1)();
     }
-
+/+
     private void printTcbCreated(string file, size_t line) @trusted nothrow
     {
         debug(PRINTF)
