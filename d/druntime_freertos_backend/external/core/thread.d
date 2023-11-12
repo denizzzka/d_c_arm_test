@@ -474,19 +474,19 @@ export ThreadBase external_attachThread(ThreadBase thisThread) nothrow @nogc
         return null;
     }
 
-/+
-    static void sleep(Duration val) @nogc nothrow
+    pragma(mangle, mangleFunc!(void function(Duration) @nogc nothrow)("core.internal.thread_freestanding.Thread.sleep"))
+    void sleep(Duration val) @nogc nothrow
     {
         import external.core.time;
 
         os.vTaskDelay(val.toTicks);
     }
 
+    pragma(mangle, mangleFunc!(void function() @nogc nothrow)("core.internal.thread_freestanding.Thread.yield"))
     static void yield() @nogc nothrow
     {
         _taskYield();
     }
-+/
 //~ }
 
 private void _taskYield() @nogc nothrow
