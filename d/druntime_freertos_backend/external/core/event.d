@@ -25,7 +25,6 @@ pragma(mangle, mangleFunc!(void function(void*))("core.internal.event_freestandi
 export void terminateEvent(os.EventGroupHandle_t group) @trusted
 {
     os.vEventGroupDelete(group);
-    debug group = null;
 }
 
 private enum uint BITS_MASK = 0x01; // using one first bit
