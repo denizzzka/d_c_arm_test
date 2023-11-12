@@ -6,7 +6,7 @@ alias ThreadID = TaskHandle_t;
 
 struct ll_ThreadData
 {
-    import external.core.event: Event;
+    import core.sync.event: Event;
     import core.atomic;
 
     ThreadID tid;

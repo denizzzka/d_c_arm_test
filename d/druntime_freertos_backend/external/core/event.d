@@ -1,140 +1,112 @@
 module external.core.event;
 
 static import os = freertos;
-import core.time;
-import external.core.time: toTicks;
+import core.demangle: mangleFunc;
+import core.time : Duration;
 
-struct Event
+nothrow:
+@nogc:
+@safe:
+
+pragma(mangle, mangleFunc!(void* function())("core.internal.event_freestanding.createEvent"))
+export os.EventGroupHandle_t createEvent() @trusted
 {
-    private os.EventGroupHandle_t group;
-    private os.BaseType_t clearOnExit;
+    import core.internal.abort: abort;
 
-    nothrow @nogc:
+    os.EventGroupHandle_t group = os.xEventGroupCreate();
 
-    this(bool manualReset, bool initialState) @safe
+    if(group is null)
+        abort("xEventGroupCreate failed");
+
+    return group;
+}
+
+pragma(mangle, mangleFunc!(void function(void*))("core.internal.event_freestanding.terminateEvent"))
+export void terminateEvent(os.EventGroupHandle_t group) @trusted
+{
+    os.vEventGroupDelete(group);
+    group = null;
+}
+
+private enum uint BITS_MASK = 0x01; // using one first bit
+
+pragma(mangle, mangleFunc!(void function(void*))("core.internal.event_freestanding.setEvent"))
+export void setEvent(os.EventGroupHandle_t group) @trusted
+{
+    os.xEventGroupSetBits(group, BITS_MASK);
+}
+
+pragma(mangle, mangleFunc!(void function(void*))("core.internal.event_freestanding.clearEvent"))
+export void clearEvent(os.EventGroupHandle_t group) @trusted
+{
+    os.xEventGroupClearBits(group, BITS_MASK);
+}
+
+pragma(mangle, mangleFunc!(void function(void*, bool))("core.internal.event_freestanding.waitEvent"))
+export void waitEvent(os.EventGroupHandle_t group, bool clearOnExit) @trusted
+{
+    uint r;
+
+    // xEventGroupWaitBits can return immediately on some cases:
+    // https://www.freertos.org/FreeRTOS_Support_Forum_Archive/February_2018/freertos_xEventGroupWaitBits_unexpected_behavior_cd13225cj.html
+    do
     {
-        initialize(manualReset, initialState);
+        r = os.xEventGroupWaitBits(
+           group,
+           BITS_MASK,
+           clearOnExit,
+           os.pdFALSE, // xWaitForAllBits
+           os.portMAX_DELAY // xTicksToWait
+        );
     }
+    while(!r);
 
-    void initialize(bool manualReset, bool initialState) @trusted
-    in(group is null)
+    assert(r & BITS_MASK);
+}
+
+pragma(mangle, mangleFunc!(bool function(void*, bool, Duration))("core.internal.event_freestanding.waitEventWithTimeout"))
+export bool waitEventWithTimeout(os.EventGroupHandle_t group, bool clearOnExit, Duration tmout) @trusted
+{
+    import external.core.time: currTicks, toTicks;
+
+    /*
+    If the task that is waiting for event bits is also being suspended and 
+    resumed then you could check the time before calling 
+    xEventGroupWaitBits(), and then if the function returns without any bits 
+    being set, check the time again to know if the function returned because 
+    of a timeout.  If the requested block time has not expired, and no bits 
+    are set, then you could assume the function returned because the task 
+    got suspended and then resumed again.
+
+    Posted by rtel on February 8, 2018
+    */
+
+    const timeoutTicks = tmout.toTicks();
+    assert(timeoutTicks < uint.max);
+
+    long startTime = currTicks();
+    const endTime = startTime + timeoutTicks;
+
+    do
     {
-        import core.internal.abort: abort;
+        long dt = endTime - startTime;
 
-        group = os.xEventGroupCreate();
+        assert(dt > 0);
 
-        if(group is null)
-            abort("xEventGroupCreate failed");
+        auto r = os.xEventGroupWaitBits(
+           group,
+           BITS_MASK,
+           clearOnExit,
+           os.pdFALSE, // xWaitForAllBits
+           cast(uint) dt // xTicksToWait
+        );
 
-        clearOnExit = manualReset ? os.pdFALSE : os.pdTRUE;
-
-        if(initialState)
-            setIfInitialized();
-    }
-
-    // copying not allowed, can produce resource leaks
-    @disable this(this);
-    @disable void opAssign(Event);
-
-    ~this() @safe
-    {
-        terminate();
-    }
-
-    void terminate() @trusted
-    in(group)
-    {
-        os.vEventGroupDelete(group);
-        group = null;
-    }
-
-    bool setIfInitialized()
-    {
-        if(group is null)
-            return false;
-        else
-        {
-            os.xEventGroupSetBits(group, BITS_MASK);
-
+        if(r & BITS_MASK)
             return true;
-        }
+
+        startTime = currTicks();
     }
+    while(startTime < endTime);
 
-    private enum uint BITS_MASK = 0x01; // using one first bit
-
-    void reset()
-    in(group)
-    {
-        os.xEventGroupClearBits(group, BITS_MASK);
-    }
-
-    void wait()
-    in(group)
-    {
-        uint r;
-
-        // xEventGroupWaitBits can return immediately on some cases:
-        // https://www.freertos.org/FreeRTOS_Support_Forum_Archive/February_2018/freertos_xEventGroupWaitBits_unexpected_behavior_cd13225cj.html
-        do
-        {
-            r = os.xEventGroupWaitBits(
-               group,
-               BITS_MASK,
-               clearOnExit,
-               os.pdFALSE, // xWaitForAllBits
-               os.portMAX_DELAY // xTicksToWait
-            );
-        }
-        while(!r);
-
-        assert(r & BITS_MASK);
-    }
-
-    bool wait(Duration tmout)
-    in(!tmout.isNegative)
-    in(group)
-    {
-        import external.core.time: currTicks;
-
-        /*
-        If the task that is waiting for event bits is also being suspended and 
-        resumed then you could check the time before calling 
-        xEventGroupWaitBits(), and then if the function returns without any bits 
-        being set, check the time again to know if the function returned because 
-        of a timeout.  If the requested block time has not expired, and no bits 
-        are set, then you could assume the function returned because the task 
-        got suspended and then resumed again.
-
-        Posted by rtel on February 8, 2018
-        */
-
-        const timeoutTicks = tmout.toTicks();
-        assert(timeoutTicks < uint.max);
-
-        long startTime = currTicks();
-        const endTime = startTime + timeoutTicks;
-
-        do
-        {
-            long dt = endTime - startTime;
-
-            assert(dt > 0);
-
-            auto r = os.xEventGroupWaitBits(
-               group,
-               BITS_MASK,
-               clearOnExit,
-               os.pdFALSE, // xWaitForAllBits
-               cast(uint) dt // xTicksToWait
-            );
-
-            if(r & BITS_MASK)
-                return true;
-
-            startTime = currTicks();
-        }
-        while(startTime < endTime);
-
-        return false;
-    }
+    return false;
 }
