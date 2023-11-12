@@ -232,9 +232,7 @@ extern (C) void thread_term() @nogc
     thread_term_tpl!(Thread)(_mainThreadStore);
 }
 
-nothrow:
-
-extern (C) static Thread thread_findByAddr(ThreadID addr)
+extern (C) static Thread thread_findByAddr(ThreadID addr) nothrow
 {
     assert(false, "Not implemented");
 }
@@ -284,12 +282,12 @@ extern (C) void thread_suspendAll() nothrow
     }
 }
 
-private TaskHandle_t mAddr(Thread t)
+private TaskHandle_t mAddr(Thread t) nothrow
 {
     return cast(TaskHandle_t) t.m_addr;
 }
 
-private void mAddr(Thread t, TaskHandle_t val)
+private void mAddr(Thread t, TaskHandle_t val) nothrow
 {
     t.m_addr = cast(void*) val;
 }
@@ -370,8 +368,8 @@ bool findLowLevelThread(ThreadID tid) nothrow @nogc
     assert(false, "Not implemented");
 }
 
-pragma(mangle, mangleFunc!(ThreadBase function(ThreadBase))("core.thread.osthread.attachThread"))
-export ThreadBase external_attachThread(ThreadBase thisThread)
+pragma(mangle, mangleFunc!(ThreadBase function(ThreadBase) nothrow @nogc)("core.thread.osthread.attachThread"))
+export ThreadBase external_attachThread(ThreadBase thisThread) nothrow @nogc
 {
     Thread t = thisThread.toThread;
 
@@ -419,7 +417,7 @@ export ThreadBase external_attachThread(ThreadBase thisThread)
     }
 
     pragma(mangle, mangleFunc!(Thread function(Thread) nothrow @nogc)("core.internal.thread_freestanding.thread_start"))
-    Thread thread_start(Thread t) nothrow @trusted @nogc
+    Thread thread_start(Thread t) nothrow @nogc
     {
         auto wasThreaded  = multiThreadedFlag;
         multiThreadedFlag = true;
@@ -457,53 +455,26 @@ export ThreadBase external_attachThread(ThreadBase thisThread)
         }
     }
 
-/+
-    static Thread getThis() @safe nothrow @nogc
+    pragma(mangle, mangleFunc!(Throwable function(Thread, bool) @nogc)("core.internal.thread_freestanding.thread_join"))
+    Throwable thread_join(Thread t, bool rethrow) @nogc
     {
-        return cast(Thread) ThreadBase.getThis;
-    }
+        assert(t.taskProperties.stackBuff !is null, "Can't join main thread");
 
-    import core.atomic: atomicStore, atomicLoad, MemoryOrder;
+        t.taskProperties.joinEvent.wait();
 
-    private void isRunning(bool status) @property nothrow @nogc
-    {
-        atomicStore!(MemoryOrder.raw)(m_isRunning, status);
-    }
+        t.mAddr = t.mAddr.init;
 
-    override final @property bool isRunning() nothrow @nogc
-    {
-        if (!super.isRunning())
-            return false;
-
-        return atomicLoad(m_isRunning);
-    }
-
-    //
-    // Remove a thread from the global thread list.
-    //
-    static void remove(Thread t) nothrow @nogc
-    {
-        assert(false, "Not implemented");
-    }
-
-    override final Throwable join( bool rethrow = true )
-    {
-        assert(taskProperties.stackBuff !is null, "Can't join main thread");
-
-        taskProperties.joinEvent.wait();
-
-        m_addr = m_addr.init;
-
-        if (m_unhandled)
+        if (t.m_unhandled)
         {
             if (rethrow)
-                throw m_unhandled;
-            return m_unhandled;
+                throw t.m_unhandled;
+            return t.m_unhandled;
         }
 
         return null;
     }
 
+/+
     static void sleep(Duration val) @nogc nothrow
     {
         import external.core.time;
