@@ -1,64 +1,48 @@
 module external.core.semaphore;
 
 static import os = freertos;
+import core.demangle: mangleFunc;
 import core.exception: onOutOfMemoryError;
-import core.stdc.errno;
-import core.sync.exception: SyncError;
-import external.core.time: toTicks;
+import core.time : Duration;
 
-class Semaphore
+nothrow:
+@nogc:
+
+pragma(mangle, mangleFunc!(shared(void)* function(size_t))("core.internal.semaphore_freestanding.createCountingSemaphore"))
+export os.SemaphoreHandle_t createCountingSemaphore(size_t initialCount) @trusted
 {
-    private os.SemaphoreHandle_t m_hndl;
+    import core.stdc.config: c_long;
 
-    this(size_t initialCount = 0) nothrow @nogc
-    {
-        import core.stdc.config: c_long;
+    auto m_hndl = os.xSemaphoreCreateCounting(c_long.max /* c_ulong */, initialCount);
 
-        m_hndl = os.xSemaphoreCreateCounting(c_long.max /* c_ulong */, initialCount);
+    if(!m_hndl)
+        onOutOfMemoryError();
 
-        if(!m_hndl)
-            onOutOfMemoryError();
-    }
+    return m_hndl;
+}
 
-    ~this() nothrow @nogc
-    {
-        os._vSemaphoreDelete(m_hndl);
+pragma(mangle, mangleFunc!(void function(shared(void)*))("core.internal.semaphore_freestanding.deleteCountingSemaphore"))
+export void deleteCountingSemaphore(os.SemaphoreHandle_t m_hndl) @trusted
+{
+    os._vSemaphoreDelete(m_hndl);
+}
 
-        debug m_hndl = null;
-    }
+pragma(mangle, mangleFunc!(bool function(shared(void)*))("core.internal.semaphore_freestanding.waitCountingSemaphore"))
+export bool waitCountingSemaphore(os.SemaphoreHandle_t m_hndl) @trusted
+{
+    return os.xSemaphoreTake(m_hndl, os.portMAX_DELAY) == os.pdTRUE;
+}
 
-    void wait()
-    {
-        if(!waitOrError())
-            throw new SyncError("Unable to wait for semaphore");
-    }
+pragma(mangle, mangleFunc!(bool function(shared(void)*, Duration))("core.internal.semaphore_freestanding.waitCountingSemaphoreWithTimeout"))
+export bool waitCountingSemaphoreWithTimeout(os.SemaphoreHandle_t m_hndl, Duration period) @trusted
+{
+    import external.core.time: toTicks;
 
-    bool waitOrError() nothrow @nogc
-    {
-        return os.xSemaphoreTake(m_hndl, os.portMAX_DELAY) == os.pdTRUE;
-    }
+    return os.xSemaphoreTake(m_hndl, period.toTicks) == os.pdTRUE;
+}
 
-    import core.time;
-
-    bool wait(Duration period)
-    in(!period.isNegative)
-    {
-        return os.xSemaphoreTake(m_hndl, period.toTicks) == os.pdTRUE;
-    }
-
-    bool tryWait() nothrow @nogc
-    {
-        return os.xSemaphoreTake(m_hndl, 0) == os.pdTRUE;
-    }
-
-    void notify()
-    {
-        if(!notifyOrError())
-            throw new SyncError("Unable to notify semaphore");
-    }
-
-    bool notifyOrError() nothrow @nogc
-    {
-        return os._xSemaphoreGive(m_hndl) == os.pdTRUE;
-    }
+pragma(mangle, mangleFunc!(bool function(shared(void)*))("core.internal.semaphore_freestanding.giveCountingSemaphore"))
+export bool giveCountingSemaphore(os.SemaphoreHandle_t m_hndl) @trusted
+{
+    return os._xSemaphoreGive(m_hndl) == os.pdTRUE;
 }
