@@ -15,19 +15,6 @@ import freertos: TaskHandle_t;
 enum DefaultTaskPriority = 3;
 enum DefaultStackSize = 2048 * os.StackType_t.sizeof;
 
-private struct TaskProperties
-{
-    os.StaticTask_t tcb;
-    Event joinEvent;
-    void* stackBuff;
-}
-
-//FIXME: broken!!! t.taskProperties must be allocated before use and deallocated after use
-private ref TaskProperties taskPropertiesStruct(Thread t) nothrow @trusted @nogc
-{
-    return *(cast(TaskProperties*) t.taskProperties);
-}
-
 extern(C) void thread_entryPoint(void* arg) nothrow
 in(arg)
 {
@@ -36,7 +23,7 @@ in(arg)
     scope(exit)
     {
         obj.isRunning = false;
-        obj.taskPropertiesStruct.joinEvent.setIfInitialized();
+        obj.taskProperties.joinEvent.setIfInitialized();
         os.vTaskDelete(null);
     }
 
@@ -410,34 +397,8 @@ nothrow @nogc @safe:
 //~ {
     //~ private TaskProperties taskProperties;
 
-    pragma(mangle, mangleFunc!(void function(Thread) nothrow @nogc @safe)("core.internal.thread_freestanding.thread_ctor_impl"))
-    void thread_ctor_impl(Thread _this) @trusted
-    {
-        _this.initTaskProperties(true, false);
-        //FIXME: event initialization:
-        //~ _this.taskPropertiesStruct.joinEvent = Event(true, false);
-        //_this.printTcbCreated(file, line);
-    }
-
-/+
-    this(void delegate() dg, size_t sz = 0, /* string file = __FILE__, size_t line = __LINE__ */) @safe nothrow
-    in(dg !is null)
-    {
-        super(dg, sz);
-        initTaskProperties();
-        taskProperties.joinEvent = Event(true, false);
-        //printTcbCreated(file, line);
-    }
-
-    ~this() nothrow @nogc
-    {
-        if(taskProperties.stackBuff) // not main thread
-            free(taskProperties.stackBuff);
-
-        destructBeforeDtor();
-    }
-+/
-    private void initTaskProperties(Thread t, bool manualReset, bool initialState) @safe nothrow
+    pragma(mangle, mangleFunc!(void function(Thread) nothrow @nogc @safe)("core.internal.thread_freestanding.initTaskProperties"))
+    private void initTaskProperties(Thread t) @safe @nogc nothrow
     {
         import core.exception: onOutOfMemoryError;
 
@@ -447,11 +408,11 @@ nothrow @nogc @safe:
         assert(t._m_sz <= ushort.max * size_t.sizeof, "FreeRTOS stack size limit");
         assert(t._m_sz % os.StackType_t.sizeof == 0, "Stack size must be multiple of word");
 
-        t.taskPropertiesStruct.stackBuff = (() @trusted => aligned_alloc(os.StackType_t.sizeof, t._m_sz))();
-        if(!t.taskPropertiesStruct.stackBuff)
+        t.taskProperties.stackBuff = (() @trusted => aligned_alloc(os.StackType_t.sizeof, t._m_sz))();
+        if(!t.taskProperties.stackBuff)
             onOutOfMemoryError();
 
-        t.m_main.bstack = (() @trusted => t.taskPropertiesStruct.stackBuff + t._m_sz - 1)();
+        t.m_main.bstack = (() @trusted => t.taskProperties.stackBuff + t._m_sz - 1)();
     }
 /+
     private void printTcbCreated(string file, size_t line) @trusted nothrow
