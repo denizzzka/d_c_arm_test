@@ -394,100 +394,95 @@ export ThreadBase external_attachThread(ThreadBase thisThread) nothrow @nogc
     return t;
 }
 
-//~ class Thread : ThreadBase
-//~ {
-    //~ private TaskProperties taskProperties;
+pragma(mangle, mangleFunc!(void function(Thread) nothrow @nogc @safe)("core.internal.thread_freestanding.initTaskProperties"))
+private void initTaskProperties(Thread t) @safe @nogc nothrow
+{
+    import core.exception: onOutOfMemoryError;
 
-    pragma(mangle, mangleFunc!(void function(Thread) nothrow @nogc @safe)("core.internal.thread_freestanding.initTaskProperties"))
-    private void initTaskProperties(Thread t) @safe @nogc nothrow
+    if(t._m_sz == 0)
+        t._m_sz = DefaultStackSize;
+
+    assert(t._m_sz <= ushort.max * size_t.sizeof, "FreeRTOS stack size limit");
+    assert(t._m_sz % os.StackType_t.sizeof == 0, "Stack size must be multiple of word");
+
+    t.taskProperties.stackBuff = (() @trusted => aligned_alloc(os.StackType_t.sizeof, t._m_sz))();
+    if(!t.taskProperties.stackBuff)
+        onOutOfMemoryError();
+
+    t.m_main.bstack = (() @trusted => t.taskProperties.stackBuff + t._m_sz - 1)();
+}
+
+pragma(mangle, mangleFunc!(Thread function(Thread) nothrow @nogc)("core.internal.thread_freestanding.thread_start"))
+Thread thread_start(Thread t) nothrow @nogc
+{
+    auto wasThreaded  = multiThreadedFlag;
+    multiThreadedFlag = true;
+    scope( failure )
     {
-        import core.exception: onOutOfMemoryError;
-
-        if(t._m_sz == 0)
-            t._m_sz = DefaultStackSize;
-
-        assert(t._m_sz <= ushort.max * size_t.sizeof, "FreeRTOS stack size limit");
-        assert(t._m_sz % os.StackType_t.sizeof == 0, "Stack size must be multiple of word");
-
-        t.taskProperties.stackBuff = (() @trusted => aligned_alloc(os.StackType_t.sizeof, t._m_sz))();
-        if(!t.taskProperties.stackBuff)
-            onOutOfMemoryError();
-
-        t.m_main.bstack = (() @trusted => t.taskProperties.stackBuff + t._m_sz - 1)();
+        if ( !wasThreaded )
+            multiThreadedFlag = false;
     }
 
-    pragma(mangle, mangleFunc!(Thread function(Thread) nothrow @nogc)("core.internal.thread_freestanding.thread_start"))
-    Thread thread_start(Thread t) nothrow @nogc
+    t.slock.lock_nothrow();
+    scope(exit) t.slock.unlock_nothrow();
+
     {
-        auto wasThreaded  = multiThreadedFlag;
-        multiThreadedFlag = true;
-        scope( failure )
-        {
-            if ( !wasThreaded )
-                multiThreadedFlag = false;
-        }
+        ++t._nAboutToStart;
+        t._pAboutToStart = cast(ThreadBase*) realloc(t._pAboutToStart, Thread.sizeof * t._nAboutToStart);
+        t._pAboutToStart[t._nAboutToStart - 1] = t;
 
-        t.slock.lock_nothrow();
-        scope(exit) t.slock.unlock_nothrow();
+        auto wordsStackSize = t._m_sz / os.StackType_t.sizeof;
+        assert(wordsStackSize >= os.configMINIMAL_STACK_SIZE);
 
-        {
-            ++t._nAboutToStart;
-            t._pAboutToStart = cast(ThreadBase*) realloc(t._pAboutToStart, Thread.sizeof * t._nAboutToStart);
-            t._pAboutToStart[t._nAboutToStart - 1] = t;
+        t.isRunning = true;
+        scope(failure) t.isRunning = false;
 
-            auto wordsStackSize = t._m_sz / os.StackType_t.sizeof;
-            assert(wordsStackSize >= os.configMINIMAL_STACK_SIZE);
+        t.mAddr = os.xTaskCreateStatic(
+            &thread_entryPoint,
+            cast(const(char*)) "D thread", //FIXME: fill name from m_name
+            wordsStackSize,
+            cast(void*) t, // pvParameters*
+            DefaultTaskPriority,
+            cast(os.StackType_t*) t.taskProperties.stackBuff,
+            cast(os.StaticTask_t*) &t.taskProperties.task_control_block
+        );
 
-            t.isRunning = true;
-            scope(failure) t.isRunning = false;
+        return t;
+    }
+}
 
-            t.mAddr = os.xTaskCreateStatic(
-                &thread_entryPoint,
-                cast(const(char*)) "D thread", //FIXME: fill name from m_name
-                wordsStackSize,
-                cast(void*) t, // pvParameters*
-                DefaultTaskPriority,
-                cast(os.StackType_t*) t.taskProperties.stackBuff,
-                cast(os.StaticTask_t*) &t.taskProperties.task_control_block
-            );
+pragma(mangle, mangleFunc!(Throwable function(Thread, bool) @nogc)("core.internal.thread_freestanding.thread_join"))
+Throwable thread_join(Thread t, bool rethrow) @nogc
+{
+    assert(t.taskProperties.stackBuff !is null, "Can't join main thread");
 
-            return t;
-        }
+    t.taskProperties.joinEvent.wait();
+
+    t.mAddr = t.mAddr.init;
+
+    if (t.m_unhandled)
+    {
+        if (rethrow)
+            throw t.m_unhandled;
+        return t.m_unhandled;
     }
 
-    pragma(mangle, mangleFunc!(Throwable function(Thread, bool) @nogc)("core.internal.thread_freestanding.thread_join"))
-    Throwable thread_join(Thread t, bool rethrow) @nogc
-    {
-        assert(t.taskProperties.stackBuff !is null, "Can't join main thread");
+    return null;
+}
 
-        t.taskProperties.joinEvent.wait();
+pragma(mangle, mangleFunc!(void function(Duration) @nogc nothrow)("core.internal.thread_freestanding.Thread.sleep"))
+void sleep(Duration val) @nogc nothrow
+{
+    import external.core.time;
 
-        t.mAddr = t.mAddr.init;
+    os.vTaskDelay(val.toTicks);
+}
 
-        if (t.m_unhandled)
-        {
-            if (rethrow)
-                throw t.m_unhandled;
-            return t.m_unhandled;
-        }
-
-        return null;
-    }
-
-    pragma(mangle, mangleFunc!(void function(Duration) @nogc nothrow)("core.internal.thread_freestanding.Thread.sleep"))
-    void sleep(Duration val) @nogc nothrow
-    {
-        import external.core.time;
-
-        os.vTaskDelay(val.toTicks);
-    }
-
-    pragma(mangle, mangleFunc!(void function() @nogc nothrow)("core.internal.thread_freestanding.Thread.yield"))
-    static void yield() @nogc nothrow
-    {
-        _taskYield();
-    }
-//~ }
+pragma(mangle, mangleFunc!(void function() @nogc nothrow)("core.internal.thread_freestanding.Thread.yield"))
+static void yield() @nogc nothrow
+{
+    _taskYield();
+}
 
 private void _taskYield() @nogc nothrow
 {
