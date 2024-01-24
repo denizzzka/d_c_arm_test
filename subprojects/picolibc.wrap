@@ -1,4 +1,4 @@
 [wrap-git]
 url = https://github.com/picolibc/picolibc.git
 depth = 1
-revision = 1.8
+revision = 1.8.6
