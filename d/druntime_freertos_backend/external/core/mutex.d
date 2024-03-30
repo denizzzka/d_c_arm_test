@@ -5,6 +5,26 @@ import freertos;
 
 @nogc:
 
+auto _xSemaphoreCreateMutex()
+{
+    return xQueueCreateMutex(queueQUEUE_TYPE_MUTEX);
+}
+
+auto _xSemaphoreCreateRecursiveMutex()
+{
+    return xQueueCreateMutex(queueQUEUE_TYPE_RECURSIVE_MUTEX);
+}
+
+auto _vSemaphoreDelete(SemaphoreHandle_t xSemaphore)
+{
+    return vQueueDelete(xSemaphore);
+}
+
+auto _xSemaphoreGive(SemaphoreHandle_t xSemaphore)
+{
+    return xQueueGenericSend(xSemaphore, null, semGIVE_BLOCK_TIME, queueSEND_TO_BACK);
+}
+
 class Mutex : Object.Monitor
 {
     import core.sync.exception;

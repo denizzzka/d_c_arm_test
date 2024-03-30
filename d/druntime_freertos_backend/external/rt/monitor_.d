@@ -4,6 +4,7 @@ nothrow:
 @nogc:
 
 import freertos;
+import external.core.mutex: _xSemaphoreCreateMutex, _xSemaphoreGive, _vSemaphoreDelete;
 import core.exception;
 
 private alias MonitorMutex = SemaphoreHandle_t;
