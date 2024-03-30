@@ -82,13 +82,8 @@ build_dir_root = meson.current_build_dir()
 
 subdir('d')
 
-if host_machine.cpu_family() == 'arm'
-    path_to_math_lib = '/usr/lib/gcc/arm-none-eabi/12.3.1/thumb/v7-m/nofp/'
-    linker_script_name = 'linker_script_arm.ld'
-elif host_machine.cpu_family() == 'riscv32'
-    path_to_math_lib = '/usr/lib/gcc/riscv64-unknown-elf/12.1.0/rv32imac/ilp32/'
-    linker_script_name = 'linker_script_riscv32.ld'
-endif
+path_to_math_lib = meson.get_external_property('math_lib')
+linker_script_name = meson.get_external_property('linker_script')
 
 firmware = executable(
     'firmware.elf',
@@ -107,7 +102,7 @@ firmware = executable(
         '-static',
         '-L../',
         '-Xlinker', '--script=' + linker_script_name,
-        '-L'+path_to_math_lib, '-lgcc',
+        '-L'+path_to_math_lib[0], '-l'+path_to_math_lib[1],
     ]
 )
 
