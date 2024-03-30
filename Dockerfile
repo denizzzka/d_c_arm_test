@@ -1,18 +1,35 @@
-FROM debian:bullseye
+FROM debian:bookworm
 
-RUN apt-get update && apt-get upgrade -y \
-    && apt-get install --no-install-recommends -y build-essential clang libclang-11-dev gcc-arm-none-eabi \
-       dub ldc git lld llvm ninja-build python3 python3-pip python3-setuptools python3-wheel
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get upgrade
+
+ARG INST="apt-get install --no-install-recommends -y"
+
+RUN $INST build-essential clang libclang-dev gcc-arm-none-eabi
+RUN $INST python3 python3-setuptools python3-wheel
+RUN $INST pipx
+RUN $INST git ninja-build
+RUN $INST wget ca-certificates
+RUN $INST lld llvm
 
 # Install meson
 ENV PATH=$PATH:/root/.local/bin
-RUN pip3 install --user meson
+RUN pipx install meson
+
+# Install ldc2
+RUN wget -qO ldc2.tar.xz https://github.com/ldc-developers/ldc/releases/download/v1.37.0/ldc2-1.37.0-linux-x86_64.tar.xz
+RUN mkdir /ldc_standalone
+RUN tar xf ldc2.tar.xz -C /ldc_standalone
+ENV PATH=/ldc_standalone/ldc2-1.37.0-linux-x86_64/bin:$PATH
+
+VOLUME /prjct
+WORKDIR /prjct
 
 # Compile
-ENV DFLAGS="-L=-L/usr/lib/llvm-11/lib/"
-COPY . /tmp/project
-RUN cd /tmp/project \
-    && meson setup --cross-file arm_cortex_m4_cross.ini -Doptimization=s -Ddebug=true /tmp/project/build
+ENV DFLAGS="-L=-L/usr/lib/llvm-14/lib/"
+RUN mkdir /tmp/build
 
-# One threaded build - workaround for https://github.com/denizzzka/d_c_arm_test/issues/2
-RUN cd /tmp/project/build && ninja -j1
+ENTRYPOINT \
+    meson setup --cross-file arm_cortex_m4_cross.ini -Doptimization=s -Ddebug=true /tmp/build && \
+    ninja -j1 -C /tmp/build # One threaded build - workaround for https://github.com/denizzzka/d_c_arm_test/issues/2
