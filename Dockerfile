@@ -1,12 +1,12 @@
-FROM debian:bookworm
+FROM debian:unstable-20240311-slim
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get upgrade
+RUN apt-get update && apt-get upgrade -y
 
 ARG INST="apt-get install --no-install-recommends -y"
 
-RUN $INST build-essential clang libclang-dev gcc-arm-none-eabi
+RUN $INST build-essential clang libclang-dev
 RUN $INST python3 python3-setuptools python3-wheel
 RUN $INST pipx
 RUN $INST git ninja-build
@@ -27,8 +27,10 @@ VOLUME /prjct
 WORKDIR /prjct
 
 # Compile
-ENV DFLAGS="-L=-L/usr/lib/llvm-14/lib/"
 RUN mkdir /tmp/build
+ENV DFLAGS="-L=-L/usr/lib/llvm-14/lib/"
+
+RUN $INST gcc-arm-none-eabi=15:13.2.rel1-2
 
 ENTRYPOINT \
     meson setup --cross-file arm_cortex_m4_cross.ini -Doptimization=s -Ddebug=true /tmp/build && \
