@@ -591,7 +591,7 @@ private void _taskYield() @nogc nothrow
         `);
     }
     else
-        static assert("Not implemented");
+        static assert(false, "Not implemented");
 }
 
 private Thread toThread(ThreadBase t) @trusted nothrow @nogc pure
