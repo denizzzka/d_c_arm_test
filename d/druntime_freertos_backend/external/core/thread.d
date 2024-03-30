@@ -571,24 +571,24 @@ class Thread : ThreadBase
 
 private void _taskYield() @nogc nothrow
 {
-    version(__ARM_ARCH_ISA_ARM)
+    version(ARM)
     {
+        import ldc.llvmasm;
+
         // taskYield() code what dpp can't convert from FreeRTOS headers
 
         /* Set a PendSV to request a context switch. */
         //os.portNVIC_INT_CTRL_REG = os.portNVIC_PENDSVSET_BIT;
-        __gshared portNVIC_INT_CTRL_REG = cast(uint*) 0xe000ed04;
-        portNVIC_INT_CTRL_REG = os.portNVIC_PENDSVSET_BIT;
+        __gshared ulong* portNVIC_INT_CTRL_REG = cast(ulong*) 0xe000ed04;
+        *portNVIC_INT_CTRL_REG = os.portNVIC_PENDSVSET_BIT;
 
         /* Barriers are normally not required but do ensure the code is completely
          * within the specified behaviour for the architecture. */
         // __asm volatile ( "dsb" ::: "memory" );
         // __asm volatile ( "isb" );
 
-        __asm!()(`
-            dsb memory
-            isb
-        `);
+        __asm!()(`dsb`, "~{memory}");
+        __asm!()(`isb`, "");
     }
     else
         static assert(false, "Not implemented");
