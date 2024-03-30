@@ -3,7 +3,7 @@ project(
     ['c'],
 )
 
-includes = include_directories(
+includes_base = include_directories(
   'include',
   get_option('config_h_dir')
 )
@@ -76,7 +76,12 @@ if cc_name == 'gcc' or cc_name == 'clang'
     endif
 endif
 
+includes = [
+    includes_base,
+    CPU_specific_includes
+]
+
 freertos_dep = declare_dependency(
-    include_directories: [includes, CPU_specific_includes],
+    include_directories: includes,
     sources: [sources, CPU_specific, heap_memory_management],
 )
