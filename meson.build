@@ -83,7 +83,8 @@ build_dir_root = meson.current_build_dir()
 subdir('d')
 
 path_to_math_lib = meson.get_external_property('math_lib')
-linker_script_name = meson.get_external_property('linker_script')
+linker_script = files(meson.get_external_property('linker_script'))
+assert(linker_script.length() == 1, 'Only one linker script allowed')
 
 firmware = executable(
     'firmware.elf',
@@ -97,11 +98,11 @@ firmware = executable(
         semihost_lib,
     ],
     link_language: 'c',
-    link_depends: files(linker_script_name),
+    link_depends: linker_script,
     link_args: [
         '-static',
         '-L../',
-        '-Xlinker', '--script=' + linker_script_name,
+        '-Xlinker', '--script=' + linker_script.get(0).full_path(),
         '-L'+path_to_math_lib[0], '-l'+path_to_math_lib[1],
     ]
 )
