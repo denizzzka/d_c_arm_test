@@ -34,6 +34,9 @@ RUN $INST gcc-arm-none-eabi=15:13.2.rel1-2
 # Path to libclang
 ENV DFLAGS="-L=-L/usr/lib/llvm-16/lib/"
 
+RUN dub fetch dpp@~master
+RUN dub build dpp@~master
+
 ENTRYPOINT \
     meson setup --cross-file arm_cortex_m4_cross.ini -Doptimization=s -Ddebug=true /tmp/build && \
     ninja -j1 -C /tmp/build # One threaded build - workaround for https://github.com/denizzzka/d_c_arm_test/issues/2
