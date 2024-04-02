@@ -26,11 +26,13 @@ ENV PATH=/ldc_standalone/ldc2-1.37.0-linux-x86_64/bin:$PATH
 VOLUME /prjct
 WORKDIR /prjct
 
-# Compile
 RUN mkdir /tmp/build
-ENV DFLAGS="-L=-L/usr/lib/llvm-14/lib/"
 
+# libgcc, provides math lib
 RUN $INST gcc-arm-none-eabi=15:13.2.rel1-2
+
+# Path to libclang
+ENV DFLAGS="-L=-L/usr/lib/llvm-16/lib/"
 
 ENTRYPOINT \
     meson setup --cross-file arm_cortex_m4_cross.ini -Doptimization=s -Ddebug=true /tmp/build && \
