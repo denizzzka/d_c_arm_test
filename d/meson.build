@@ -81,7 +81,6 @@ druntime_lib = library(
 d_dep_sources = [
     'source/app.d',
     'source/arm_cortex_debug.d',
-    'source/drivers/max7219.d',
 ]
 
 if host_machine.cpu_family() == 'arm'

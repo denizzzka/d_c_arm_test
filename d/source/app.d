@@ -1,54 +1,14 @@
 import freertos;
 
-int main()
+void main()
 {
-    import drivers.max7219;
+    // To ensure what this is not betterC
+    class TestClass {}
+    auto c = new TestClass;
 
-    auto display = new MAX7219Display(2);
-
-    display.testBlink();
-
-    ubyte[] str;
-
-    with(Segment7Font)
-    str = [d,L,A,n,G,dash,_2,_0,_2,_1]; //dLAnG-2021
-
-    byte curr;
-    byte increment = 1;
-    byte intensity = 0b11;
-    byte intensity_increment = 1;
-
-    while(true)
-    {
-        if(curr >= display.buf.length - str.length) increment = -1;
-        if(curr <= 0) increment = 1;
-
-        if(intensity >= 0b1111) intensity_increment = -1;
-        if(intensity <= 0) intensity_increment = 1;
-
-        // "Move" text
-        display.buf[0 .. $] = 0;
-        display.buf[curr .. curr + str.length] = str[0 .. $];
-
-        // prints buffer
-        display.setIntensity(intensity);
-        display.refreshImageFromBuffer();
-
-        vTaskDelay(100);
-
-        curr += increment;
-        intensity += intensity_increment;
-    }
-}
-
-version(ARM)
-extern(C) void blinkTask(void *pvParametres) @nogc nothrow
-{
-    import libopencm3;
-
-    gpio_toggle(GPIO_PORT_B_BASE, GPIO1);
-
-    vTaskDelay(500);
+    // FIXME: return from main() broken at least for FreeRTOS
+    import core.stdc.stdlib: exit;
+    exit(0);
 }
 
 // Init FreeRTOS main task stack size:
