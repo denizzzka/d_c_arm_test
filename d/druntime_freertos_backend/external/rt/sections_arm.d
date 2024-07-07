@@ -53,19 +53,7 @@ void[] initTLSRanges() nothrow @nogc
 
 extern(C) extern void* __aeabi_read_tp() nothrow @nogc
 {
-    import ldc.llvmasm;
     import external.rt.sections: read_tp_secondary;
 
-    // TODO: For unknown reason __aeabi_read_tp() is not preserves registers by itself. Why?
-    //
-    // Preserve registers due to
-    // Thread-local storage (new in v2.01)
-    // https://developer.arm.com/documentation/ihi0043/latest/
-    __asm(`push {r1, r2, r3}`, ``);
-
-    auto ret = read_tp_secondary();
-
-    __asm(`pop {r1, r2, r3}`, ``);
-
-    return ret;
+    return read_tp_secondary();
 }
