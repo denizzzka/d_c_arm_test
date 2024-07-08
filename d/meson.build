@@ -48,13 +48,6 @@ freertos_d_dep = declare_dependency(
 
 subdir('druntime_freertos_backend')
 
-druntime_sub = subproject(
-    'druntime',
-    default_options: [
-        'use_external_backend=true',
-    ]
-)
-
 druntime_dep = druntime_sub.get_variable('druntime_dep')
 
 druntime_lib = library(
