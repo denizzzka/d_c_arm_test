@@ -62,14 +62,7 @@ elif host_machine.cpu_family() == 'riscv32'
     hardware_interface_dep = esp32c3_hal_dep
 endif
 
-druntime_sub = subproject(
-    'dfruntime',
-    default_options: [
-        'use_external_backend=true',
-    ]
-)
-
-libunwind_dep = druntime_sub.get_variable('libunwind_dep')
+libunwind_dep = subproject('libunwind').get_variable('libunwind_dep')
 
 freertos_sub_default_options = 'config_h_dir=.'
 freertos_sub = subproject(
