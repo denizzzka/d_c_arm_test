@@ -48,14 +48,28 @@ freertos_d_dep = declare_dependency(
 
 subdir('druntime_freertos_backend')
 
-druntime_sub = subproject(
-    'dfruntime',
-    default_options: [
-        'use_external_backend=true',
-    ]
+cmake = import('cmake')
+druntime_opts = cmake.subproject_options()
+druntime_opts.add_cmake_defines({
+    'DRUNTIME_ONLY': 'true',
+    'LDC_EXE_FULL': '/home/denizzz/ldc2_standalone/bin/ldc2', #FIXME
+    'CMAKE_SYSTEM_NAME': 'EXTERNAL',
+    'TARGET_SYSTEM': 'some_baremetal', #FIXME: rename
+    'DMDFE_MINOR_VERSION': 109, #FIXME
+    'DMDFE_PATCH_VERSION': 1, #FIXME
+    'EXTERNAL_TAGS': 'freertos,default_abort',
+})
+druntime_opts.append_compile_args(
+    '-d-version=OnlyLowMemUnittest',
+    '-d-version=CoreUnittest',
+    '-d-version=SupportSanitizers', #FIXME: remove, for debugging purposes only
 )
-
-druntime_dep = druntime_sub.get_variable('druntime_dep')
+#~ druntime_opts.append_link_args(
+#~     '-L'+path_to_math_lib[0],
+#~     '-l'+path_to_math_lib[1],
+#~ )
+ldc2_sub = cmake.subproject('dfruntime', options: druntime_opts)
+druntime_dep = ldc2_sub.dependency('druntime-ldc')
 
 druntime_lib = library(
     'druntime',
