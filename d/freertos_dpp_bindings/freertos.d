@@ -4415,7 +4415,7 @@ extern(C)
 
 
 
-import external.libc.config;
+import core.libc.config;
 
 
 

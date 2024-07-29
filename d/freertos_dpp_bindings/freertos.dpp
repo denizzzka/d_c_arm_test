@@ -1,8 +1,6 @@
 module freertos;
 
-import external.libc.config;
-//TODO: ^^^^^^^^ can be replaced by:
-//import core.stdc.config;
+import core.stdc.config;
 
 @nogc:
 

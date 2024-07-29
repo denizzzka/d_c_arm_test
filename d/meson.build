@@ -48,13 +48,8 @@ freertos_d_dep = declare_dependency(
 
 subdir('druntime_freertos_backend')
 
-druntime_sub = subproject(
-    'dfruntime',
-)
-
-druntime_dep = druntime_sub.get_variable('druntime_dep')
-
-druntime_lib = library(
+#FIXME: remove
+druntime_lib_disabled = library(
     'druntime',
     sources: [
         freertos_druntime_backend,
@@ -63,7 +58,6 @@ druntime_lib = library(
         'druntime_freertos_backend',
     ),
     dependencies: [
-        druntime_dep,
         freertos_d_dep,
         picolibc_dep,
     ],
@@ -104,12 +98,9 @@ d_dep = declare_dependency(
         'source/bindings',
     ],
     dependencies: [
-        #FIXME: duplicates link_with content because dependencies also contains includes with correct d-versions
-        druntime_dep,
         freertos_d_dep,
     ],
     link_with: [
-        druntime_lib,
         freertos_lib,
     ]
 )
