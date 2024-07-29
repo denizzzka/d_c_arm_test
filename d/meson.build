@@ -31,8 +31,6 @@ freertos_d_unused = custom_target(
     build_by_default: true,
 )
 
-phobos_includes = subproject('phobos').get_variable('include_directories')
-
 freertos_d_dep = declare_dependency(
     sources: [
         freertos_binding,
@@ -42,7 +40,6 @@ freertos_d_dep = declare_dependency(
             'freertos_dpp_bindings',
             'druntime_freertos_backend',
         ),
-        phobos_includes,
     ],
 )
 
