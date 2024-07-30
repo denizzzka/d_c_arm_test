@@ -43,29 +43,6 @@ freertos_d_dep = declare_dependency(
     ],
 )
 
-subdir('druntime_freertos_backend')
-
-#FIXME: remove
-druntime_lib_disabled = library(
-    'druntime',
-    sources: [
-        freertos_druntime_backend,
-    ],
-    include_directories: include_directories(
-        'druntime_freertos_backend',
-    ),
-    dependencies: [
-        freertos_d_dep,
-        picolibc_dep,
-    ],
-    d_debug: [
-        #'SENTINEL',
-        #'MEMSTOMP',
-        #'PTRCHECK',
-        #'PTRCHECK2',
-    ],
-)
-
 d_dep_sources = [
     'source/app.d',
     'source/arm_cortex_debug.d',

@@ -1,4 +1,4 @@
-import external.libc.config;
+import core.stdc.config;
 
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
