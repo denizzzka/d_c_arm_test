@@ -65,7 +65,9 @@ if host_machine.cpu_family() == 'arm'
     d_dep_sources += libopencm3_binding
 endif
 
-d_dep = declare_dependency(
+#TODO: add default libs using find_library https://github.com/mesonbuild/meson/issues/13487
+d_lib = static_library(
+    'all_D_stuff',
     sources: d_dep_sources,
     include_directories: [
         'source',
