@@ -89,13 +89,13 @@ assert(linker_script.length() == 1, 'Only one linker script allowed')
 firmware = executable(
     'firmware.elf',
     dependencies: [
+        d_dep,
         hardware_interface_dep,
         picolibc_dep,
         libunwind_dep,
     ],
     link_with: [
         semihost_lib,
-        d_lib,
     ],
     link_language: 'c',
     link_depends: linker_script,
