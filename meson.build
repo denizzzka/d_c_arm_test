@@ -44,10 +44,12 @@ picolibc_sub = subproject(
     default_options: [
         'multilib=false',
         'newlib-global-errno=true',
+        'newlib-initfini-array=false', # .init & .fini processed by libopencm3
         'newlib-io-c99-formats=true',
         'newlib-long-time_t=true',
         'newlib-multithread=true',
         'tinystdio=true',
+        'posix-console=true',
         'thread-local-storage=false',
     ]
 )
