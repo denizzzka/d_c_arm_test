@@ -1,1 +1,2 @@
 option('dlang_lto', type: 'boolean', value: false, description: 'Enable Dlang LTO compilation and linking')
+option('ldc2_conf', type: 'string', description: 'Path to ldc2 config file')

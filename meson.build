@@ -21,7 +21,6 @@ ldc_default_libs_links = meson.source_root() / 'subprojects' / 'druntime' / 'src
 
 add_global_arguments(
     lto_d,
-    '--conf=' + meson.get_external_property('ldc2_conf'),
     '-I' + ldc_default_libs_links,
     #'--boundscheck=off', #saves 1.4KB
     #TODO: remove these "--d-version" - used only for Phobos headers compilation:
@@ -35,9 +34,14 @@ add_global_link_arguments(
 add_global_link_arguments(
     lto_d,
     '-L=--fatal-warnings',
-    '--conf=' + meson.get_external_property('ldc2_conf'),
     language: 'd'
 )
+
+ldc2_conf = get_option('ldc2_conf')
+if ldc2_conf != ''
+    add_global_arguments('--conf=' + ldc2_conf, language: 'd')
+    add_global_link_arguments('--conf=' + ldc2_conf, language: 'd')
+endif
 
 picolibc_sub = subproject(
     'picolibc',
