@@ -17,7 +17,7 @@ BUILD STEPS:
 
 2. Then cd into current repository and:
 
-$ meson setup --cross-file ../dfruntime/meson/arm_cortex_m4_cross.ini --cross-file arm_cortex_m4_cross.ini --optimization=s -Dbuildtype=debug builddir
+$ meson setup --cross-file ../dfruntime/meson/arm_cortex_m4_cross.ini --cross-file arm_cortex_m4_cross.ini --optimization=s builddir
 $ cd build
 $ ninja
 
