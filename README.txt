@@ -17,7 +17,7 @@ BUILD STEPS:
 
 2. Then cd into current repository and:
 
-$ meson setup --cross-file ../dfruntime/meson/arm_cortex_m4_cross.ini --cross-file arm_cortex_m4_cross.ini -Doptimization=s -Ddebug=true builddir
+$ meson setup --cross-file ../dfruntime/meson/arm_cortex_m4_cross.ini --cross-file arm_cortex_m4_cross.ini --optimization=s -Dbuildtype=debug builddir
 $ cd build
 $ ninja
 
@@ -25,7 +25,7 @@ This steps will produce file firmware.elf: "ELF 32-bit LSB executable,
 ARM, EABI5 version 1 (SYSV), statically linked, with debug_info,
 not stripped".
 
-BUILD using docker
+BUILD using docker (FIXME: broken)
 
 cd into this repository and:
 
