@@ -5,7 +5,7 @@ bare metal devices
 
 Prerequisites:
 
-- Installed: dub, ldc2, clang-11, libclang1-10 (used by dpp), gcc-arm-none-eabi
+- Installed: dub, ldc2 (v1.40 or newer), clang-18 (or newer), libclang1-10 (used by dpp), gcc-arm-none-eabi (provides libgcc.a)
 
 PREBUILD:
 
@@ -13,9 +13,11 @@ $ dub fetch dpp # d++, headers parser
 
 BUILD STEPS:
 
-cd into this repository and:
+1. Build DFRuntime as described in https://github.com/denizzzka/dfruntime
 
-$ meson setup --cross-file arm_cortex_m4_cross.ini -Doptimization=s -Ddebug=true builddir
+2. Then cd into current repository and:
+
+$ meson setup --cross-file ../dfruntime/meson/arm_cortex_m4_cross.ini --cross-file arm_cortex_m4_cross.ini -Doptimization=s -Ddebug=true builddir
 $ cd build
 $ ninja
 
