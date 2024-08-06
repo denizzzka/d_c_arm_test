@@ -99,6 +99,7 @@ firmware = executable(
     ],
     link_with: [
         semihost_lib,
+        freertos_lib,
     ],
     link_language: 'c',
     link_depends: linker_script,

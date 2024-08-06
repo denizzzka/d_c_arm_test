@@ -76,7 +76,4 @@ d_dep = declare_dependency(
     dependencies: [
         freertos_d_dep,
     ],
-    link_with: [
-        freertos_lib,
-    ],
 )
