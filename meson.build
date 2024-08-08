@@ -23,8 +23,6 @@ add_global_arguments(
     lto_d,
     '-I' + ldc_default_libs_links,
     #'--boundscheck=off', #saves 1.4KB
-    #TODO: remove these "--d-version" - used only for Phobos headers compilation:
-    '--d-version=GENERIC_IO',
     language: 'd'
 )
 add_global_link_arguments(
