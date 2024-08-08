@@ -64,8 +64,7 @@ if host_machine.cpu_family() == 'arm'
     libopencm3_sub = subproject('libopencm3')
     hardware_interface_dep = libopencm3_sub.get_variable('libopencm3_dep')
 elif host_machine.cpu_family() == 'riscv32'
-    subdir('hardware_interface/esp32c3')
-    hardware_interface_dep = esp32c3_hal_dep
+    hardware_interface_dep = declare_dependency()
 endif
 
 freertos_sub_default_options = 'config_h_dir=.'
@@ -86,12 +85,21 @@ build_dir_root = meson.current_build_dir()
 
 subdir('d')
 
+d_lib = library(
+    'dcode',
+    build_by_default: false,
+    dependencies: [
+        d_dep,
+    ],
+)
+
 path_to_math_lib = meson.get_external_property('math_lib')
 linker_script = files(meson.get_external_property('linker_script'))
 assert(linker_script.length() == 1, 'Only one linker script allowed')
 
 firmware = executable(
     'firmware.elf',
+    build_by_default: false,
     dependencies: [
         d_dep,
         hardware_interface_dep,
