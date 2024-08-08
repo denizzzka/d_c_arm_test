@@ -6,10 +6,12 @@ endif()
 if(DEFINED ENV{PRESERVE_I_FILES})
      # Provide fake app_main()
      set(FAKE_APP_MAIN "${CMAKE_SOURCE_DIR}/fake_main.c")
+else()
+     set(APP_MAIN "call_d_main.c")
 endif()
 
 idf_component_register(SRCS
-     "call_d_main.c"
+     ${APP_MAIN}
      ${FAKE_APP_MAIN}
      INCLUDE_DIRS "."
      REQUIRES esp_driver_spi freertos

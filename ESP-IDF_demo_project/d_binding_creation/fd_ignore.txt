@@ -1,0 +1,16 @@
+main/
+**/*_legacy.c.i
+**/mbedtls/
+**/esp_supplicant/src/crypto/tls_mbedtls.c.i
+**/i2c/esp_lcd_panel_io_i2c_v1.c.i
+**/gdbstub.c.i
+
+# clashes with another definition of heap_t
+**/multi_heap.c.i
+
+# clashes with struct "session" from security2.c
+**/security/security1.c.i
+
+# prevents state -> state_ (https://github.com/atilaneves/dpp/issues/352)
+# and avoids issue with "http_strerror_tab" (https://github.com/atilaneves/dpp/issues/351)
+**/http_parser.c.i
