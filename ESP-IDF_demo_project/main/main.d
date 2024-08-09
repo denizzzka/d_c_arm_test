@@ -2,7 +2,7 @@ module main;
 
 import core.stdc.stdatomic;
 
-void main()
+extern(C) export void d_app_main() nothrow
 {
 }
 //~ import esp_idf;

@@ -21,14 +21,14 @@ set(D_COMPILER "ldc2")
 set(D_COMPILER_FLAGS
      $ENV{DFLAGS}
      -I./main/ # import ESP IDF binding
-     "-c" "-betterC"
+     "-betterC"
 )
 
 set(D_OBJ_PATH "${CMAKE_BINARY_DIR}/d_obj.o")
 
 add_custom_command(
      OUTPUT ${D_OBJ_PATH}
-     COMMAND ${D_COMPILER} ${D_COMPILER_FLAGS} "-of=${D_OBJ_PATH}"
+     COMMAND ${D_COMPILER} ${D_COMPILER_FLAGS} -c "-of=${D_OBJ_PATH}"
      "${CMAKE_SOURCE_DIR}/main/main.d"
 )
 
@@ -36,4 +36,9 @@ if(NOT DEFINED ENV{PRESERVE_I_FILES})
      add_library(d_obj STATIC ${D_OBJ_PATH})
      set_target_properties(d_obj PROPERTIES LINKER_LANGUAGE C)
      target_link_libraries(${COMPONENT_LIB} d_obj)
+
+     #TODO: remove
+     set(DSTDLIBS "/home/denizzz/Dev/dfruntime/install_freertos_riscv32/lib")
+     target_link_libraries(${COMPONENT_LIB} ${DSTDLIBS}/libdruntime-ldc-debug.a)
+     target_link_libraries(${COMPONENT_LIB} ${DSTDLIBS}/libphobos2-ldc-debug.a)
 endif()

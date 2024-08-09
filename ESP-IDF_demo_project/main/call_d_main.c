@@ -1,6 +1,6 @@
-extern void _d_run_main(void);
+extern void d_app_main(void);
 
 void app_main(void)
 {
-    _d_run_main();
+    d_app_main();
 }
