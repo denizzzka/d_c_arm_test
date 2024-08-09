@@ -18,11 +18,9 @@ idf_component_register(SRCS
 )
 
 set(D_COMPILER "ldc2")
-get_filename_component(BINDING_INCLUDE_DIR "$ENV{D_BINDING}" DIRECTORY)
 set(D_COMPILER_FLAGS
-     "--mtriple=riscv32-unknown-newlib-elf" "--mattr=+m,+c,+a"
-     --fthread-model=local-exec
-     -I${BINDING_INCLUDE_DIR}
+     $ENV{DFLAGS}
+     -I./main/ # import ESP IDF binding
      "-c" "-betterC"
 )
 
@@ -31,7 +29,7 @@ set(D_OBJ_PATH "${CMAKE_BINARY_DIR}/d_obj.o")
 add_custom_command(
      OUTPUT ${D_OBJ_PATH}
      COMMAND ${D_COMPILER} ${D_COMPILER_FLAGS} "-of=${D_OBJ_PATH}"
-     "${CMAKE_SOURCE_DIR}/main/d/main.d"
+     "${CMAKE_SOURCE_DIR}/main/main.d"
 )
 
 if(NOT DEFINED ENV{PRESERVE_I_FILES})
