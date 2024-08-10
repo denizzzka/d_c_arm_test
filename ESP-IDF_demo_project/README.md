@@ -7,7 +7,11 @@ Build runtime and Phobos as described at https://github.com/denizzzka/dfruntime
 
 # Activate ESP IDF environment
 
-Install [ESP IDF](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/get-started/index.html)
+Install [ESP IDF](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/get-started/index.html).
+Then install ESP clang environment:
+```
+> idf_tools.py install esp-clang
+```
 
 Inside of each terminal session which will be used for compilation of ESP IDF code
 activate ESP IDE by command:
@@ -36,9 +40,14 @@ Bump me when a new version comes out and I'll update it.
 
 # Compiling "Hello, world!" project
 
-Finally, everything is ready to build our first D project for ESP-IDF platform.
+Finally, everything is ready to build and flash our first D project for ESP-IDF platform.
 
 ```
 > DFLAGS="--conf=/path/to/dfruntime/install_freertos_riscv32/etc/ldc2_tagged.conf" \
-    idf.py --build-dir=builddir set-target esp32c3 build
+    idf.py \
+    --build-dir=builddir \
+    -D IDF_TOOLCHAIN=clang \
+    set-target esp32c3 build
+
+> idf.py --build-dir=builddir flash
 ```
