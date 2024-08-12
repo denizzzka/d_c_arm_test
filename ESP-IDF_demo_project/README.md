@@ -43,10 +43,11 @@ Bump me when a new version comes out and I'll update it.
 Finally, everything is ready to build and flash our first D project for ESP-IDF platform.
 
 ```
-> DFLAGS="-g;--conf=/path/to/dfruntime/install_freertos_riscv32/etc/ldc2_tagged.conf" \
+> DFLAGS="--conf=/path/to/dfruntime/install_freertos_riscv32/etc/ldc2_tagged.conf" \
     idf.py \
     --build-dir=builddir \
     -D IDF_TOOLCHAIN=clang \
+    -D CMAKE_BUILD_TYPE=Debug \
     set-target esp32c3 build
 
 > idf.py --build-dir=builddir flash
