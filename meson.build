@@ -46,7 +46,7 @@ picolibc_sub = subproject(
     default_options: [
         'multilib=false',
         'newlib-global-errno=true',
-        'newlib-initfini-array=true', # .init & .fini processed by libopencm3, but ESP-IDF needs __libc_init_array & __libc_fini_array
+        'newlib-initfini-array=false', # .init & .fini processed by libopencm3, but ESP-IDF needs __libc_init_array & __libc_fini_array
         'newlib-io-c99-formats=true',
         'newlib-long-time_t=true',
         'newlib-multithread=true',

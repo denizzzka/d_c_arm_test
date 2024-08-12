@@ -20,8 +20,8 @@ idf_component_register(SRCS
 set(D_COMPILER "ldc2")
 set(D_COMPILER_FLAGS
      $ENV{DFLAGS}
-     -I./main/ # import ESP IDF binding
-     "-betterC"
+     -I${CMAKE_CURRENT_SOURCE_DIR} # for import ESP IDF binding
+     "-betterC" #FIXME: remove
 )
 
 set(D_OBJ_PATH "${CMAKE_BINARY_DIR}/d_obj.o")
@@ -39,6 +39,6 @@ if(NOT DEFINED ENV{PRESERVE_I_FILES})
 
      #TODO: remove
      set(DSTDLIBS "/home/denizzz/Dev/dfruntime/install_freertos_riscv32/lib")
-     target_link_libraries(${COMPONENT_LIB} ${DSTDLIBS}/libdruntime-ldc-debug.a)
+     target_link_libraries(${COMPONENT_LIB} -Wl,--whole-archive  ${DSTDLIBS}/libdruntime-ldc-debug.a -Wl,--no-whole-archive)
      target_link_libraries(${COMPONENT_LIB} ${DSTDLIBS}/libphobos2-ldc-debug.a)
 endif()
