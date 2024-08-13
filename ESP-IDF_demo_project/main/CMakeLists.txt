@@ -23,7 +23,7 @@ set(D_COMPILER_FLAGS
      #-I${CMAKE_CURRENT_SOURCE_DIR} # for import ESP IDF binding
 )
 
-if(CMAKE_BUILD_TYPE EQUAL "DEBUG")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     list(APPEND D_COMPILER_FLAGS "-g")
 endif()
 
