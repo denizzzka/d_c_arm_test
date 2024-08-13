@@ -18,6 +18,54 @@ void configure_led() nothrow
 
 extern(C) export void d_app_main() nothrow
 {
+    {
+        import core.thread.fiber;
+
+        class TestFiber : Fiber
+        {
+            this()
+            {
+                super(&run);
+            }
+
+            void run()
+            {
+                foreach (i; 0 .. 1000)
+                {
+                    sum += i;
+                    Fiber.yield();
+                }
+            }
+
+            enum expSum = 1000 * 999 / 2;
+            size_t sum;
+        }
+
+        void runTen()
+        {
+            TestFiber[10] fibs;
+            foreach (ref fib; fibs)
+                fib = new TestFiber();
+
+            bool cont;
+            do {
+                cont = false;
+                foreach (fib; fibs) {
+                    if (fib.state == Fiber.State.HOLD)
+                    {
+                        fib.call();
+                        cont |= fib.state != Fiber.State.TERM;
+                    }
+                }
+            } while (cont);
+
+            foreach (fib; fibs)
+            {
+                assert(fib.sum == TestFiber.expSum);
+            }
+        }
+    }
+
     configure_led();
     ubyte s_led_state = 0;
 
