@@ -18,12 +18,6 @@ void configure_led() nothrow
 
 extern(C) export void d_app_main() nothrow
 {
-    import std.exception;
-
-    try
-        throw new Exception("tst");
-    catch(Exception) {}
-
     configure_led();
     ubyte s_led_state = 0;
 
