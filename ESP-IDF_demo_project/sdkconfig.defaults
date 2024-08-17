@@ -5,5 +5,9 @@
 #CONFIG_COMPILER_DISABLE_GCC13_WARNINGS=y
 CONFIG_ESP_SYSTEM_USE_EH_FRAME=y
 
+# Fibers create stack objects on the heap
+# Without this option SP can't point outside of the stack bounds
+CONFIG_ESP_SYSTEM_HW_STACK_GUARD=n
+
 #only for debugging, ESP IDF openocd isn't disables watchdog for some unknown reason
 CONFIG_INT_WDT=n
