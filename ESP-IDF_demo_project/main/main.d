@@ -19,7 +19,7 @@ void configure_led() nothrow
 extern(C) export void d_app_main() nothrow
 {
     configure_led();
-    ubyte s_led_state = 0;
+    ubyte s_led_state;
 
     while (1) {
         gpio_set_level(BLINK_GPIO, s_led_state);
