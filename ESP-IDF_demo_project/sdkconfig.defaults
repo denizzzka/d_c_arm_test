@@ -4,3 +4,6 @@
 #CONFIG_COMPILER_DISABLE_GCC12_WARNINGS=y
 #CONFIG_COMPILER_DISABLE_GCC13_WARNINGS=y
 CONFIG_ESP_SYSTEM_USE_EH_FRAME=y
+
+#only for debugging, ESP IDF openocd isn't disables watchdog for some unknown reason
+CONFIG_INT_WDT=n
