@@ -1,8 +1,10 @@
 # This file was generated using idf.py save-defconfig. It can be edited manually.
 # Espressif IoT Development Framework (ESP-IDF) 5.3.0 Project Minimal Configuration
 #
-#CONFIG_COMPILER_DISABLE_GCC12_WARNINGS=y
-#CONFIG_COMPILER_DISABLE_GCC13_WARNINGS=y
+# Used only during binding creation with gcc, disable if clang is used
+CONFIG_COMPILER_DISABLE_GCC12_WARNINGS=y
+CONFIG_COMPILER_DISABLE_GCC13_WARNINGS=y
+
 CONFIG_PARTITION_TABLE_SINGLE_APP_LARGE=y
 CONFIG_ESP_SYSTEM_USE_EH_FRAME=y
 CONFIG_COMPILER_CXX_EXCEPTIONS=y # adds libunwind symbols
@@ -10,6 +12,8 @@ CONFIG_COMPILER_CXX_EXCEPTIONS=y # adds libunwind symbols
 # Fibers create stack objects on the heap
 # Without this option SP can't point outside of the stack bounds
 CONFIG_ESP_SYSTEM_HW_STACK_GUARD=n
+
+CONFIG_HEAP_POISONING_COMPREHENSIVE=y
 
 #only for debugging, ESP IDF openocd isn't disables watchdog for some unknown reason
 CONFIG_INT_WDT=n
