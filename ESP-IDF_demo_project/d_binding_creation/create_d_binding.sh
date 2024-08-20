@@ -4,6 +4,8 @@
 
 set -euox pipefail
 
+PATH_TO_PREPR=$1
+
 # Do not forgot to init ESP IDF environment:
 # $ source path/to/Espressif_IDE/esp-idf-v5.2.1/export.sh (.fish|.bat|.ps1)
 
@@ -14,13 +16,13 @@ FILES_LIST="preprocessed/preprocessed_files_list.txt"
 
 echo "Prepare list of *.i files which will be used for binding creation"
 
-fdfind --base-directory ./preprocessed/esp-idf --type f --extension "c.i" \
+fdfind --base-directory ${PATH_TO_PREPR} --type f --extension "c.i" \
     --case-sensitive \
     --ignore-file ../../d_binding_creation/fd_ignore.txt \
     --exec cp {} {.} \; \
     --exec sed -i -r 's/__atomic_/__atomic_DISABLED_/g' {.} \; \
     --exec sed -i -r 's/__sync_/REDECLARED__sync_/g' {.} \; \
-    --exec echo ./preprocessed/esp-idf/{.} \; > ${FILES_LIST}
+    --exec echo ${PATH_TO_PREPR}/{.} \; > ${FILES_LIST}
 
 # TODO: "restrict" in freertos isn't compatible with "__restrict" in esp_ringbuf, ESP IDF issue?
 

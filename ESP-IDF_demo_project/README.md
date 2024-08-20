@@ -29,7 +29,7 @@ There are different ways, I suggest using [mc2d](https://code.dlang.org/packages
 In my opinion, it gives the best and fastest results.
 
 ```
-> ./d_binding_creation/create_d_binding.sh
+> ./d_binding_creation/create_d_binding.sh preprocessed/esp-idf/
 ```
 
 Now `./preprocessed/esp_idf.d` contains just created binding.
